@@ -206,6 +206,16 @@ $eventfacts = a4_event_recorder::install();
 // per request instead (lib/moodlelib.php mtrace() honours $CFG->mtrace_wrapper). Logging only.
 $CFG->mtrace_wrapper = 'a4_mtrace_capture';
 $registry = a4_registry_facts();
+// ADR-035 flags at global scope (read only, never changed): with either ON, local_sentientia_privacy's provider adds
+// the contexts the stock approval drops to its own list and erases them in its delete (README "a4_sweep.php").
+$adr035flags = class_exists('\\local_sentientia_privacy\\privacy\\provider')
+        && defined('\\local_sentientia_privacy\\privacy\\provider::FLAG_TRUNCATION') ? [
+    'truncation' => \local_sentientia_privacy\privacy\provider::flag_enabled(
+        \local_sentientia_privacy\privacy\provider::FLAG_TRUNCATION),
+    'completion' => \local_sentientia_privacy\privacy\provider::flag_enabled(
+        \local_sentientia_privacy\privacy\provider::FLAG_COMPLETION),
+] : null;
+$adr035on = $adr035flags && ($adr035flags['truncation'] || $adr035flags['completion']);
 
 $webfacts = null;
 $backupfacts = null;
@@ -407,6 +417,7 @@ $startrec = [
     'backup' => $backupfacts, 'cron_user' => (int)$USER->id, 'dpo_count' => $dpocount, 'admin_count' => $admincount,
     'memory_limit' => ini_get('memory_limit'), 'allow_insert' => array_keys($allowinsert),
     'tripwire_tables' => a4_tripwire_tables(), 'all_id_tables' => count(a4_all_id_tables()), 'snapshot' => $base,
+    'adr035_flags_global' => $adr035flags,
     'all_table_counts' => $countsstart, 'restore_markers' => $restoremarkers, 'requests' => $distbefore,
     'candidates' => count($candidates), 'refused' => count($refused), 'filtered_out' => $filteredout,
     'a4_subjects' => count($a4subjects), 'cert_issue_ids' => $certissueids, 'cert_issue_owners' => $certissueowners,
@@ -545,6 +556,7 @@ foreach ($candidates as $c) {
             $collection = $manager->get_contexts_for_userid($userid);   // Task :93.
             $cldisc = a4_contextlist_detail($collection);   // Full + iterated lists, before anything iterates them.
             $rec['discovery'] = a4_collection_summary($collection);
+            $rec['supplement_plan'] = a4_supplement_plan_record($userid);   // ADR-035, null with both flags OFF.
             if (is_primary_admin($foruser->id)) {                       // Task :140 (cannot happen: deleted).
                 $rec += a4_truncation_fields($cldisc, null);
                 $rec['outcome'] = 'would_reject_primary_admin';
@@ -607,6 +619,9 @@ foreach ($candidates as $c) {
                 $contextlistcollection = $manager->get_contexts_for_userid($requestpersistent->get('userid'));   // :93
                 $cldisc = a4_contextlist_detail($contextlistcollection);   // Before anything iterates the lists.
                 $rec['discovery'] = a4_collection_summary($contextlistcollection);
+                // ADR-035: the plan local_sentientia_privacy kept from this discovery (null with both flags OFF).
+                // Read now: the provider's delete consumes it. a4_verify judges the privacy list by it (supp_active).
+                $rec['supplement_plan'] = a4_supplement_plan_record($userid);
 
                 if (is_primary_admin($foruser->id)) {                        // :140 (unreachable: subject is deleted)
                     api::update_request_status($requestid, api::DATAREQUEST_STATUS_REJECTED);   // :141 + :158
@@ -632,7 +647,13 @@ foreach ($candidates as $c) {
                         throw new a4_tripwire_exception(['approved component(s) not in the provider manifest: '
                             . implode(', ', $unknown)]);
                     }
-                    $bscope = a4_blast_scope($userid, $rec['approved_ids']);   // Quizzes read before the deletion.
+                    // Quizzes read before the deletion. With an ADR-035 flag ON the supplement also deletes in the
+                    // components its plan names (and core_course for the completion gap).
+                    $suppcomps = array_keys($rec['supplement_plan']['missed'] ?? []);
+                    if (!empty($rec['supplement_plan']['completion_gap'])) {
+                        $suppcomps[] = 'core_course';
+                    }
+                    $bscope = a4_blast_scope($userid, $rec['approved_ids'], $suppcomps);
                     $blastbefore = a4_blast_counts([$userid], $bscope);
                     $manager = new \core_privacy\manager();              // :148
                     $manager->set_observer($obs);                        // :149 (recording observer)
@@ -670,9 +691,10 @@ foreach ($candidates as $c) {
                         // uncommitted, and every event already reached the (internal) recorder.
                         $inside = a4_snapshot($logbaseline, true);
                         $pre = array_merge($pre, a4_tripwire_compare($base, $prev, $inside, $allowinsert));
-                        if (a4_event_recorder::$events) {
-                            $pre[] = 'events fired: ' . implode(', ', array_unique(array_column(a4_event_recorder::$events,
-                                'eventname')));
+                        // ADR-035: with a flag ON the provider's delete fires one erasure_supplemented per request.
+                        $evtrip = a4_unexpected_events(a4_event_recorder::$events, $adr035on);
+                        if ($evtrip) {
+                            $pre[] = 'events fired: ' . implode(', ', array_unique($evtrip));
                         }
                         if (!a4_event_recorder::intact()) {
                             $pre[] = 'event observer table was reloaded (real observers could run)';
@@ -763,7 +785,10 @@ foreach ($candidates as $c) {
     $events = a4_event_recorder::take();
     if ($events) {
         $rec['events'] = array_count_values(array_column($events, 'eventname'));
-        $softtrips[] = 'events fired: ' . implode(', ', array_keys($rec['events']));
+        $evtrip = a4_unexpected_events($events, $execute && $adr035on);
+        if ($evtrip) {
+            $softtrips[] = 'events fired: ' . implode(', ', array_unique($evtrip));
+        }
     }
     if (!a4_event_recorder::intact()) {
         $softtrips[] = 'event observer table was reloaded (real observers could run)';

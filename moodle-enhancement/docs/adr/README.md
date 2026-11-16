@@ -39,6 +39,7 @@ accepted; superseded decisions get a new ADR that references the old one.
 | [ADR-032](ADR-032-bizlms-data-import.md) | Import BizLMS feature data through one shared framework | **Proposed**; import decided 2026-09-29, owner choices signed 2026-09-30, rest decided under delegation 2026-10-07 | 2026-09-29 |
 | [ADR-033](ADR-033-target-moodle-5.3-lts.md) | Target Moodle 5.3 LTS instead of 5.2 | **Accepted** on Nitin's instruction, subject to the compatibility gate; 5.2 stays the fallback. Blockers FX-01 to FX-10 and the non-blockers FX-12 to FX-23 landed on `claude/moodle53-compat` (2026-10-08); the runtime gate (fresh install, upgrade rehearsals, PHPUnit, write paths) is still to run | 2026-10-07 |
 | [ADR-034](ADR-034-content-pipeline-architecture.md) | Content pipeline architecture: canonical course JSON, SCORM 1.2 / 2004 4th / cmi5 outputs, XLIFF + translation memory + two-stage review, self-hosted Indic TTS/ASR with an evaluation gate, DPDP/RBI posture | **Accepted** 2026-11-12 (Nitin: all recommendations approved, decision A1 in docs/cutover/NITIN-DECISIONS-2026-11-12.md); Stage 1 slice 1 in local_sentientia_authoring 2026111200 | 2026-10-15 |
+| [ADR-035](ADR-035-privacy-erasure-completeness.md) | Privacy erasure completeness: a supplementary provider in `local_sentientia_privacy` recovers the contexts stock approval drops (core `contextlist` truncation) and the course completions core never discovers, with no core edit | **Accepted** 2026-11-13 (Nitin chose Option A after the A4 rehearsal); built in local_sentientia_privacy 2026111300, both flags OFF; flag ON needs a recorded DPO retention decision; blocking cutover item before any DPO approves a DELETE request on production | 2026-11-13 |
 
 > Complete index — every ADR on disk is listed (ADR-006/007 were never assigned;
 > the numbering gap is intentional). ADR-022's component-rename plan was executed by
@@ -46,6 +47,8 @@ accepted; superseded decisions get a new ADR that references the old one.
 > `local_sentientia_*`. The state-card files under `state-cards/` still carry the
 > legacy `airpay_*` names; aligning them to `sentientia_*` is the open half of P3-5
 > (doc hygiene), pending a per-component pass (gateway / theme / block names differ).
+> ADR-034's open questions name "ADR-035" for the Indic TTS engine choice; ADR-035
+> went to privacy erasure completeness, so that ADR takes the next free number.
 
 ## Template
 

@@ -5,7 +5,8 @@
 // What it checks, after one or more --execute runs of a4_rehearsal.php ("processed" = outcome deleted or
 // deleted_with_provider_failures in the reports):
 //   1. Discovery. Re-asks every privacy provider get_contexts_for_userid() for the processed subjects and for two
-//      control ids: one user id that never existed and one deleted user outside A4 that has a user context. A context
+//      control ids: one user id that never existed and one deleted user outside A4 that has a user context. Each list
+//      is read in FULL (get_contextids(); since 2026-11-17: a foreach stops at the first key hole). A context
 //      a component also reports for both controls is "unconditional" (reported for any user id). A context kept by
 //      design (A4_RESIDUE_BY_DESIGN, code-verified) is listed separately. Anything else still reported is
 //      "still_reported"; when the component's discovery is exact (local_sentientia_* except request,
@@ -170,7 +171,12 @@ $result = [
 ];
 
 // ---- 1. Discovery with control ids.
-/** Discovery for one user id: [component => [key => contextid]], key = system | own_user | ctx:<id>. */
+/**
+ * Discovery for one user id: [component => [key => contextid]], key = system | own_user | ctx:<id>.
+ * Reads each list's FULL id array (get_contextids()) since 2026-11-17: a foreach over a contextlist stops at the first
+ * key hole (contextlist_base.php:66 + :170, the core bug this whole rehearsal measures), so the old foreach re-check
+ * was cut short exactly where residue is most likely. A context that no longer exists is skipped (IGNORE_MISSING).
+ */
 function a4v_discover(int $uid, a4_recording_observer $obs): array {
     $GLOBALS['A4_MTRACE_BUF'] = '';
     ob_start();
@@ -179,9 +185,13 @@ function a4v_discover(int $uid, a4_recording_observer $obs): array {
         $manager->set_observer($obs);
         $collection = $manager->get_contexts_for_userid($uid);
         $out = [];
-        foreach ($collection as $cl) {
+        foreach ($collection->get_contextlists() as $cl) {
             $c = $cl->get_component();
-            foreach ($cl as $ctx) {
+            foreach (array_values($cl->get_contextids()) as $ctxid) {
+                $ctx = \context::instance_by_id((int)$ctxid, IGNORE_MISSING);
+                if (!$ctx) {
+                    continue;
+                }
                 if ((int)$ctx->contextlevel === CONTEXT_SYSTEM) {
                     $key = 'system';
                 } else if ((int)$ctx->contextlevel === CONTEXT_USER && (int)$ctx->instanceid === $uid) {

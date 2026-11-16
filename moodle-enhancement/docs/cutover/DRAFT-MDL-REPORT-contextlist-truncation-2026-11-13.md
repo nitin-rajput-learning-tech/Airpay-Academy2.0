@@ -67,12 +67,20 @@ rows.
 
 ## For Nitin (not part of the report)
 
-- **Effect on Sentientia (local copy of production data, stock path):** in the pending A4 requests the
-  approval silently dropped 3,325 contexts in 223 of 507 requests: tool_log 3,279 (222 requests),
-  report_stats 20 (17), mod_quiz 13 (10), mod_scorm 13 (1). About 15,000 log rows of the deleted subjects
-  stay after "Deleted". Figures are in the A4 rehearsal report.
-- **The fix is a one-line core edit.** ADR-033 says no edits to existing core files on 5.3, so applying it
-  locally, on UAT or at cutover needs your decision (amend ADR-033 with a core-mods record), or we wait for
-  an upstream fix. Until then every erasure through the stock tool_dataprivacy flow needs a residue check
-  afterwards.
+- **Effect on Sentientia (local copy of production data, stock path).** Two populations, two figures:
+  - **Executed** (the requests A4 actually ran after the canary: the main run plus request 504): the approval
+    silently dropped **3,309 contexts in 221 requests**: tool_log 3,263 (220 requests), report_stats 20 (17),
+    mod_quiz 13 (10), mod_scorm 13 (1). 15,108 log rows and 21 stats rows of the deleted subjects stayed after
+    "Deleted". This is the figure the A4 results doc and ADR-035 use. (The 8 canary requests truncated too but
+    were not recorded.)
+  - **Final full dry run** (`a4-dryrun-full-final.jsonl`, the 507 requests still pending after the canary:
+    278 subjects marked deleted and 229 with no user row): 3,325 contexts in 223 of 507 requests: tool_log
+    3,279 (222 requests), report_stats 20 (17), mod_quiz 13 (10), mod_scorm 13 (1). The difference (16
+    tool_log contexts, 2 requests) is 2 subjects with no user row, whose requests were never executed.
+- **Decided 2026-11-13: Option A** (ADR-035). A Sentientia supplementary privacy provider recovers the
+  dropped contexts, with no core edit, behind two flags that stay OFF until the DPO's retention decision.
+  The one-line core edit (amend ADR-033 with a core-mods record) was not chosen. Filing this report is still
+  useful: once upstream fixes it, a canary test in `local_sentientia_privacy` fails and tells us to retire
+  the workaround. Until the flags are ON, every erasure through the stock tool_dataprivacy flow needs a
+  residue check afterwards.
 - **Filing upstream** is public posting: your call (it can be filed from your own tracker account).

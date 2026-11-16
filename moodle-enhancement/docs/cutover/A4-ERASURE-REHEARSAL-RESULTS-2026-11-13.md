@@ -57,8 +57,8 @@ from stock Moodle 5.1 (and 5.3, which has the same code):
 
 | Cause | Rows left | What it is |
 |---|---|---|
-| **Core bug: approval stops early** | 15,129 | `contextlist_base::set_contextids()` removes duplicate ids without renumbering, and the loop that builds the approved list stops at the first gap. Discovery found the data; approval silently dropped it. 3,308 contexts dropped in 220 of the 286 requests: log entries (15,108 rows left), stats (21), and quiz and SCORM contexts too. Upstream Moodle `main` has the same code; no Moodle tracker issue exists. Draft report: `DRAFT-MDL-REPORT-contextlist-truncation-2026-11-13.md`. |
-| **Core gap: course completions never found** | 1,713 | core_course discovery only finds a course where the person touched a completion criterion. "Enrolled, never started" completion rows, and rows in courses without criteria, are never found, so never deleted. |
+| **Core bug: approval stops early** | 15,129 | `contextlist_base::set_contextids()` removes duplicate ids without renumbering, and the loop that builds the approved list stops at the first gap. Discovery found the data; approval silently dropped it. 3,309 contexts dropped in 221 of the 286 requests (the main run plus request 504; the 8 canary requests truncated too but were not recorded): log 3,263, stats 20, quiz 13, SCORM 13. Rows left: log entries 15,108, stats 21, plus 1 activity-completion and 1 activity-view row in one quiz context that the checker does not count. (An earlier version said 3,308 in 220; it left out request 504.) Upstream Moodle `main` has the same code; no Moodle tracker issue exists. Draft report: `DRAFT-MDL-REPORT-contextlist-truncation-2026-11-13.md`. |
+| **Core gap: course completions never found** | 1,713 | core_course discovery only finds a course where the person touched a completion criterion. "Enrolled, never started" completion rows, and rows in courses without criteria, are never found, so never deleted. With the canary's 5: 1,718 rows (124 in courses without criteria, 1,591 with untouched criteria, 3 completed). |
 | **Context already gone** | 5,584 | Log, grade-history and stats rows that point at a course or activity deleted earlier. No privacy provider can reach them. |
 | Canary (recorded before the bucketing) | 518 | The same three causes, for the first 8 subjects. |
 
@@ -77,9 +77,30 @@ Approving these requests on live through the normal screen would today:
 3. **Report "Deleted" while most log entries, many course completions and the whole profile row remain.**
 
 Before any real erasure on live (decisions for Nitin and the DPO):
-- **Fix the core bug** one of three ways: (A) a Sentientia supplementary privacy provider that finds and deletes
-  what core misses, no core edit (recommended; suggested as a separate task), (B) amend ADR-033 for a one-line core
-  edit, or (C) wait for upstream. Until then every erasure needs a residue check afterwards.
+- **Fix the core bug: DECIDED 2026-11-13, Option A** (Nitin): a Sentientia supplementary privacy provider that finds
+  and deletes what core misses, with no core edit. Recorded in `docs/adr/ADR-035-privacy-erasure-completeness.md`.
+  Built 2026-11-13 in `local_sentientia_privacy` 2026111300 behind two flags, both **OFF**:
+  `sentientia.privacy.erasure_completeness.enabled` (the core bug) and `sentientia.privacy.completion_gap.enabled`
+  (the course-completion gap, a separate call). Options B (amend ADR-033 for the one-line core edit) and C (wait for
+  upstream) were not chosen.
+  - Proof so far. PHPUnit: `erasure_completeness_test` OK, 12 tests, 96 assertions (2026-11-13 and 2026-11-16),
+    and after the 2026-11-17 review fixes OK, 16 tests, 134 assertions;
+    the core privacy and tool_dataprivacy suites with the flags OFF fail only in other plugins (ADR-035 "Proof").
+    Read-only dry run over the processed subjects, 2026-11-17 (`tools/privacy-erasure-rehearsal/a4_supplement_plan.php`,
+    READ ONLY session, nothing written): of the 16,844 leftover rows in scope (truncated logs, statistics and activity
+    completion, plus the course completions core never discovers), 704 would go with a plain stock re-run today
+    (681 log, 21 stats, 1 + 1 activity completion and view), 16,140 only through the supplement (14,427 log, 1,713
+    course completions), and **0 are uncovered**; 5,727 rows sit in contexts that no longer exist (out of reach of
+    any provider). 0 plan failures; plan time per subject 0.46 / 0.61 / 7.8 s (min / median / max). The replay
+    driver `a4_sweep.php` agreed in two dry runs (286 subjects, 0 failures; projection: stock 726, supplement
+    16,493, uncovered 0). Details and the post-review re-run: ADR-035 "Proof".
+  - Still open: the **DPO retention decision** before either flag goes ON (turning them on deletes log rows,
+    including login and audit-trail rows, and course completions that survive today only because of the bug;
+    ADR-035 "Retention"); the flags themselves (Nitin's call); and, if wanted, one local execute run (A/B on the
+    restored pre-A4 dump, or a replay sweep of the 286 with `a4_sweep.php --execute`), each Nitin's call. The
+    pre-A4 dump passed the 48-hour backup gate only until 2026-11-15 09:07, so either option now needs a new dump.
+  - Until both flags are ON, every erasure still needs a residue check afterwards, and requests completed while
+    they are OFF need the residue sweep (blocking cutover item in `SENTIENTIA-CUTOVER-MASTER.md`).
 - **Decide the profile row**: anonymise the BizLMS profile columns on erasure (the DPDP flow's
   `anonymise_data_for_user()` is not called by the stock path), or record why they are kept.
 - **Decide the 229**: cancel or reject them with a recorded reason (nothing of theirs is left to erase except

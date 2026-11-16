@@ -1183,6 +1183,46 @@ jobs:
             exit "$code"
           fi
 
+      # ── HARD GATE ──────────────────────────────────────────────────
+      # Right-to-erasure completeness (local_sentientia_privacy 1.1.0,
+      # 2026-11-13): the supplementary provider that recovers what core's
+      # truncated data-request approval drops. Every test runs the real stock
+      # path and asserts its precondition (the hole) first; one is a canary
+      # that fails the day core fixes the bug. Do not add continue-on-error.
+      - name: "Privacy erasure group (BLOCKING)"
+        working-directory: ${{ env.MOODLE_DIR }}
+        run: |
+          set -euo pipefail
+          # Same guard as above: an empty group would pass while proving nothing.
+          # public/local only: on 5.1+ there is no root local/, and a glob that
+          # matches nothing reaches grep as a literal path. grep then exits 2,
+          # which aborts this step under pipefail before any test runs.
+          N=$(grep -rl '@group privacy_erasure' public/local/*/tests/*.php 2>/dev/null | wc -l)
+          echo "tagged privacy_erasure suites: $N"
+          test "$N" -ge 1
+          # Same failure annotation as the tenant step: PHPUnit's verdict, not
+          # the log tail, readable without signing in to GitHub.
+          set +e
+          vendor/bin/phpunit --group privacy_erasure 2>&1 | tee "$RUNNER_TEMP/phpunit-privacy.log"
+          code=${PIPESTATUS[0]}
+          set -e
+          if [ "$code" -ne 0 ]; then
+            sum="$RUNNER_TEMP/phpunit-privacy-summary.txt"
+            awk '/^[0-9]+\) /{print; if ((getline nxt) > 0) print nxt; next}
+                 /^(OK|FAILURES!|ERRORS!|WARNINGS!|Tests: |There (was|were) [0-9]+ )/{print}' \
+              "$RUNNER_TEMP/phpunit-privacy.log" > "$sum" || true
+            [ -s "$sum" ] || tail -n 40 "$RUNNER_TEMP/phpunit-privacy.log" > "$sum"
+            split -b 3800 -d "$sum" "$RUNNER_TEMP/privacy-ann."
+            n=0
+            for part in "$RUNNER_TEMP"/privacy-ann.*; do
+              n=$((n + 1))
+              [ "$n" -le 8 ] || break
+              msg=$(sed -e 's/%/%25/g' -e 's/\r/%0D/g' "$part" | awk '{printf "%s%%0A", $0}')
+              echo "::error title=privacy_erasure group failed (exit ${code}) part ${n}::${msg}"
+            done
+            exit "$code"
+          fi
+
       # ── ADVISORY ───────────────────────────────────────────────────
       # Full 5.2 suite. Known unrelated failures; drain then make blocking.
       - name: Run PHPUnit

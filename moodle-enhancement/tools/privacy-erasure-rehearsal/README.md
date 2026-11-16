@@ -4,6 +4,17 @@ Decision A4 (Nitin, 2026-11-13): process the automatic `tool_dataprivacy` deleti
 creationmethod 1 automatic, status 2 awaiting approval) on the **local XAMPP copy only**, as a rehearsal of every
 plugin's delete code. Hard constraint, verbatim: "no emails or notifications should be triggered".
 
+**Status 2026-11-17 02:30 IST (ADR-035 follow-up): proved read-only, harness fixed, NOTHING EXECUTED.**
+`local_sentientia_privacy` 1.1.0 (the supplementary erasure of ADR-035 "Option A", both flags OFF) is deployed on the
+local copy. `a4_supplement_plan.php` computed the supplement's plan for all 515 A4 subjects inside a READ ONLY,
+always-rolled-back session and reconciled it with the residue as it is now: of the 16,844 leftover rows in scope
+(truncated logs, statistics and activity completion, plus the course completions core never discovers) 0 are uncovered
+(681 + 21 + 2 would go with a stock re-run today, 14,427 + 1,713 only through the supplement), and it wrote nothing.
+The harness was fixed for a future flags-ON execute, and `a4_sweep.php` (replay driver for the 286 completed
+requests, dry run by default) ran twice as a dry run (identical counts). Any execute is Nitin's call: section
+"ADR-035 supplement" below. Review fixes of 2026-11-17 (03:00 IST onwards): see "Review fixes (2026-11-17)" at the end
+of that section.
+
 **Status 2026-11-13 11:45 IST: DONE on the local copy.** 286 requests executed (canary of 9, request 504, then
 277), all `deleted`; the 229 requests whose subject has no user row are untouched at status 2 (the stock task would
 throw a TypeError on them). Zero sends: 0 events, 0 send attempts, no new notification, message, popup or e-mail row,
@@ -17,13 +28,199 @@ The sections below were written while building and are kept as the record.
 | File | What it is |
 |---|---|
 | `a4_rehearsal.php` | The rehearsal. Dry run by default; changes data only with `--execute`. |
-| `a4_verify.php` | Read-only check after an execute run: discovery against control ids, must-be-empty checks (flat, or bucketed by context for the context-scoped ones: only `failure` is a violation, see "Residue buckets"), other people's rows, residual counts, tripwires. Exit 4 on any violation. Only syntax-checked; its SQL ran in the `--residuals` dry run (`reports/test5-dry-residuals.jsonl`). |
-| `a4_lib.php` | Shared helpers: php guard check, environment guard, read-only session, kill switches, event recorder, snapshots and tripwires, blast-radius counts, message-tail mirror, provider manifest, backup gate, verify specs. |
+| `a4_verify.php` | Read-only check after an execute run: discovery against control ids, must-be-empty checks (flat, or bucketed by context for the context-scoped ones: only `failure` is a violation, see "Residue buckets"), other people's rows, residual counts, tripwires. Exit 4 on any violation. Ran over the A4 execute reports on 2026-11-13 and, with the ADR-035 changes, on 2026-11-17 (below). |
+| `a4_lib.php` | Shared helpers: php guard check, environment guard, read-only session, kill switches, event recorder, snapshots and tripwires, blast-radius counts, message-tail mirror, provider manifest, backup gate, verify specs; since 2026-11-17 also the ADR-035 coverage helpers (`a4_cover_class()`, `a4_read_execute_reports()`, `a4_supplement_plan_record()`). |
+| `a4_supplement_plan.php` | 2026-11-17, read-only. Plans the ADR-035 supplementary erasure for every A4 subject and reconciles it with the residue now. Writes one JSON result. |
+| `a4_sweep.php` | 2026-11-17. Replay driver for the 286 completed (status 10) A4 requests: stock three calls, then the supplement, no request rows. Dry run by default; `--execute` behind the rehearsal's gates (never run). |
 | `reports/` | JSON-lines reports (`event` = start, request, summary, counts). Ids and counts only. |
-| `state/` | `provider-manifest.json` (written by the dry run), and from `--execute`: `journal.jsonl` and `a4.lock`. |
+| `state/` | `provider-manifest.json` (written by the dry run), and from `--execute`: `journal.jsonl` and `a4.lock`. `a4_sweep.php` keeps its own `sweep-manifest.json`, `sweep-journal.jsonl` and `sweep.lock` in `--state-dir` (default `state/`). |
 
-Both scripts refuse to run unless the php guard flags are on (below), `wwwroot` is localhost, `dbhost` is local,
+Every script refuses to run unless the php guard flags are on (below), `wwwroot` is localhost, `dbhost` is local,
 `dbname` is `moodle`, the prefix is `mdl_` (never `phpu_`) and `$CFG->noemailever` is true.
+
+## ADR-035 supplement: proof, harness fixes and the sweep (2026-11-17)
+
+Background: `docs/adr/ADR-035-privacy-erasure-completeness.md` and "Residue buckets" below. Two core defects leave data
+behind on the stock path: the contextlist iterator stops at the first duplicate id (truncation), and `core_course`
+never discovers most `course_completions` rows (completion gap). `local_sentientia_privacy` 1.1.0 lists what the stock
+approval drops in its own contextlist and erases it through the owning component
+(`classes/local/erasure_completeness.php`), behind two flags that are OFF. Nothing below flips a flag.
+
+### `a4_supplement_plan.php`: read-only proof
+
+```bash
+cd C:/xampp/htdocs/moodle5/public          # $H = the php guard flags, as in "How to run" below
+T="D:/Claude Local/airpay-ld-os/moodle-enhancement/tools/privacy-erasure-rehearsal"
+R="D:/Claude Local/kit-scratch/1113/a4/rehearsal/reports"
+O="D:/Claude Local/kit-scratch/1113/erasure-build/1117"
+php $H "$T/a4_supplement_plan.php" --out="$O/supplement-plan-final.json" \
+    --report="$R/a4-execute-canary.jsonl,$R/a4-execute-504.jsonl,$R/a4-execute-main.jsonl"
+```
+
+It calls `erasure_completeness::plan($userid, true, true)` (flag-independent) for every A4 subject in a READ ONLY
+session (zero-row self-test refused first) and inside a delegated transaction that is always rolled back, with the
+kill switches and the event recorder. Then it runs the bucketed must-be-empty specs again over the three execute
+reports and classifies each leftover row against today's plan of its subject: **stock** (the context is in the
+component's iterated list today), **supplement** (in its missed list, or for `core_course` specs in the completion
+gap), **uncovered**, or **vanished** (the context no longer exists; no discovery can find it, out of scope). In scope:
+bucket `truncated` (every spec) and bucket `undiscovered` for `course_completions`. Exit 5 if a row in scope is
+uncovered, 3 if anything was written.
+
+Result, run 01:47:59-01:55:56 IST (`supplement-plan-final.json` + `.stdout.txt` in `$O`; exit 0):
+
+| | Processed (status 10, user row) | No user row |
+|---|---|---|
+| Subjects planned | 286 | 229 |
+| With missed contexts | 213 (all `tool_log`, 3,277 subject-context pairs) | 2 (`tool_log`, 16 pairs) |
+| With a completion gap | 184 (1,718 course contexts) | 0 |
+| Supplementary ids (missed + gap) | 3,406 | 16 |
+| Plan failures | 0 | 0 |
+| Seconds per subject (min / median / max) | 0.461 / 0.610 / 7.813 | 0.472 / 0.787 / 2.607 |
+
+`stock_approval_truncates()` = true (0.039 s); data registry `defaults_set` false. Today only `tool_log` still has
+holes: the A4 run deleted the iterated prefix of every list, so the `report_stats`, `mod_quiz` and `mod_scorm` lists
+of 2026-11-13 no longer have a duplicate in front of their leftover contexts.
+
+Reconciliation over the 286 (2.2 s):
+
+| Component (spec) | Contexts | Pairs | Rows | Stock now | Supplement | Uncovered |
+|---|---|---|---|---|---|---|
+| `tool_log` (`logstore_standard_log`, truncated) | 179 | 1,801 | 15,108 | 681 | 14,427 | 0 |
+| `core_course` (`course_completions`, undiscovered) | 37 | 1,713 | 1,713 | 0 | 1,713 | 0 |
+| `report_stats` (`stats_user_monthly`, truncated) | 17 | 20 | 21 | 21 | 0 | 0 |
+| `mod_quiz` (module cmc + cmv, truncated; context 4138, request 463) | 1 | 2 | 2 | 2 | 0 | 0 |
+| **Total in scope** | | | **16,844** | **704** | **16,140** | **0** |
+
+The design expected the two context-4138 rows to be covered through `mod_quiz`'s missed list. Today they are in
+`mod_quiz`'s iterated list (the quiz contexts that were in front of 4138 lost their rows in the A4 run), so a stock
+re-run alone would delete them; the supplement would have covered them on 2026-11-13. Out of scope, for the record:
+the 9 canary subjects (`not_approved_unbucketed_pre_guard`): 5 `course_completions` rows (supplement), 368 log rows
+in existing contexts (348 supplement, 20 stock), 2 `stats_user_monthly` rows (stock); vanished contexts: 5,328 log
+rows, 391 `grade_grades_history` rows, 8 stats rows (no discovery can reach them). The `mod_scorm` truncation of
+2026-11-13 left no row in any spec (its contexts were listed only through the shared completion add).
+
+Write proof: `logstore_standard_log` 2,594,278 rows / max id 2,596,624, `task_adhoc` 44 / 16,431, `notifications`
+4,245 / 1,665,968, `messages` 0 / 0, `event` 418 / 470, all identical before and after; MAX(id) of every `mdl_` table
+and the `task_scheduled`, `task_adhoc`, `config` and `config_plugins` checksums identical; 0 events, 0 send-attempt
+lines, 0 other output lines; `tx_read_only` 1 at the end. A first full run at 01:40 (`supplement-plan-full.*`) used the
+first version of the new bucket rule, which counted the provider's own system context (flags OFF in every A4 line) as
+a hand-off and put 1,411 truncated log rows in `failure`; superseded (the `supp_active` gate below).
+
+### Harness fixes for a future flags-ON execute (made, not exercised by an execute)
+
+- `a4_residue_bucket()`: a row is also a `failure` when its context is in `appr['local_sentientia_privacy']` and
+  either in the component's full discovery list or the spec is `course_completions`, but only for a line that ran WITH
+  the supplement (`supp_active`: the line recorded the provider's plan). Every A4 line of 2026-11-13 has only the
+  provider's own system context there and is not judged by the rule.
+- New bucketed specs: `course_modules_completion` (non-criterion modules) and `course_modules_viewed` in MODULE
+  contexts, per-row component `mod_<modname>`. They are a `failure` when the context is in ANY approved list: the
+  manager runs the shared cleanup on every approved list (`manager.php:418-419`).
+- `a4_blast_scope()`: the log scope is the union of the `tool_log` and `local_sentientia_privacy` approved ids, and
+  the components the supplement dispatches to are in scope too (no false "removed X row(s) but only Y belonged").
+- `a4_verify.php` step 1 reads each list with `get_contextids()` (a foreach stops at the first hole);
+  `local_sentientia_privacy` discovery is not "exact" any more and is listed by design (with a flag ON it re-reports
+  other components' contexts, e.g. `tool_log` contexts kept for `relateduserid` rows).
+- `a4_manifest_paths()` hashes `erasure_completeness.php`, `erasure_plan.php`, `erasure_plan_store.php`,
+  `forced_contextlist.php`, `event/erasure_supplemented.php`, the provider, both flag files and the completion
+  provider. **The stored manifests therefore differ now ("new file in scope"): re-bless with a dry run
+  `--write-manifest` before any execute.**
+- `a4_rehearsal.php` records `adr035_flags_global` in the start line and, per request, `supplement_plan` (the plan the
+  provider kept from discovery, read before the delete consumes it); its blast scope includes the plan's components.
+- `a4_rehearsal.php` (with a flag ON) and `a4_sweep.php` accept exactly one `erasure_supplemented` event per request or
+  subject (`a4_unexpected_events()`); any other event, or a second one, still trips.
+
+`a4_verify.php` with these changes, read-only over the three A4 execute reports (02:05:51-02:09:53 IST,
+`a4-verify-1117.json` + `verify-1117.stdout.txt` in `$O`): **VIOLATIONS 0**. Discovery read in full for 286 subjects
+in 211 s, 0 provider failures. Buckets: failure 0, truncated 15,131 (15,108 log, 21 statistics, and the 1 cmc + 1 cmv
+row of context 4138 that the new module specs now see), undiscovered 7,297, `not_approved_unbucketed_pre_guard` 518,
+registry 0. Exit 3 only because its tripwire baseline is the 2026-11-13 start line and the site has moved since
+(`upgrade_log` max id 6,010 -> 6,025, config and scheduled-task checksums, sessions, log rows, points log: the
+2026-11-16 deploys and other sessions); the run itself was READ ONLY (`tx_read_only` 1 at the end).
+
+### `a4_sweep.php`: replay driver for the 286 completed requests
+
+Per status-10 A4 subject (user row with `deleted = 1`; the 229 without a row are refused): plan first, then the stock
+three calls (`manager->get_contexts_for_userid`, `api::get_approved_contextlist_collection_for_collection(..., DELETE)`,
+`manager->delete_data_for_user`, recording observer), then the supplement: the list the provider would build with a
+flag ON (one `add_from_sql` over `SYSCONTEXTID` + the plan's supplementary ids) through the same approval call,
+`erasure_completeness::apply_delete($user, <approved ids>, 'cli', $truncation, true, $requestid)` with the
+pre-delete plan (it must report `plan` = `cached`), and the manager's shared cleanup on that list. No request row,
+status or message is written. Differences from the flags-ON request path, all deliberate: the supplement runs after the
+whole stock delete (with the pre-delete plan the hit sets are the same, missed ∩ approved); the shared cleanup on the
+privacy list is run by `apply_delete()` itself on the `cli` path (since 2026-11-17; before that the sweep made the call,
+because `apply_delete()` ran it for `mod_*` hits only; the manager runs it on every list); the `erasure_supplemented`
+event reaches only the event recorder (no log row; its payload is in the report line). `--execute` refuses while either
+flag is ON (the provider would already supplement inside the stock calls). The plan must split every component's list
+exactly as the stock discovery did, full list AND iterated part (`a4s_plan_vs_discovery()`): the stock pass deletes
+the stock-iterated ids and the supplement the plan's missed ids, so a different split (logstore discovery has no
+`ORDER BY`) could leave a context in neither. A mismatch is reported in a dry run and is a tripwire before the stock
+delete under `--execute` (since 2026-11-17; before that only the full lists were compared, and only reported).
+
+Gates for `--execute`, the same as `a4_rehearsal.php --execute`: php guard flags, local-only guards, kill switches,
+event recorder (only `erasure_supplemented` may fire, once per subject), recording observer, `--web=maintenance`,
+`--backup` (complete dump under 48 h), its own manifest (`sweep-manifest.json`, from a dry run), cron checks, lock,
+journal, one delegated transaction per subject with pre-commit tripwires (any failure or trip rolls the subject back),
+request-status distribution unchanged at the end, and a final leftover check (rows still in a context this run cleared:
+exit 4). Per subject it counts the subject's rows per blast spec before, after the stock delete and after the supplement
+(deletes per source) and checks other people's rows.
+
+```bash
+php $H "$T/a4_sweep.php" --report="$O/a4-sweep-dryrun.jsonl" --state-dir="$O/sweep-state"          # dry run
+# Execute: NOT RUN. Nitin's call, after the approvals below:
+php $H "$T/a4_sweep.php" --execute --ids=230,231,250,428,463 --stop-on-error --web=maintenance \
+    --backup="D:/Claude Local/Moodle Backup/<new dump>/moodle-mdl.sql" --state-dir="$O/sweep-state" \
+    --report="$O/a4-sweep-execute-canary.jsonl"
+```
+
+Dry-run result on the final code, 02:10:24-02:18:12 IST (`a4-sweep-dryrun-final.jsonl` +
+`sweep-dryrun-final.stdout.txt` in `$O`; exit 0; manifest "match": `sweep-state/sweep-manifest.json` was written by
+the first dry run, 01:56:28-02:05:02, `a4-sweep-dryrun.*`, same counts; only execute-path code changed in between):
+286 subjects, 0 refused; 216 would get stock + supplement, 70 stock only; 0 failures, 0 events, 0 other output lines;
+plan full lists equal to the stock discovery's full lists for all 286; 1.265 s median per subject (1.10 min, 14.91
+max), plan alone 0.553 s median (7.122 max); wall 457 s. Stock approved 4,983 component-context pairs. Supplementary list 3,534 ids (3,406 missed + gap,
+plus the system context where it was not already one), all 3,534 approved (`defaults_set` false); hit sets: `tool_log`
+3,277 pairs in 213 subjects, completion gap 1,718 course contexts in 184 subjects. Projection over the leftover rows of
+the 286 (every bucket, canary lines included): stock pass 726 rows (`tool_log` 701, `report_stats` 23, `mod_quiz`
+cmc + cmv 2), supplement 16,493 rows (`tool_log` 14,775, `core_course` completions 1,718), vanished 5,727 (`tool_log`
+5,328, `core_grades` history 391, `report_stats` 8), **uncovered 0**. Read-only proof: `tx_read_only` 1 at the end,
+tripwires "no increase", snapshot delta empty, request statuses `t2.c1.s10` 286 and `t2.c1.s2` 229 before and after.
+Suggested canary (covers log only, nothing, both, completion only, the context-4138 subject): requests 230, 231, 250,
+428, 463.
+
+### What Nitin must approve before any execute
+
+1. **The DPO retention decision** (ADR-035): the supplement deletes data that survives today only because of the core
+   defects (for the 286: 16,493 rows only the supplement reaches, 14,775 log rows and 1,718 course completions; plus
+   726 rows a stock re-run alone would take today).
+2. **Which replay**, one of:
+   - **Restore A/B** (the ADR-035 proof on identical input): restore the pre-A4 dump (README "Restore"), set both flags
+     ON (a persisted `feature_flags::set()` at customer 0 / tenant 0), purge caches, re-bless the manifest
+     (`a4_rehearsal.php --write-manifest`), maintenance mode on, take a new dump (the 2026-11-13 09:07 dump is past the
+     48 h backup gate since 2026-11-15 09:07), run the unchanged `a4_rehearsal.php --execute` on the same ids, then
+     `a4_verify.php`. Pass: approved ids identical to the A4 reports for every component except
+     `local_sentientia_privacy`, and the residue drop equals the `truncated` + `course_completions` buckets.
+   - **Sweep** on the current state, flags staying OFF: new dump, maintenance mode on, `a4_sweep.php --write-manifest`
+     dry run, `--execute` on a canary (requests 230, 231, 250, 428, 463), then `--all`. Pass: 0 failures, 0 trips, leftover
+     0, deletes per source match the dry-run projection.
+3. **Maintenance mode** on the local site for the execute (and off afterwards), and a restore rehearsal of the new dump.
+4. **The 229 subjects with no user row** stay out of both (the stock task cannot process them; 2 of them have 16
+   missed `tool_log` contexts).
+
+### Review fixes (2026-11-17, after a read-only review)
+
+- `a4_sweep.php`: `a4s_plan_vs_discovery()` compares the iterated split as well as the full lists (skipped when the
+  truncation part is off), and under `--execute` any mismatch is a tripwire before the stock delete. The sweep no
+  longer runs the manager's shared cleanup on the privacy list itself: `apply_delete(..., 'cli')` now does it (a
+  failure there comes back as phase `delete_shared` for `local_sentientia_privacy`).
+- `local_sentientia_privacy` changed in files the manifests hash (`erasure_completeness.php`, the provider, the
+  event), so re-bless both manifests with a dry run before any execute, as before.
+- Re-run after the fixes, 04:42-04:53 IST (`D:/Claude Local/kit-scratch/1113/erasure-build/1117fix/`):
+  `a4_supplement_plan.php` exit 0 with counts identical to the 01:47 run (16,844 rows in scope: stock now 704,
+  supplement 16,140, **uncovered 0**; 0 plan failures; plan median 0.43 s, max 12.8 s per subject; write proof
+  unchanged, `tx_read_only` 1). `a4_sweep.php` dry run exit 0: 286 subjects, 216 stock + supplement, 70 stock only,
+  0 failures, 0 events, **plan vs stock discovery (full lists and iterated split): 0 subjects differ**; projection
+  identical (stock 726, supplement 16,493, vanished 5,727, uncovered 0); request statuses unchanged; manifest
+  "differs" in 3 files (the fixed provider, class and event), as expected: re-bless before any execute.
 
 ## What one request goes through
 

@@ -139,6 +139,51 @@ then the next.
 
 ---
 
+## BLOCKING — Erasure gate: before any DPO approves a DELETE request on production  (ADR-035)
+
+Stock Moodle (5.1 and 5.3) reports a data-deletion request as **Deleted** while data stays behind:
+the approval stops at the first duplicate context (core bug), and course completions without touched
+criteria are never found (core gap). The A4 rehearsal on the local copy left 15,129 log and stats rows,
+1,718 course completions and 1 activity-completion + 1 activity-view row of 286 subjects after
+"Deleted" (`docs/cutover/A4-ERASURE-REHEARSAL-RESULTS-2026-11-13.md`). The fix is a supplementary
+provider in `local_sentientia_privacy` (2026111300), deployed with Gate A behind two flags, both OFF:
+`sentientia.privacy.erasure_completeness.enabled` (truncation) and `sentientia.privacy.completion_gap.enabled`
+(course completions). The flags are read site-wide only; tenant or customer overrides have no effect.
+
+**No DPO approves a DELETE request on production until all three hold:**
+1. **The DPO retention decision is recorded** (ADR-035 "Retention"): either (a) the data registry is
+   configured (system purpose + category; protected purposes for compliance-training courses), or (b) a
+   DPO-signed acceptance that auth logs, audit-trail rows and learning records of erased subjects are
+   deleted, with the privacy notice updated. Legal confirms the log-retention duties (CERT-In 2022,
+   180 days; DPDP Rules 2025) first.
+2. **Both flags are ON site-wide** (Nitin's call), set as the web server user:
+   ```
+   php set_flag.php --config=<dirroot>/config.php --flag=sentientia.privacy.erasure_completeness.enabled --value=on --reason="<who, date, ADR-035>"
+   php set_flag.php --config=<dirroot>/config.php --flag=sentientia.privacy.completion_gap.enabled --value=on --reason="<who, date, ADR-035>"
+   ```
+   (`tools/uat/set_flag.php`, copied to the server; it sets the site-wide value and prints it before and after.)
+3. **The post-erasure residue check is green on UAT:** after one DELETE request for a UAT test account
+   with data in several courses and activities, no row of the subject remains in a context the approval
+   approved for deletion: no `logstore_standard_log` row with the subject as `userid`, and no
+   `course_completions`, `course_modules_completion`, `course_modules_viewed` or `stats_user_*` row.
+   This is the `failure` bucket of `tools/privacy-erasure-rehearsal/a4_verify.php`. Under retention
+   option (a) the contexts the data registry keeps (the system and category contexts, so system-level
+   login logs; protected, unexpired courses) are not approved for deletion and do not count; under
+   option (b) every existing context of the subject is approved. Rows where the subject is only
+   `relateduserid`/`realuserid` stay by core design and do not count.
+
+**Requests completed while the flags were OFF keep their residue.** Stock never reprocesses a request
+at status 10 (Deleted). Every such request needs the **residue sweep** (DPO decision + Nitin's call),
+including any BizLMS-era requests completed on live. The production backup on the local copy had none
+(all 515 were at status 2 before A4); check again on the Stage B copy.
+
+**Not built yet (2026-11-13; still so 2026-11-17):** the residue sweep CLI for UAT and live, and the UAT
+residue check. A local rehearsal driver exists since 2026-11-17 (`tools/privacy-erasure-rehearsal/a4_sweep.php`,
+local XAMPP only, dry runs only). The DPO decision is not taken. The flags are OFF everywhere.
+**Rollback:** the same commands with `--value=off` (seconds). The deletions already made are permanent.
+
+---
+
 ## Recommended order & dependencies
 
 1. **Gate A** (deploy) — prerequisite for everything; dormant.
@@ -146,6 +191,8 @@ then the next.
 3. **Gate C** (org) — independent of B; per-tenant, the highest learner-visible impact.
 4. **Gate D** (rename) — last; orthogonal to A–C but the heaviest. Can be deferred indefinitely
    (the platform runs fine on the `airpay_*` component names — the rename is cosmetic/product-naming).
+5. **Erasure gate** (ADR-035) — after Gate A, independent of B–D. **BLOCKING** for one thing: no DPO
+   approves a DELETE request on production until it is green.
 
 Each gate is independent and individually reversible. There is **no deadline pressure**: the
 branch is deploy-safe today, and you can flip gates weeks apart.
@@ -160,6 +207,7 @@ branch is deploy-safe today, and you can flip gates weeks apart.
 | B — registry | `cfg.php … tenant_registry_legacy --set=1` + purge | seconds |
 | C — org | `cfg.php … org_legacy --set=1` + purge | seconds |
 | D — rename | restore pre-batch DB snapshot + code | minutes |
+| Erasure (ADR-035) | `set_flag.php … --value=off` for both flags (deletions already made stay made) | seconds |
 
 ---
 

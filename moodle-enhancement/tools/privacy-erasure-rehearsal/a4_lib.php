@@ -1064,7 +1064,8 @@ function a4_message_tail(\stdClass $request, \stdClass $foruser, bool $deleteuse
  *   providers run, and these large tables are written by that provider alone). The run-level baseline (a4_verify)
  *   covers every spec over the whole table.
  * 'total' => 'logctx': the per-request total of logstore_standard_log counts the contexts approved for tool_log (its
- *   only delete is "userid = :userid AND contextid IN (approved)", moodle_database_export_and_delete.php:113-120).
+ *   only delete is "userid = :userid AND contextid IN (approved)", moodle_database_export_and_delete.php:113-120), and
+ *   since 2026-11-17 also those approved for local_sentientia_privacy (the supplementary erasure, a4_blast_scope()).
  * 'total' => 'quizscope': the per-request total of a question table counts the usages of every attempt in the quizzes
  *   the subject attempted (quiz_delete_user_attempts deletes per quiz and user, mod/quiz/lib.php:351-362).
  * 'subjsql': a full COUNT query for the subject rows (an indexed UNION where an OR would scan the table).
@@ -1171,7 +1172,8 @@ function a4_blast_specs(): array {
 
 /**
  * Counts for the blast specs. $userids: the subject (per request) or a set (run baseline).
- * $scope (per request): ['components' => approved component names, 'logctx' => approved tool_log context ids,
+ * $scope (per request): ['components' => approved component names, 'logctx' => approved tool_log (and
+ * local_sentientia_privacy) context ids,
  * 'quizids' => quizzes the subject attempted, taken before the deletion]. null = every spec over the whole table.
  * Returns [key => counts].
  */
@@ -1213,7 +1215,7 @@ function a4_blast_counts(array $userids, ?array $scope = null): array {
             if ($scope !== null && ($sp['total'] ?? '') === 'logctx') {
                 $ctx = array_map('intval', $scope['logctx'] ?? []) ?: [0];
                 $totalsql .= ' WHERE x.contextid IN (' . implode(',', $ctx) . ')';
-                $scopename = 'approved tool_log contexts';
+                $scopename = 'approved tool_log + local_sentientia_privacy contexts';
             } else if ($scope !== null && ($sp['total'] ?? '') === 'quizscope') {
                 $q = array_map('intval', $scope['quizids'] ?? []) ?: [0];
                 $totalsql = str_replace('{Q}', implode(',', $q), $sp['quiztotal']);
@@ -1246,13 +1248,26 @@ function a4_blast_counts(array $userids, ?array $scope = null): array {
     return $out;
 }
 
-/** Per-request blast scope: approved components, approved tool_log contexts, the subject's quizzes (before deletion). */
-function a4_blast_scope(int $userid, array $approvedids): array {
+/**
+ * Per-request blast scope: approved components, approved log contexts, the subject's quizzes (before deletion).
+ *
+ * Since 2026-11-17 (ADR-035 harness fix) the log contexts are the UNION of the tool_log and the
+ * local_sentientia_privacy approved ids: the supplementary erasure deletes the subject's log rows in contexts the
+ * stock approval dropped, and those are in the privacy list, not the tool_log list. Without the union the subject's
+ * table-wide drop exceeds the scoped total's drop and trips "removed X row(s) but only Y belonged to the subject".
+ * $extracomponents: components the supplementary erasure dispatches to (a4_sweep.php: the plan's hit components), so
+ * their 'only' blast specs run too.
+ */
+function a4_blast_scope(int $userid, array $approvedids, array $extracomponents = []): array {
     global $DB;
+    $components = array_values(array_unique(array_merge(array_map('strval', array_keys($approvedids)),
+        array_map('strval', $extracomponents))));
+    $logctx = array_values(array_unique(array_map('intval', array_merge($approvedids['tool_log'] ?? [],
+        $approvedids['local_sentientia_privacy'] ?? []))));
     return [
-        'components' => array_keys($approvedids),
-        'logctx' => $approvedids['tool_log'] ?? [],
-        'quizids' => isset($approvedids['mod_quiz']) ? array_map('intval', $DB->get_fieldset_sql(
+        'components' => $components,
+        'logctx' => $logctx,
+        'quizids' => in_array('mod_quiz', $components, true) ? array_map('intval', $DB->get_fieldset_sql(
             'SELECT DISTINCT quiz FROM {quiz_attempts} WHERE userid = :u', ['u' => $userid])) : [],
     ];
 }
@@ -1382,6 +1397,15 @@ function a4_must_be_empty_specs(): array {
         . 'ctx = the course context of courseid. Discovery :94-117 runs add_from_sql three times: duplicate ids, so the '
         . 'approval is truncated (contextlist_base.php:66 + :170)';
     $stats = ['subj' => 'x.userid', 'ctx' => 'c.id', 'join' => $coursecx('x.courseid'), 'ref' => $statsref];
+    $modshared = ['subj' => 'x.userid', 'ctx' => 'c.id', 'comp' => "CONCAT('mod_', m.name)",
+        'join' => 'LEFT JOIN {course_modules} cm ON cm.id = x.coursemoduleid LEFT JOIN {modules} m ON m.id = cm.module '
+            . 'LEFT JOIN {context} c ON c.contextlevel = ' . CONTEXT_MODULE . ' AND c.instanceid = cm.id',
+        'ref' => 'privacy/classes/manager.php:237-248 + privacy/classes/local/request/helper.php:54-61,167-187: discovery '
+            . 'adds every module context with a cmc row of the subject to mod_<modname>\'s list (cmv rows are not '
+            . 'discovered). manager.php:418-419 -> helper::delete_data_for_user() (:116-121, :297-306): for each approved '
+            . 'MODULE context of mod_<modname> (foreach) delete_completion(user, null, cmid) (completion/classes/privacy/'
+            . 'provider.php:236-241: cmc and cmv WHERE coursemoduleid AND userid). ctx = the module context of the cm; '
+            . 'component = mod_<modname> per row'];
     return [
         ['tool_certificate_issues', 'userid IN ({U})', 'tool_certificate',
             ['subj' => 'x.userid', 'ctx' => 'cs.id', 'join' => $syscx, 'ref' => $certref]],
@@ -1433,6 +1457,14 @@ function a4_must_be_empty_specs(): array {
                 . 'modules that are completion criteria of the approved course (ccc.course = course AND cmc.coursemoduleid '
                 . '= ccc.moduleinstance). Rows of modules that are no criterion are never targeted by core_course and are '
                 . 'not counted. ctx = the course context of the criterion\'s course']],
+        // Added 2026-11-17 (ADR-035 harness fix): activity completion and views in MODULE contexts. The privacy manager
+        // adds every module context holding a cmc row of the subject to that module's list (shared add, the mod_quiz /
+        // mod_scorm hole source) and, after the module's own delete, clears cmc AND cmv for each approved module
+        // context. These rows were never measured before (A4: 1 cmc + 1 cmv left in the truncated mod_quiz context
+        // 4138). Bucketed per row against mod_<modname>. cmc rows of criterion modules stay in the core_course spec above.
+        ['course_modules_completion', 'userid IN ({U}) AND coursemoduleid NOT IN (SELECT ccn.moduleinstance FROM '
+            . '{course_completion_criteria} ccn WHERE ccn.moduleinstance IS NOT NULL)', 'mod_*', $modshared],
+        ['course_modules_viewed', 'userid IN ({U})', 'mod_*', $modshared],
         // ctx = the row's raw contextid (2026-11-13 review): the delete is "contextid IN get_contextids()", so a
         // context removed after the run must not move a leftover row out of failure; c.id IS NULL is ctx_missing.
         ['logstore_standard_log', 'userid IN ({U})', 'tool_log',
@@ -1540,11 +1572,17 @@ function a4_subject_lists_from_report(array $r): array {
         }
         return $o;
     };
+    // supp_active (2026-11-17): the line ran WITH the ADR-035 supplementary erasure, i.e. it recorded the plan the
+    // provider kept from discovery (a4_rehearsal.php 'supplement_plan', a4_sweep.php 'plan'). Without it, the
+    // local_sentientia_privacy approved list is the provider's own system context only (flags OFF, as in every A4
+    // line of 2026-11-13) and must not count as a hand-off of other components' contexts (a4_residue_bucket()).
+    $suppactive = !empty($r['supplement_plan']) || (($r['event'] ?? '') === 'subject' && isset($r['plan']));
     if (!isset($r['discovery_full_ids'])) {
-        return ['pre_guard' => true, 'appr_iter' => $ints($r['approved_ids'] ?? [])];
+        return ['pre_guard' => true, 'supp_active' => $suppactive, 'appr_iter' => $ints($r['approved_ids'] ?? [])];
     }
     return [
         'pre_guard' => false,
+        'supp_active' => $suppactive,
         'disc_full' => $ints($r['discovery_full_ids']),
         'disc_iter' => $ints($r['discovery_iterated_ids'] ?? []),
         'appr_full' => $ints($r['approved_full_ids'] ?? ($r['approved_ids'] ?? [])),
@@ -1559,10 +1597,49 @@ function a4_subject_lists_from_report(array $r): array {
  * failure is checked FIRST and against the approved list ITERATED or FULL (2026-11-13 review): five of the seven
  * context-scoped components delete over the whole list (get_contextids()/get_contexts()), so a context in the full
  * approved list that the iterator never reached is still a context the delete was asked to clear.
+ *
+ * Supplementary erasure (ADR-035, 2026-11-17): local_sentientia_privacy 1.1.0 lists the contexts the stock approval
+ * drops in ITS OWN contextlist and, at delete time, hands each one back to the component that owns it
+ * (\local_sentientia_privacy\local\erasure_completeness::apply_delete()). A row is therefore ALSO a failure when its
+ * context is in appr['local_sentientia_privacy'] (iterated or full: that list is dense, so they are equal), the line ran
+ * WITH the supplement ($l['supp_active']: it recorded the provider's plan; flags-OFF lines, e.g. all of A4 2026-11-13,
+ * have only the provider's own system context in that list and are not judged by this rule), and
+ *   - the context is in the component's own FULL discovery list (a missed context the supplement was asked to clear),
+ *     or
+ *   - $spec is course_completions (the completion gap: course contexts with course_completions rows that core_course
+ *     never discovers; the supplement erases them through core_course's delete, whatever core_course discovered).
+ * This assumes both supplementary parts ran (both flags ON, or a4_sweep.php, which always applies both). With only
+ * the truncation flag ON, a course_completions row in a privacy-approved course context is not erased by design and
+ * lands in failure here: read such a failure against the flags of that run.
+ *
+ * @param array $l Subject lists (a4_subject_lists_from_report()).
+ * @param string $c Component the row belongs to (the spec's, or the per-row component of a 'comp' spec).
+ * @param int|null $ctx Context id the delete keys on (null: the context is gone).
+ * @param bool $ctxgone The context row no longer exists.
+ * The module-context course_modules_completion / course_modules_viewed specs (component mod_<name>) are a failure when
+ * the context is in ANY approved list: the privacy manager runs the shared cleanup on every approved list.
+ *
+ * @param string $spec The spec's table name (course_completions enables the completion-gap rule).
  */
-function a4_residue_bucket(array $l, string $c, ?int $ctx, bool $ctxgone = false): string {
-    $in = fn(string $k) => $ctx !== null && in_array($ctx, $l[$k][$c] ?? [], true);
+function a4_residue_bucket(array $l, string $c, ?int $ctx, bool $ctxgone = false, string $spec = ''): string {
+    $in = fn(string $k, ?string $comp = null) => $ctx !== null && in_array($ctx, $l[$k][$comp ?? $c] ?? [], true);
     if ($in('appr_iter') || $in('appr_full')) {
+        return 'failure';
+    }
+    if (a4_is_module_shared_spec($spec, $c) && $ctx !== null) {
+        // The manager clears cmc/cmv of every MODULE context in EVERY approved list, whatever its component
+        // (manager.php:418-419 -> helper::delete_data_for_user()), local_sentientia_privacy's list included.
+        foreach (['appr_iter', 'appr_full'] as $k) {
+            foreach ($l[$k] ?? [] as $lc => $ids) {
+                if (in_array($ctx, (array)$ids, true)) {
+                    return 'failure';
+                }
+            }
+        }
+    }
+    $supp = 'local_sentientia_privacy';
+    if (!empty($l['supp_active']) && ($in('appr_iter', $supp) || $in('appr_full', $supp))
+            && ($in('disc_full') || $spec === 'course_completions')) {
         return 'failure';
     }
     if (!empty($l['pre_guard'])) {
@@ -1578,6 +1655,167 @@ function a4_residue_bucket(array $l, string $c, ?int $ctx, bool $ctxgone = false
 }
 
 /**
+ * Coverage of one leftover row by a deletion pass (2026-11-17, a4_supplement_plan.php and the a4_sweep.php dry run).
+ * $stock: component => context ids the STOCK path deletes (a fresh plan's iterated list, or the stock approved list).
+ * $supp: component => context ids the SUPPLEMENTARY erasure deletes (the plan's missed list, or its hit set).
+ * $gap: course context ids of the completion gap (or its hit set); they are erased through core_course's delete, so
+ * every core_course spec (course_completions, criterion course_modules_completion) counts them.
+ * $anylist (the module-context cmc/cmv specs, a4_is_module_shared_spec()): the context counts when it is in ANY list of
+ * $stock / $supp, because the privacy manager runs the shared cleanup on every approved list (manager.php:418-419),
+ * including local_sentientia_privacy's (pass it in $supp: the plan's missed ids, or the supplementary approved ids).
+ * Returns 'vanished' (the context no longer exists: no discovery joins it, out of scope), 'stock', 'supplement' or
+ * 'uncovered'. Stock wins when both would delete (the stock delete runs first).
+ */
+function a4_cover_class(array $stock, array $supp, array $gap, string $component, ?int $ctx, bool $ctxgone,
+        bool $anylist = false): string {
+    if ($ctx === null || $ctxgone) {
+        return 'vanished';
+    }
+    $inany = function(array $lists) use ($ctx): bool {
+        foreach ($lists as $ids) {
+            if (in_array($ctx, (array)$ids, true)) {
+                return true;
+            }
+        }
+        return false;
+    };
+    if (isset($stock[$component]) && in_array($ctx, $stock[$component], true)) {
+        return 'stock';
+    }
+    if ($anylist && $inany($stock)) {
+        return 'stock';
+    }
+    if (isset($supp[$component]) && in_array($ctx, $supp[$component], true)) {
+        return 'supplement';
+    }
+    if ($anylist && $inany($supp)) {
+        return 'supplement';
+    }
+    if ($component === 'core_course' && in_array($ctx, $gap, true)) {
+        return 'supplement';
+    }
+    return 'uncovered';
+}
+
+/**
+ * Read a4_rehearsal.php execute reports the way a4_verify.php does (2026-11-17, for a4_supplement_plan.php): processed
+ * subjects (outcome deleted / deleted_with_provider_failures) with their lists, the earliest execute start line's
+ * cert_issue_ids, and the cert_issue_owners union over every execute start line (earliest first).
+ * Returns ['files', 'starts', 'processed' => uid => requestid, 'lists' => uid => a4_subject_lists_from_report(),
+ * 'outcomes', 'issueids', 'issueowners'].
+ */
+function a4_read_execute_reports(array $paths): array {
+    $out = ['files' => [], 'starts' => [], 'processed' => [], 'lists' => [], 'outcomes' => [], 'issueids' => [],
+        'issueowners' => []];
+    $start = null;
+    foreach ($paths as $p) {
+        $p = trim((string)$p);
+        if ($p === '') {
+            continue;
+        }
+        if (!is_readable($p)) {
+            a4_abort("report not readable: $p", 1);
+        }
+        $out['files'][] = $p;
+        foreach (file($p, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+            $r = json_decode($line, true);
+            if (!is_array($r) || empty($r['event']) || ($r['mode'] ?? '') !== 'execute') {
+                continue;
+            }
+            if ($r['event'] === 'start') {
+                $out['starts'][] = $r;
+                if ($start === null || strcmp((string)$r['ts'], (string)$start['ts']) < 0) {
+                    $start = $r;
+                }
+            } else if ($r['event'] === 'request') {
+                $o = (string)($r['outcome'] ?? '');
+                $out['outcomes'][$o] = ($out['outcomes'][$o] ?? 0) + 1;
+                if (in_array($o, ['deleted', 'deleted_with_provider_failures'], true) && !empty($r['subjectid'])) {
+                    $out['processed'][(int)$r['subjectid']] = (int)$r['requestid'];
+                    $out['lists'][(int)$r['subjectid']] = a4_subject_lists_from_report($r);
+                }
+            }
+        }
+    }
+    usort($out['starts'], fn($a, $b) => strcmp((string)($a['ts'] ?? ''), (string)($b['ts'] ?? '')));
+    $out['issueids'] = array_map('intval', $start['cert_issue_ids'] ?? []);
+    foreach ($out['starts'] as $s) {
+        foreach ($s['cert_issue_owners'] ?? [] as $iid => $owner) {
+            if (!isset($out['issueowners'][(int)$iid])) {
+                $out['issueowners'][(int)$iid] = (int)$owner;
+            }
+        }
+    }
+    $out['start_lines'] = count($out['starts']);
+    unset($out['starts']);   // Large (snapshots, baselines); callers need the counts only.
+    return $out;
+}
+
+/**
+ * The supplementary plan local_sentientia_privacy's provider kept from the discovery that just ran for $userid (ids
+ * only), or null when it kept none (both ADR-035 flags OFF, or the plugin older than 1.1.0; a flag ON with nothing to
+ * supplement still records an empty plan). Read it right after \core_privacy\manager::get_contexts_for_userid(): the
+ * provider's delete consumes it (2026-11-17, a4_rehearsal.php 'supplement_plan').
+ */
+function a4_supplement_plan_record(int $userid): ?array {
+    $cls = '\\local_sentientia_privacy\\local\\erasure_plan_store';
+    if (!class_exists($cls)) {
+        return null;
+    }
+    try {
+        $plan = \core\di::get($cls)->plans[$userid] ?? null;
+    } catch (\Throwable $e) {
+        return null;
+    }
+    if (!$plan) {
+        return null;
+    }
+    return ['truncation' => (bool)$plan->truncation, 'completion' => (bool)$plan->completion,
+        'missed' => $plan->missed_by_component(), 'completion_gap' => array_values($plan->completiongap),
+        'failures' => $plan->failures];
+}
+
+/** The one event the ADR-035 supplementary erasure fires per erasure (local_sentientia_privacy 1.1.0). */
+const A4_SUPPLEMENT_EVENT = '\\local_sentientia_privacy\\event\\erasure_supplemented';
+
+/**
+ * Recorded events that are a trip. With $allowsupplement (an ADR-035 flag ON, or a4_sweep.php after apply_delete()),
+ * at most one erasure_supplemented per request is expected and dropped; any other event, or a second one, trips.
+ *
+ * @param array $events a4_event_recorder entries ['eventname', 'contextid', 'crud'].
+ * @param bool $allowsupplement
+ * @return string[] Event names that trip.
+ */
+function a4_unexpected_events(array $events, bool $allowsupplement): array {
+    $names = array_column($events, 'eventname');
+    if ($allowsupplement) {
+        $i = array_search(A4_SUPPLEMENT_EVENT, $names, true);
+        if ($i !== false) {
+            unset($names[$i]);
+        }
+    }
+    return array_values($names);
+}
+
+/** True for the module-context course_modules_completion / course_modules_viewed specs (per-row mod_<name>). */
+function a4_is_module_shared_spec(string $table, string $component): bool {
+    return in_array($table, ['course_modules_completion', 'course_modules_viewed'], true)
+        && strpos($component, 'mod_') === 0;
+}
+
+/** Min, median, max, mean and total of a list of seconds (rounded to ms). */
+function a4_timing_stats(array $secs): array {
+    if (!$secs) {
+        return ['n' => 0];
+    }
+    sort($secs);
+    $n = count($secs);
+    $median = ($n % 2) ? $secs[intdiv($n, 2)] : ($secs[$n / 2 - 1] + $secs[$n / 2]) / 2;
+    return ['n' => $n, 'min' => round($secs[0], 3), 'median' => round($median, 3), 'max' => round($secs[$n - 1], 3),
+        'mean' => round(array_sum($secs) / $n, 3), 'total' => round(array_sum($secs), 1)];
+}
+
+/**
  * Bucketed must-be-empty checks (the specs with a 'bucket' entry), over every processed subject.
  * $lists: subjectid => a4_subject_lists_from_report(). $issueowners: tool_certificate issue id => owner, the union of
  * cert_issue_owners over every execute start line read (a4_verify; empty for start lines older than 2026-11-13).
@@ -1585,8 +1823,13 @@ function a4_residue_bucket(array $l, string $c, ?int $ctx, bool $ctxgone = false
  * rows whose context no longer exists), 'ctx_missing_by_bucket', 'failure_subject_unresolved', 'subject_not_processed',
  * 'by_subject' => [subjectid => [bucket => rows]], 'failure_rows' => sample of [subject, ctx, rows, ctx_gone?], 'ref',
  * 'secs'] | skipped | error | missing_table].
+ * A spec whose bucket entry has 'comp' (an SQL expression, 2026-11-17: the module-context course_modules_completion /
+ * course_modules_viewed specs) is bucketed against the PER-ROW component that expression returns (mod_<name>); the
+ * spec's own component ('mod_*') is the fallback when it returns NULL (course module gone).
+ * $onrow (2026-11-17, a4_supplement_plan.php and a4_sweep.php): called once per grouped row of a processed subject with
+ * (string $key, string $table, string $component, int $subject, ?int $ctx, bool $ctxgone, string $bucket, int $rows).
  */
-function a4_must_be_empty_buckets(array $lists, array $issueids, array $issueowners = []): array {
+function a4_must_be_empty_buckets(array $lists, array $issueids, array $issueowners = [], ?callable $onrow = null): array {
     global $DB;
     $tables = $DB->get_tables(false);
     $subjects = array_map('intval', array_keys($lists));
@@ -1611,11 +1854,15 @@ function a4_must_be_empty_buckets(array $lists, array $issueids, array $issueown
         if (!empty($b['issue'])) {
             $group[] = $b['issue'];
         }
+        if (!empty($b['comp'])) {
+            $group[] = $b['comp'];
+        }
         // 'gone' (raw-contextid specs): an aggregate, so it is valid under ONLY_FULL_GROUP_BY on MySQL and MariaDB;
         // every row of a group has the same contextid, so MAX() is that context's flag.
         $gone = !empty($b['gone']) ? 'MAX(CASE WHEN ' . $b['gone'] . ' THEN 1 ELSE 0 END)' : '0';
         $sql = 'SELECT ' . $b['subj'] . ' AS subj, ' . $b['ctx'] . ' AS ctx, '
-            . (!empty($b['issue']) ? $b['issue'] : '0') . ' AS issue, ' . $gone . ' AS ctxgone, COUNT(1) AS n
+            . (!empty($b['issue']) ? $b['issue'] : '0') . ' AS issue, '
+            . (!empty($b['comp']) ? $b['comp'] : 'NULL') . ' AS comp, ' . $gone . ' AS ctxgone, COUNT(1) AS n
                   FROM (SELECT * FROM {' . $t . '} WHERE ' . a4_mbe_sql($where, $subjects, $issueids) . ') x
                   ' . $b['join'] . '
               GROUP BY ' . implode(', ', $group);
@@ -1642,7 +1889,11 @@ function a4_must_be_empty_buckets(array $lists, array $issueids, array $issueown
                     $res['subject_not_processed'] += $n;
                     continue;
                 } else {
-                    $bucket = a4_residue_bucket($lists[$uid], $c, $ctx, $ctxgone);
+                    $rowc = ($r->comp === null || $r->comp === '') ? $c : (string)$r->comp;
+                    $bucket = a4_residue_bucket($lists[$uid], $rowc, $ctx, $ctxgone, $t);
+                    if ($onrow !== null) {
+                        $onrow($key, $t, $rowc, $uid, $ctx, $ctxgone, $bucket, $n);
+                    }
                 }
                 $res['buckets'][$bucket] += $n;
                 $res['by_subject'][$uid][$bucket] = ($res['by_subject'][$uid][$bucket] ?? 0) + $n;
@@ -1682,6 +1933,13 @@ const A4_RESIDUE_BY_DESIGN = [
         . 'with userid/approver/decider (:41-44)'],
     'tool_log' => ['*' => 'discovery includes relateduserid/realuserid rows (logstore_standard provider.php:76-88), '
         . 'which the delete keeps by design (moodle_database_export_and_delete.php:113-120)'],
+    // 2026-11-17 (ADR-035): with an erasure-completeness flag ON, this provider re-lists every context another
+    // component still reports but the stock approval drops, e.g. tool_log contexts kept for relateduserid/realuserid
+    // rows (by design, above). Its own rows (DSR records, consent) are kept by design in the system context. The
+    // underlying component's entry and the bucketed must-be-empty checks judge what is really left.
+    'local_sentientia_privacy' => ['*' => 'own DSR/consent rows kept by design (system context); with an ADR-035 flag ON '
+        . 'the list also re-reports contexts other components still report (supplementary discovery, '
+        . 'classes/local/erasure_completeness.php plan())'],
 ];
 
 /**
@@ -1692,6 +1950,9 @@ const A4_RESIDUE_BY_DESIGN = [
 function a4_discovery_exact(string $component): bool {
     if ($component === 'local_sentientia_request') {
         return false;   // Keeps redacted rows by design.
+    }
+    if ($component === 'local_sentientia_privacy') {
+        return false;   // Cross-component supplementary discovery since 1.1.0 (ADR-035): not its own data.
     }
     return $component === 'tool_certificate' || strpos($component, 'local_sentientia_') === 0;
 }
@@ -1921,6 +2182,16 @@ function a4_manifest_paths(): array {
         // classes/user_type_tables.php until 2026-11-13, which hashed nothing ("missing" matched "missing").
         'local/sentientia_platform/classes/schema/user_type_tables.php', 'local/sentientia_authoring/classes/scd/repository.php',
         'local/sentientia_privacy/classes/privacy_manager.php', 'local/sentientia_privacy/index.php',
+        // ADR-035 (2026-11-17): the supplementary erasure deletes through these, so the manifest must hash them. The
+        // provider is also hashed by the component loop above; it is listed here so that a rename cannot drop it.
+        'local/sentientia_privacy/classes/privacy/provider.php',
+        'local/sentientia_privacy/classes/local/erasure_completeness.php',
+        'local/sentientia_privacy/classes/local/erasure_plan.php',
+        'local/sentientia_privacy/classes/local/erasure_plan_store.php',
+        'local/sentientia_privacy/classes/local/forced_contextlist.php',
+        'local/sentientia_privacy/classes/event/erasure_supplemented.php',
+        'local/sentientia_privacy/db/feature_flags.php', 'local/sentientia_platform/classes/feature_flags.php',
+        'completion/classes/privacy/provider.php',
     ];
     foreach ($helpers as $h) {
         // A wrong helper path would hash to null on both sides and always "match"; refuse it instead.

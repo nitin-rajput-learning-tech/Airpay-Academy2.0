@@ -39,3 +39,9 @@ $string['erasurecompleted']   = 'The account was anonymised and all of this user
 $string['erasurepartial']     = 'The account was anonymised, but some data could not be erased. The request is marked Incomplete; its note lists what remains.';
 $string['requestnotpending']  = 'This request has already been processed.';
 $string['erasurenotapplicable'] = 'This is not an account-deletion request, or its user no longer exists. Nothing was changed.';
+
+// Erasure completeness (1.1.0, 2026-11-13): supplementary erasure provider.
+$string['privacy:metadata:erasurecompleteness'] = 'When the erasure-completeness feature flags are on, this plugin\'s context list also carries contexts whose data belongs to other components: the contexts Moodle core\'s data-request approval drops (a core defect), and course contexts with course completion records core never discovers. They pass the same approval and data registry checks as any other context, and are erased or exported through the component that owns them. This plugin stores nothing about them.';
+$string['eventerasuresupplemented'] = 'Supplementary erasure completed';
+$string['erasuresupplementfailed_delete'] = 'The supplementary erasure (ADR-035) could not erase data of: {$a}, in contexts the stock approval had dropped or in course completion records core never finds. The other components were processed and the erasure still completed (a data request is still marked Deleted; an expired user is still deleted), so it cannot be run again: record the data subject for the ADR-035 residue sweep.';
+$string['erasuresupplementfailed_export'] = 'The supplementary export (ADR-035) could not export data of: {$a}, from contexts the stock approval had dropped or from course completion records core never finds. The export file is missing that data. Create a new export request once the cause is fixed.';

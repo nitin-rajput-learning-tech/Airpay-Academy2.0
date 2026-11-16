@@ -133,6 +133,34 @@ added to the defined scope. The scheduled resume task stays disabled (IT securit
   - Embargo: these version bumps (skillsai, authoring, notifications, compliance_report) must NOT reach
     `C:/xampp` before the A4 re-run, whose restore step expects exactly three upgraded components. Afterwards:
     deploy, PHPUnit re-init, run the four new test files.
+- **CI green for the first time in weeks (11-17 05:07, run #742 on `e2983e3f6`).** After the `phpunit-52` fix
+  landed, five follow-ups were each found from the live run and pushed: `603b9efa4` (failures published as
+  annotations, which need no GitHub sign-in), `861961b2d` (generate the `en_AU.UTF-8` locale Moodle's PHPUnit
+  requires; `init.php` had exited 135), `494754284` (analytics 2026111700: count 0 certificates when the third-party
+  `tool_certificate` is absent; 4 errors), `adff0eedc` (annotation carries PHPUnit's verdict, not 4 KB of
+  debugging), `e2983e3f6` (a PWA VAPID tamper test that failed 1 run in 4: it flipped a base64 padding bit; the code
+  was right). The BLOCKING tenant_isolation group now runs 2,203 tests on Moodle 5.2 + MariaDB and passes. Every
+  job is green except Playwright (advisory; the open items above). Option A's `privacy_erasure` step lands with
+  Option A below.
+- **A4 re-run did NOT run tonight.** Option A was still in its fix phase at 04:11, so the restore could not start by
+  the 04:30 cutoff (Nitin's rule). It needs a new window. The 11-13 dump is also past the harness's 48 h gate.
+
+- **Option A privacy erasure (ADR-035; `local_sentientia_privacy` 2026111300 / 1.1.0): proved read-only, reviewed,
+  fixed; committed and pushed 11-17 ~05:20 (Nitin's 11-16 plan: commit only if review + fix are green); both
+  flags OFF (11-16/17 night).** Re-checked against the design and re-tested after a fresh
+  PHPUnit init (cmd.exe is disabled, so `init.php` cannot run: its `util.php --drop/--install/--buildconfig` steps
+  were run directly). Read-only proof on the local copy: of the 16,844 leftover A4 rows in scope, 704 go with a
+  plain stock re-run, 16,140 only through the supplement, **0 uncovered**; the replay driver `a4_sweep.php` agreed in
+  its dry runs; nothing written, nothing executed. A read-only review led to fixes (no version change): the DPO
+  failure message no longer asks for a re-run that cannot happen (separate delete/export strings), the audit event
+  no longer counts attempted contexts as erased, `apply_delete(..., 'cli')` runs the shared completion cleanup
+  itself, the completion gap is exported under `allowfiltering`, "complete" is qualified everywhere, 4 new tests,
+  and the sweep refuses a plan that splits a list differently from the stock discovery. `erasure_completeness_test`
+  OK (16 tests), the plugin's other tests OK, core `provider_test.php` unchanged (failures only in other plugins);
+  the dry runs re-ran with identical counts. Records: ADR-035 (Proof), the state card, A4 results section 4, the
+  cutover master's erasure gate (check 3 now counts only contexts the approval approved, so retention option (a)
+  can pass it). Open, Nitin's or the DPO's call: the retention decision, the flag flip, an execute option (needs a
+  new dump: the 11-13 one is past the 48 h gate), the residue-sweep CLI for UAT and live, the 5.3 runtime suites.
 
 **Machine note (11-16 evening):** after the restart, PowerShell and cmd.exe are disabled by the administrator, so the
 XAMPP watchdog cannot restart anything; MariaDB and Apache were started directly from Git Bash.
@@ -190,7 +218,7 @@ batch (content_market null-provider reason, paygw_airpay and block_learnerscript
 - The stock tool_dataprivacy path run inline, with every send channel shut in-process, maintenance mode on and cron off. Backup first: `D:/Claude Local/Moodle Backup/a4-pre-rehearsal-20261113-0907/moodle-mdl.sql`.
 - 286 requests Deleted (canary 9, then 277); 229 with no user row left awaiting approval (the stock task would fail on them and notify every admin). 0 events, 0 send attempts, no notification/message/e-mail row added, task queue unchanged.
 - `a4_verify`: 0 violations, 0 failed deletes, nobody else's rows touched (56 tables).
-- **Found:** (1) Moodle core bug: `contextlist_base::set_contextids()` = `array_unique()` without reindex, so approval stops at the first duplicate context; 3,308 contexts dropped in 220 requests (logs, stats, quiz, SCORM), 15,129 rows left after "Deleted". Upstream main is the same; no tracker issue; draft report `docs/cutover/DRAFT-MDL-REPORT-contextlist-truncation-2026-11-13.md`. (2) core_course never discovers course_completions without touched criteria: 1,713 rows left. (3) The user row and BizLMS profile columns (names, employee id, DOB, phone) are never cleared by the stock path.
+- **Found:** (1) Moodle core bug: `contextlist_base::set_contextids()` = `array_unique()` without reindex, so approval stops at the first duplicate context; 3,309 contexts dropped in 221 requests (logs, stats, quiz, SCORM; the first count, 3,308 in 220, left out request 504), 15,129 rows left after "Deleted". Upstream main is the same; no tracker issue; draft report `docs/cutover/DRAFT-MDL-REPORT-contextlist-truncation-2026-11-13.md`. (2) core_course never discovers course_completions without touched criteria: 1,718 rows left (1,713 plus 5 from the canary). (3) The user row and BizLMS profile columns (names, employee id, DOB, phone) are never cleared by the stock path.
 - Fix options for (1) and (2): a Sentientia supplementary privacy provider (no core edit; task raised), amending ADR-033 for a one-line core edit, or waiting for upstream. Nitin's call.
 - Checker lessons: an anonymise check must allow the subject's own rows to be deleted; a manifest helper path that does not exist must fail, not hash to "missing".
 
