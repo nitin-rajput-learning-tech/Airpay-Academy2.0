@@ -4,9 +4,9 @@
 **Gap:** P0.3 — GenAI Authoring Studio (Invince "Craft" competitor)
 **Source:** `moodle-enhancement/docs/competitive/GAP-ANALYSIS-INVINCE-LXP-2026-06-16.md` §6 P0.3
 **Branch:** `claude/gap-authoring`
-**Status:** `2026111200` / `0.3.0-alpha` (2026-11-12: ADR-034 Stage 1 slice 1, the canonical course document foundation, flag OFF, no UI; see the last section). Before that `2026092500` / `0.2.2-alpha` (2026-10-22: this header said 0.1.0-alpha "MVP scaffold" until now). A real course builder since 0.2.0-alpha (2026-08-05): mod_book chapters plus a GIFT mastery quiz, built into a hidden course behind the mandatory review gate; the author role is seeded on a fresh install (T-01, 2026-09-07); ADR-031 tenant scoping. Every flag defaults OFF (`enabled`, `tts`, `live_api`, `publish.enabled`); mock mode only (the AI gateway has never made a live call). On UAT (Moodle 5.3 since 2026-10-21), not on the live site. Not built: a scenario graph model, packaging to any standard (SCORM/cmi5), live TTS. See the dated sections below.
+**Status:** `2026111600` / `0.3.1-alpha` (2026-11-16: a fresh install gives the author role this plugin's own caps, plus a guarded back-fill step; see the last section). Before that `2026111200` / `0.3.0-alpha` (2026-11-12: ADR-034 Stage 1 slice 1, the canonical course document foundation, flag OFF, no UI). Before that `2026092500` / `0.2.2-alpha` (2026-10-22: this header said 0.1.0-alpha "MVP scaffold" until now). A real course builder since 0.2.0-alpha (2026-08-05): mod_book chapters plus a GIFT mastery quiz, built into a hidden course behind the mandatory review gate; the author role is seeded on a fresh install (T-01, 2026-09-07); ADR-031 tenant scoping. Every flag defaults OFF (`enabled`, `tts`, `live_api`, `publish.enabled`); mock mode only (the AI gateway has never made a live call). On UAT (Moodle 5.3 since 2026-10-21), not on the live site. Not built: a scenario graph model, packaging to any standard (SCORM/cmi5), live TTS. See the dated sections below.
 **Maturity:** MATURITY_ALPHA — requires prod sign-off before any flag flips.
-**Updated:** 2026-11-12 (ADR-034 slice 1 section added; 2026-10-22 header refresh)
+**Updated:** 2026-11-16 (fresh-install author caps section added; 2026-11-12 ADR-034 slice 1; 2026-10-22 header refresh)
 
 ---
 
@@ -310,3 +310,70 @@ Nitin accepted ADR-034 on 2026-11-12 (decision A1, all recommendations approved)
 - Still gated: speech (GPU) and any live AI call wait for the budget approval, with [CONFIRM] per paid call.
 
 Both trees, byte-identical.
+
+## 2026-11-16 - Fresh install gives the author role this plugin's own caps (0.3.1-alpha, 2026111600)
+
+**Defect (CI review).** Moodle runs a plugin's `db/install.php` BEFORE it registers the plugin's
+capabilities (`lib/upgradelib.php` `upgrade_plugins()`: install.php, then
+`upgrade_component_updated()` -> `update_capabilities()`). `author_role::ensure()` grants only
+registered capabilities, so since 2026090700 this plugin's install hook created the
+`sentientiaauthor` role WITHOUT `:generate` / `:review` / `:managetemplates`. On a one-run install
+(CI, PHPUnit sites, a new customer, the Stage B cutover) skillsai's install hook filled them in a few
+plugins later, and itself left skillsai's two caps off (see the skillsai card). A site without
+skillsai, or with skillsai installed before this plugin, kept the role without this plugin's caps.
+
+**Fix.**
+- `db/install.php`: `update_capabilities('local_sentientia_authoring')` (underscore form) before
+  `author_role::ensure()`. Moodle's own later `update_capabilities()` call finds nothing new, so
+  archetype defaults are applied once. Docblock corrected.
+- `db/upgradelib.php` gains `local_sentientia_authoring_backfill_author_caps()`, called by new upgrade
+  step 2026111600. Back-fill condition (tightened the same night, see the follow-up below): a role
+  with shortname `sentientiaauthor` exists AND all three caps are registered in `{capabilities}` AND
+  `{role_capabilities}` has no system-context row for that role and ANY of the three. Then all three
+  get CAP_ALLOW with `assign_capability(overwrite=false)`; otherwise nothing. Only this plugin's
+  three caps, only that role. It does not re-run `ensure()`. On a site installed in one run with
+  skillsai it finds nothing to do.
+- Why a back-fill here too: the gap is real for a customer without Skills AI, or one that licensed
+  Skills AI first. The step is guarded, so it is a no-op wherever the caps are already set.
+- Version 2026111200 -> 2026111600 (0.3.0 -> 0.3.1-alpha). No schema / flag / capability change.
+
+**Tests (written, not run: another job held the shared PHPUnit DB).** New
+`tests/install_caps_test.php` (attributes only: `CoversFunction` x2; no docblock PHPUnit tags):
+fresh-install order (caps deleted from `{capabilities}` and `{role_capabilities}`, then the hook)
+grants all three at CAP_ALLOW; back-fill grants only these three caps and only to the author role,
+idempotent; keeps a PROHIBIT and a PREVENT; no-op without the role. A standalone stub harness (no
+Moodle, no DB) replayed four install orders against the HEAD and new hooks: HEAD left these three
+off in the no-skillsai and skillsai-first orders; the new hooks left nothing off in any order.
+
+**Follow-up (review, same night; still 2026111600, no second bump).**
+- Back-fill tightened to the gap's signature. The gap always leaves ALL of a plugin's author caps
+  without a system-context row at once, so `local_sentientia_authoring_backfill_author_caps()` now
+  grants only when the role exists AND none of `:generate` / `:review` / `:managetemplates` has a
+  system-context `{role_capabilities}` row for it AND all three are registered. If even one has a
+  row (any permission), nothing is granted: that is an administrator's configuration, never the
+  gap. A cap an admin cleared to "Not set" while another stays set now stays cleared (before, it
+  was re-granted). Only an admin who cleared all three looks like the gap and gets them back.
+  Returns 3 or 0. Same change in skillsai (see its card).
+- Tests: the PROHIBIT/PREVENT case now expects nothing granted (the unset caps stay unset); new
+  "one cap cleared while the others have rows -> nothing granted" and "a cap not registered ->
+  nothing written" cases.
+- New `test_real_fresh_install_left_the_author_role_with_every_registered_cap`: no `ensure()`, no
+  back-fill, no `resetAfterTest()`. It reads the `sentientiaauthor` role as the phpu_ site's real
+  install of every plugin left it and asserts CAP_ALLOW at system context for every
+  `author_role::caps()` entry registered in `{capabilities}`. This is the end-to-end check on CI's
+  phpu_ site, but only in the ADVISORY full-suite step: a regression would not fail the build until
+  a blocking step runs this class (open). On a site initialised with the HEAD (pre-2026111600) hooks it fails naming
+  `local/sentientia_skillsai:extract` and `:review` (aiquiz caps registered first, authoring's
+  three filled in by skillsai's hook, skillsai's own two skipped). Attributes only. Written, not
+  run (shared PHPUnit DB busy).
+- `classes/author_role.php`: `caps()` / `ensure()` docblocks corrected (comment only). An owner
+  plugin's install hook fills its own caps in only because it calls `update_capabilities()` before
+  `ensure()`; the old text said it simply re-runs `ensure()`.
+
+**Still open.** `local_sentientia_aiquiz` has no install hook. Its two caps reach the author role
+only when `ensure()` runs after aiquiz is installed: in a one-run install that is this plugin's hook
+(aiquiz installs first, alphabetically) and skillsai's. If aiquiz is installed in a later run than
+this plugin (and skillsai), nothing re-runs `ensure()` and its caps never reach the role. Not fixed
+(no aiquiz hook added); now also noted in the `author_role::caps()` docblock.
+
+Both trees, byte-identical. NOT deployed; PHPUnit needs a re-init for the version bump.

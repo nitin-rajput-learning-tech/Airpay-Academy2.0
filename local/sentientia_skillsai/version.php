@@ -52,15 +52,25 @@ $plugin->component = 'local_sentientia_skillsai';
 // sentientia.ai.gateway.enabled default OFF = byte- and side-effect-
 // identical legacy path; mock passed down as callable; 'denied'→'failed').
 // 2026090700 — T-01 fresh-install parity (UAT persona walk 2026-09-07). New
-// db/install.php re-runs local_sentientia_authoring\author_role::ensure() so
-// this plugin's :extract/:review caps land on the Sentientia Author role on a
-// FRESH install (authoring installs alphabetically before skillsai and skips
-// these caps at its own install time). No-op on existing installs (authoring's
-// 2026090700 upgrade step already reconciles them). No schema/flag change.
-$plugin->version   = 2026092500;  // ADR-031: :manage_all no default (+ revoke step), cross-tenant only; no-tenant fails closed
+// db/install.php re-runs local_sentientia_authoring\author_role::ensure().
+// It was meant to put this plugin's :extract/:review caps on the Sentientia
+// Author role on a FRESH install. It did not: Moodle registers a plugin's caps
+// only after its install.php returns, so ensure() skipped them here too (it
+// did fill in authoring's own caps, which authoring's install had skipped for
+// the same reason). Corrected in 2026111600. No schema/flag change.
+// 2026092500 — ADR-031: :manage_all has no default and is revoked (see below).
+// 2026111600 — fresh-install fix. db/install.php calls
+// update_capabilities('local_sentientia_skillsai') before ensure(), so the
+// two caps are registered and granted. New upgrade step 2026111600
+// (db/upgradelib.php) back-fills sites fresh-installed with the gap: it grants
+// ONLY :extract/:review, ONLY to the 'sentientiaauthor' role, and ONLY when
+// that role has no system-context role_capabilities row for EITHER cap (the
+// gap's signature; one row means an administrator set it: nothing granted).
+// No schema/flag change.
+$plugin->version   = 2026111600;  // Fresh-install author caps + guarded back-fill step
 $plugin->requires  = 2022041900;        // Moodle 4.5+ (matches sibling plugins).
 $plugin->maturity  = MATURITY_ALPHA;    // MVP — needs prod sign-off before flag flips.
-$plugin->release   = '0.1.3-alpha';
+$plugin->release   = '0.1.4-alpha';
 $plugin->dependencies = [
     // Tenant helper + 5-level feature_flags resolver + per-customer config.
     // 2026092500: ADR-031 tenant::is_cross_tenant() / require_same_tenant_user().
@@ -80,3 +90,6 @@ $plugin->dependencies = [
 // 0.1.3-alpha  ADR-031: :manage_all has no archetype default and is revoked
 //              from every role; it unscopes only a cross-tenant caller. A
 //              viewer with no tenant gets no gap summary / feed / jobs of others.
+// 0.1.4-alpha  A fresh install now gives the Sentientia Author role :extract
+//              and :review (they were skipped since 2026090700); a guarded
+//              upgrade step back-fills sites installed with the gap.

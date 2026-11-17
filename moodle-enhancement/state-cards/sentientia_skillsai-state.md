@@ -2,7 +2,7 @@
 
 **Plugin:** Skills Intelligence (AI) — Gap P0.1 (highest-leverage competitive gap)
 **Source:** `moodle-enhancement/docs/competitive/GAP-ANALYSIS-INVINCE-LXP-2026-06-16.md` §6 P0.1
-**Version:** 2026061600 / 0.1.0-alpha (MATURITY_ALPHA)
+**Version:** 2026111600 / 0.1.4-alpha (MATURITY_ALPHA; 2026-11-16, see the last section. Built as 2026061600 / 0.1.0-alpha)
 **Branch:** `claude/gap-skillsai`
 **Status:** MVP complete. All feature flags DEFAULT OFF. No live API calls made during build (zero spend).
 
@@ -241,3 +241,55 @@ From the adversarial review of claude/adr031-assessment-ff.
 - **`create_pending()`** refuses a `courseid` that fails `course_in_scope()` (`error_outoftenant`), so the gate no longer lives only in extract.php. `courseid` 0 (untagged) needs no scope.
 - **Tests:** `test_extract_course_picker_is_tenant_scoped` now asserts legacy NULL and '' courses are neither offered nor taggable by a scoped caller (it asserted NULL stayed pickable); new `test_tagging_a_job_with_a_course_is_a_scoped_write`.
 - **Not run here:** PHPUnit.
+
+## 2026-11-16 - Fresh install now gives the Sentientia Author role :extract and :review (0.1.4-alpha, 2026111600)
+
+**Defect (CI review).** The 2026-09-07 section above is wrong. Moodle runs a plugin's
+`db/install.php` BEFORE it registers the plugin's capabilities (`lib/upgradelib.php`
+`upgrade_plugins()`: install.php, then `upgrade_component_updated()` -> `update_capabilities()`).
+`author_role::ensure()` grants only registered capabilities, so the `ensure()` call in this
+plugin's install hook skipped `:extract` / `:review` exactly as authoring's own install did. Every
+fresh install since 2026090700 (CI, PHPUnit sites, a new customer, the Stage B cutover, which
+installs the Sentientia plugins fresh into the imported live DB) created the role without them.
+That call did fill in authoring's three caps, which is why the gap only showed for these two.
+(Exception: a site that installed skillsai before authoring, in an earlier run, got both caps from
+authoring's install hook.) UAT was installed 2026-09-03, before these hooks existed; its role most
+likely came from authoring's 2026090700 upgrade step with every cap registered, so the back-fill is
+probably a no-op there. Not checked on UAT.
+
+**Fix.**
+- `db/install.php`: `update_capabilities('local_sentientia_skillsai')` (underscore form) before
+  `author_role::ensure()`, still inside the `class_exists` guard. Moodle's own later
+  `update_capabilities()` call finds nothing new, so archetype defaults are applied once.
+- New `db/upgradelib.php` `local_sentientia_skillsai_backfill_author_caps()`, called by new upgrade
+  step 2026111600. Back-fill condition (tightened the same night, see the follow-up below): a role
+  with shortname `sentientiaauthor` exists AND both caps are registered in `{capabilities}` AND
+  `{role_capabilities}` has no system-context row for that role and EITHER cap. Then both
+  `local/sentientia_skillsai:extract` and `:review` get CAP_ALLOW with
+  `assign_capability(overwrite=false)`; otherwise nothing. Only that role. It does not re-run
+  `ensure()` (that resets every author cap to ALLOW).
+- Comments corrected: install.php docblock, version.php (2026090700 note), upgrade.php header.
+- Version 2026092500 -> 2026111600 (0.1.3 -> 0.1.4-alpha). No schema / flag / capability change.
+
+**Tests (written, not run: another job held the shared PHPUnit DB).** New
+`tests/install_caps_test.php` (attributes only: `CoversFunction` x2; no docblock PHPUnit tags):
+fresh-install order (caps deleted from `{capabilities}` and `{role_capabilities}`, then the hook)
+grants both at CAP_ALLOW; back-fill grants only these two caps and only to the author role, and is
+idempotent; keeps a PROHIBIT and a PREVENT; no-op without the role. A standalone stub harness
+(no Moodle, no DB) replayed four install orders against the HEAD and new hooks: HEAD left these two
+caps off in the same-run and authoring-first orders; the new hooks left nothing off in any order.
+
+**Follow-up (review, same night; still 2026111600, no second bump).** The back-fill now matches the
+gap's signature: the gap always leaves BOTH caps without a system-context row at once. So
+`local_sentientia_skillsai_backfill_author_caps()` grants only when the role exists AND neither cap
+has a system-context `{role_capabilities}` row for it AND both are registered; returns 2 or 0. If
+one has a row (any permission), nothing is granted: that is an administrator's configuration, never
+the gap. Tests: the PROHIBIT/PREVENT case now expects nothing granted (the unset cap stays unset);
+new "one cap cleared to 'Not set' while the other has a row -> nothing granted" and "a cap not
+registered -> nothing written" cases. Same change in authoring, which also gained the read-only
+real-fresh-install test (see its card). Written, not run (shared PHPUnit DB busy).
+
+**Known limit (narrowed).** Before the follow-up, any cap cleared to "Not set" was re-granted. Now
+only an administrator who cleared BOTH caps looks the same as the gap, and gets them back as ALLOW.
+
+Both trees, byte-identical. NOT deployed; PHPUnit needs a re-init for the version bump.

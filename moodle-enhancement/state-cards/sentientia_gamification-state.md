@@ -240,3 +240,22 @@ runs to the end. New `tests/badge_scope_test.php` (`@group tenant_isolation`) co
 learners ('', 'garbage', '/abc') earn neither; a tenant learner earns both inside their tenant; the
 site admin and a `:crosstenant` holder keep site-wide scope. Code only (no db/ or lang change), so the
 version stays 2026092500. Not executed here. Both trees.
+
+## 2026-11-16 - badge_manager_test was silently outside the tenant_isolation gate (test-only, no version change)
+
+CI review defect C. PHPUnit 11.5.55 (the version both the 5.1 and 5.2 composer.lock pin) reads metadata
+per class and per method through `Metadata/Parser/ParserChain.php`: when a class carries ANY
+`PHPUnit\Framework\Attributes\*` attribute, its doc-comment annotations are never read. This class
+had three `#[CoversClass]` attributes and its `@group tenant_isolation` only in a doc-comment, so
+`phpunit --group tenant_isolation` (the BLOCKING CI gate) selected neither of its 2 tests. The CI
+sanity count still counted the file, because it greps for the text.
+
+Fix: added `#[\PHPUnit\Framework\Attributes\Group('tenant_isolation')]` next to the `CoversClass`
+attributes. The `@group tenant_isolation` tag moved from a second docblock (between the attributes and
+`class`) into the main class docblock, so the grep-based guards still count the file. A short note in
+the docblock explains why both exist. Both tests now run in the blocking gate. The vanilla-schema test
+drops `{user}.open_path` and restores it in `finally` via `ensure_bizlms_schema()`, so it should not
+leave the column missing for the other gate tests. Not executed here (a PHPUnit run was in progress on
+the shared local DB). A repo-wide token scan of all ~800 `*_test.php` files in both trees found no
+other class or method that mixes PHPUnit attributes with doc-comment metadata. Test file only: no
+version bump (ci.yml exempts /tests/). Both trees, byte-identical (cmp).

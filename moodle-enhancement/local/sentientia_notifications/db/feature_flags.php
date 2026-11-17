@@ -39,4 +39,23 @@ $flags = [
                           not affected. Default OFF.',
     ],
 
+    // 2026-11-16: the daily digest's "compliance deadlines approaching"
+    // section read a table no plugin creates, so it never ran. The digest
+    // task itself is enabled with no flag and sends under smart_alert (popup
+    // and email ON by default), so fixing the query alone would have added
+    // lines to digests already going out. The fix ships behind this flag.
+    'sentientia.notifications.digest_deadlines.enabled' => [
+        'default'     => false,
+        'description' => 'Adds "Due in Nd: course name" lines (at most two) to the
+                          weekday daily learning digest, for compliance courses
+                          (local_sentientia_compliance_report) the learner has
+                          not completed, is actively enrolled in and is not
+                          exempted from, whose deadline falls in the next 7 days.
+                          Resolved per learner tenant; a learner with no tenant
+                          never gets them. Only changes digests that are sent
+                          anyway: the digest task, its recipients and its other
+                          lines are not affected. Does nothing if the compliance
+                          report plugin is not installed. Default OFF.',
+    ],
+
 ];

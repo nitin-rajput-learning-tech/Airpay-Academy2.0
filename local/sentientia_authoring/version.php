@@ -84,10 +84,21 @@ $plugin->component = 'local_sentientia_authoring';
 // new tables (anonymise, keep). No page, no menu item, no compiler (slice 2).
 // Also: requires raised to 2024100700 (Moodle 4.5, what this line always said;
 // 2022041900 was Moodle 4.0) and the platform dependency to 2026101500.
-$plugin->version   = 2026111200;  // ADR-034 canonical course document (slice 1)
+// 2026111600 — fresh-install fix. Moodle registers a plugin's capabilities only
+// after its db/install.php returns, so the 2026090700 install hook created the
+// Sentientia Author role without this plugin's :generate/:review/
+// :managetemplates (skillsai's install filled them in when it ran later in the
+// same run; without skillsai the role kept the gap). db/install.php now calls
+// update_capabilities('local_sentientia_authoring') before ensure(). New
+// upgrade step 2026111600 (db/upgradelib.php) back-fills sites installed with
+// the gap: ONLY those three caps, ONLY to the 'sentientiaauthor' role, ONLY
+// when that role has no system-context role_capabilities row for ANY of the
+// three (the gap's signature; one row of any permission means an admin set
+// it: nothing granted). No schema/flag change.
+$plugin->version   = 2026111600;  // Fresh-install author caps + guarded back-fill step
 $plugin->requires  = 2024100700;          // Moodle 4.5+
 $plugin->maturity  = MATURITY_ALPHA;      // MVP — prod sign-off before any flag flips
-$plugin->release   = '0.3.0-alpha';
+$plugin->release   = '0.3.1-alpha';
 $plugin->dependencies = [
     // feature_flags resolver + tenant + customer scope, the ADR-031
     // tenant::is_cross_tenant() authority, and (2026111200) customer::of_tenant()
@@ -106,3 +117,6 @@ $plugin->dependencies = [
 //              caller's tenant; :manage_all is no longer a manager default.
 // 0.3.0-alpha  ADR-034 Stage 1 slice 1 (2026-11-12): canonical course document
 //              schema, validator, tables and repository; flag OFF; no UI.
+// 0.3.1-alpha  A fresh install now gives the Sentientia Author role this
+//              plugin's three caps itself; a guarded upgrade step back-fills
+//              sites installed with the gap (2026-11-16).

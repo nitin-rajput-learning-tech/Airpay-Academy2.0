@@ -5,11 +5,11 @@
 /**
  * Upgrade steps for local_sentientia_authoring.
  *
- * P0.3.0 (2026-06-16) is the install baseline — the five tables are created
- * by db/install.xml, so there are no upgrade steps yet. This file exists to
- * satisfy the local-plugin checklist (CLAUDE.md §6) and to give future schema
- * revisions a home that follows the version-checked savepoint pattern from
- * .claude/rules/database.md.
+ * P0.3.0 (2026-06-16) is the install baseline — its tables are created by
+ * db/install.xml. Later revisions add steps here that follow the
+ * version-checked savepoint pattern from .claude/rules/database.md. These
+ * steps run only when an existing install is upgraded, never on a fresh
+ * install (that is db/install.php).
  *
  * @package local_sentientia_authoring
  */
@@ -194,6 +194,23 @@ function xmldb_local_sentientia_authoring_upgrade(int $oldversion): bool {
         }
 
         upgrade_plugin_savepoint(true, 2026111200, 'local', 'sentientia_authoring');
+    }
+
+    // 2026111600 - fresh-install gap. db/install.php ran author_role::ensure()
+    // before Moodle registered this plugin's capabilities (it does that after
+    // install.php returns), so a fresh install created the Sentientia Author
+    // role without :generate / :review / :managetemplates. skillsai's install
+    // filled them in when it installed later in the same run; a site without
+    // skillsai, or with skillsai installed first, kept the gap. The gap always
+    // leaves ALL THREE without a system-context row at once, so grant ONLY
+    // those three caps, ONLY to that role, and ONLY when the role has no
+    // system-context setting for ANY of them. One setting (any permission) is
+    // an administrator's configuration, never the gap: then nothing is
+    // granted. No-op where the role does not exist or already has them.
+    if ($oldversion < 2026111600) {
+        require_once(__DIR__ . '/upgradelib.php');
+        local_sentientia_authoring_backfill_author_caps();
+        upgrade_plugin_savepoint(true, 2026111600, 'local', 'sentientia_authoring');
     }
 
     unset($dbman);

@@ -50,8 +50,23 @@ class author_role {
      *
      * All granted at CONTEXT_SYSTEM. Caps whose owning plugin is not installed
      * (not registered in {capabilities}) are skipped by ensure(), so no orphan
-     * role_capability rows are created for an unlicensed plugin — that plugin
-     * re-runs ensure() from its own install once its caps are registered.
+     * role_capabilities rows are created for an unlicensed plugin.
+     *
+     * An owner plugin's own install hook fills its caps in only because the
+     * hook calls update_capabilities('<its component>') BEFORE ensure().
+     * Moodle registers a plugin's caps (db/access.php -> {capabilities}) only
+     * AFTER its db/install.php returns (lib/upgradelib.php upgrade_plugins():
+     * install.php, then upgrade_component_updated() -> update_capabilities()),
+     * so an install hook that just calls ensure() skips its own plugin's caps.
+     * Until 2026111600 that is what local_sentientia_authoring's and
+     * local_sentientia_skillsai's hooks did; both register first since then.
+     *
+     * local_sentientia_aiquiz has no install hook. Its caps reach the role only
+     * when ensure() runs after aiquiz is installed: in a one-run install that is
+     * authoring's hook (aiquiz installs first, alphabetically), and skillsai's.
+     * If aiquiz is installed in a later run than authoring (and skillsai),
+     * nothing re-runs ensure() and they never do. Open, see the authoring state
+     * card (2026-11-16).
      *
      * @return string[]
      */
@@ -79,7 +94,12 @@ class author_role {
      *  - always pins its assignable context to CONTEXT_SYSTEM only;
      *  - grants each cap that is currently registered, skipping the rest — so a
      *    plugin that installs AFTER this call (or isn't licensed) leaves no
-     *    orphan rows and fills its own caps in when it runs ensure() itself.
+     *    orphan rows. That plugin fills its own caps in when it runs ensure()
+     *    itself, but from its db/install.php only after calling
+     *    update_capabilities('<its component>') first: Moodle registers a
+     *    plugin's caps only after install.php returns, so otherwise this call
+     *    skips them too (see caps()). The authoring and skillsai install hooks
+     *    do so since 2026111600; aiquiz has no install hook (see caps()).
      *
      * assign_capability(overwrite=true) keeps the author caps at ALLOW — this
      * role IS the author's definition, so we own its permissions outright.

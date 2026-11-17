@@ -20,15 +20,19 @@ defined('MOODLE_INTERNAL') || die();
  * (local_sentientia_api webhooks_test) and silently aborted the award
  * chain: no badge check, no first_course bonus.
  *
+ * PHPUnit 11 reads no doc-comment metadata from a class that carries any
+ * PHPUnit attribute, so the #[Group] below is what puts this class in
+ * `--group tenant_isolation`. The doc-comment group tag below stays for
+ * the grep-based guards.
+ *
  * @package    local_sentientia_gamification
  * @category   test
+ * @group tenant_isolation
  */
 #[\PHPUnit\Framework\Attributes\CoversClass(badge_manager::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(points_manager::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(observer::class)]
-/**
- * @group tenant_isolation
- */
+#[\PHPUnit\Framework\Attributes\Group('tenant_isolation')]
 final class badge_manager_test extends \advanced_testcase {
 
     use \local_sentientia_org\test\bizlms_fixture;
