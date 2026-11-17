@@ -1,5 +1,6 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-11-16 (**Demo week: C-suite demo Thursday 2026-11-19. Theme 2026111600, 2026111601 and 2026111602 committed; reminder tasks count from the enrolment date (courses 2026111600) committed; option A privacy build running overnight. See the 2026-11-16 entry.**)
+**Updated:** 2026-11-18 ~01:00 (**C-suite demo MOVED UP to Wednesday 18 November, morning; everything developed so far goes to UAT first thing (Nitin, over his VPN, per `docs/cutover/UAT-DEPLOY-RUNBOOK-2026-11-18.md`). Committed tonight: the fresh-install fixes (`cdd4fc310`) and the compliance_report security + exclusions fix (`0706fdadf`, 2026111702). New C-suite deck: what Academy 2.0 adds over today's airpay.academy, no operational detail. See the 2026-11-17/18 entry.**)
+**Before that, 2026-11-16** (**Demo week. Theme 2026111600-02, reminder tasks (courses 2026111600) and Option A privacy committed; CI green. See the 2026-11-16 entry.**)
 **Before that, 2026-11-13** (**Nitin's 11-12 decisions carried out; see the 2026-11-12 / 11-13 entry.**
 - Committed and on `production`: subagent-stall fix, Stage 0-2 tooling, working permission rules, hook and gate fixes, theme A2/A3, A1 (ADR-034 slice 1), A5 (audit events + tenant trail), AI gateway pricing.
 - A4 done on the local copy: 286 erasures, nothing sent, 0 failed deletes; found a Moodle core bug and two erasure gaps (`docs/cutover/A4-ERASURE-REHEARSAL-RESULTS-2026-11-13.md`). Decisions for Nitin listed there.)
@@ -7,6 +8,42 @@
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
 
 ---
+
+## 2026-11-17/18 - Demo eve: the demo moved up to Wednesday morning (Opus 5.5)
+
+**Nitin, 11-17 20:30:** the C-suite demo moves to Wednesday 18 November, morning; push everything developed so far
+to UAT first thing; build the C-suite deck in his airpay template. Then (21:00) two calls: merge, test and commit the
+other session's role-id-9 security fix; deck of about 12 slides. Then (22:30) the first deck was REJECTED: "We need to
+tell them what we built over current live airpay.academy - all features list, how it can benefit, remove all
+operational details".
+
+- **Committed and pushed** (`production` fast-forwarded): `cdd4fc310` fresh-install author caps (skillsai,
+  authoring 2026111600), digest deadlines behind an OFF flag (notifications 2026111600), badge_manager back in the
+  tenant gate; `0706fdadf` compliance_report 2026111702 / 1.0.8 = the role-id-9 export fix (merged from worktree
+  `brave-yonath-1848a0`) + all-course exclusions. Local Moodle 5.1.3+ after a PHPUnit re-init (`util.php`
+  drop/install/buildconfig, since cmd.exe blocks `init.php`): every targeted test and the full suites of skillsai
+  (59), authoring (129), notifications (73), compliance_report (55), gamification (10), analytics (49) and pwa (40)
+  pass, 0 failures, 0 errors. The local `--group tenant_isolation` (2,221 tests) and `privacy_erasure` runs were
+  still going at ~12.5 s/test (do not start another PHPUnit until `kit-scratch/1117/phpunit/tests.status` says
+  ALL-DONE); CI runs both groups on Moodle 5.2 for these commits. Follow-up, not fixed: digest section 1 (in-progress
+  courses, older code) joins enrolments without de-duplicating, so a learner enrolled twice raises a duplicate-key
+  debugging notice (one line is still shown).
+- **C-suite deck:** `docs/business/csuite-2026-11-18/SENTIENTIA-CSUITE-DECK-2026-11-18.pptx`, 18 slides in Nitin's
+  airpay template: today vs Academy 2.0 per area, the benefit for each group, the full feature catalogue (112 lines:
+  71 new, 41 rebuilt, 48 built but switched off, marked as such), why owning the platform matters. No budgets, asks,
+  servers, cutover, test or version detail; nothing claims it is live. Built with python-pptx (`build_deck.py`;
+  sources `deck-content.md`, `research-features.md`, `research-baseline.md`), fact-checked twice against the record
+  (all must-fix/should-fix applied, incl. payment wording: "checked", not "confirmed"), validate.py and a text-fit
+  check pass. No renderer on this machine (no LibreOffice; driving PowerPoint would mean getting round the shell
+  block): Nitin pages through it in PowerPoint before presenting. The rejected first deck is kept locally as
+  `...-v1-asks-REJECTED.pptx`, not committed.
+- **Demo script** `docs/business/DEMO-SCRIPT-2026-11-19.md` updated for Wednesday 18; its deck pointers now match the
+  18-slide features deck; status, go-live path, asks and decisions are made verbally.
+- **UAT runbook** `docs/cutover/UAT-DEPLOY-RUNBOOK-2026-11-18.md` (written and independently reviewed tonight,
+  read-only; nothing connected to UAT): baseline `95bd68689` (11-11), Option A = everything to HEAD (about 106 files,
+  15 components), deploy from a git export (autocrlf off) because the deploy tool copies working-tree CRLF bytes,
+  upgrade steps expected no-op or empty-table creation on UAT, about 3 h end to end, latest safe start demo minus
+  3 h 15. The push itself is Nitin's, in the morning.
 
 ## 2026-11-17 - Security: compliance export granted to "role id 9" (Opus 5.5)
 

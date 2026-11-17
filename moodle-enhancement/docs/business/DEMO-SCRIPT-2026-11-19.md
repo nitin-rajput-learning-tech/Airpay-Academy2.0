@@ -1,10 +1,18 @@
-# Demo script: Academy 2.0 on Sentientia LMS, C-suite, Thursday 19 November 2026
+# Demo script: Academy 2.0 on Sentientia LMS, C-suite, Wednesday 18 November 2026, morning
 
+**Date moved:** the meeting moved up from Thursday 19 November to **Wednesday 18 November 2026, morning**. The file
+keeps its old name so existing links still work. UAT gets the push of everything developed so far first thing that
+morning, then the checks in section 6, then the meeting.
 **Presenter:** Nitin Rajput, Head of L&D. **Audience:** MD and Founder, CTO, CHRO and peers.
 **Where:** the UAT server, https://academy2.airpay.ninja (Moodle 5.3), from Nitin's laptop.
 **Length:** 35 minutes. A 30-minute cut is in section 2.
-**Status:** draft, written 16 November 2026 from the project record. Anything marked **(to confirm on Wednesday)**
-could not be confirmed from the files. Section 8 collects them.
+**Deck:** `moodle-enhancement/docs/business/csuite-2026-11-18/SENTIENTIA-CSUITE-DECK-2026-11-18.pptx` (18 slides:
+what Academy 2.0 adds over today's airpay.academy, feature by feature, with the benefit of each). It has no
+status, go-live, asks or decisions slides: those points are made verbally from this page. Do not show the rejected
+first version, `csuite-2026-11-18/SENTIENTIA-CSUITE-DECK-2026-11-18-v1-asks-REJECTED.pptx`.
+**Status:** draft, written 16 November 2026 from the project record; dates updated 17 November. Anything marked
+**(to confirm on Wednesday)** could not be confirmed from the files; check it on Wednesday morning, before the
+meeting. Section 8 collects them.
 
 **Passwords** are never on screen and never in this file. They are in
 `moodle-enhancement/docs/cutover/uat-credentials/UAT-TEST-ACCOUNTS.filled.md` (gitignored). Keep that file open on a
@@ -89,8 +97,8 @@ No date is promised. The rehearsal waits on IT (the server and the backup), not 
 
 | Start | Min | Block | Screen / account |
 |---|---|---|---|
-| 0:00 | 3 | Opening: the goal, the "not live, test data" line, the three asks in one sentence each | UAT landing page, logged out |
-| 0:03 | 2 | Where we are: UAT on Moodle 5.3 since 21 October; the go-live path in three steps | Verbal, or deck slide 3 |
+| 0:00 | 3 | Opening: the goal, the "not live, test data" line, the three asks in one sentence each | UAT landing page, logged out, or deck slides 1 and 2 (title; from today's academy to Academy 2.0); the asks are verbal |
+| 0:03 | 2 | Where we are: UAT on Moodle 5.3 since 21 October; the go-live path in three steps | Verbal (no deck slide); then deck slide 3 (what changes for each group) for a few seconds as the bridge into the walk |
 | 0:05 | 4 | 3.1 Learner | Priya, `uat_learner_airpay` |
 | 0:09 | 3 | 3.2 Manager | Vikram, `uat_manager_airpay` |
 | 0:12 | 3 | 3.3 L&D admin | Meera Iyer, `uat_ldadmin_airpay` |
@@ -99,8 +107,8 @@ No date is promised. The rehearsal waits on IT (the server and the backup), not 
 | 0:21 | 2 | 3.6 Public storefront | Guest, then Deepa, `uat_learner_public` |
 | 0:23 | 2 | 3.7 Second tenant: ZEEA isolation | Juma Mwakalinga, `uat_admin_zeea` |
 | 0:25 | 1 | 3.8 Hindi switch | Priya's or Meera's dashboard |
-| 0:26 | 6 | The asks: budgets, IT, Finance (section 1) | Deck slide 12, or this page |
-| 0:32 | 3 | Questions, then close: read back each decision, its owner and its date | |
+| 0:26 | 6 | The asks: budgets, IT, Finance (section 1) | Deck slide 17 (why owning the platform matters) as a 30-second lead-in, then this page; the deck has no asks slide |
+| 0:32 | 3 | Questions, then close: read back each decision, its owner and its date | Read the decisions back verbally (the deck has no decisions slide), then deck slide 18 (Thank you) |
 
 Take clarifying questions during the walk. Park the rest for 0:32.
 
@@ -116,8 +124,8 @@ author to 3 minutes (live poll only if phones can join, otherwise the author onl
   sessions apart. How long a UAT session stays signed in: (to confirm on Wednesday).
 - "Log in as" is for site admins only since 30 September; Meera and Juma no longer have it. If a window has signed
   out, sign that persona in from the handout on the second device, or use the site admin's "Log in as".
-- Stay at desktop width. Do not show a course page at phone width unless Wednesday's UAT deploy carried theme
-  2026111600 (the fix, section 4).
+- Stay at desktop width. Do not show a course page at phone width unless Wednesday morning's UAT push carried theme
+  2026111600 or later (the fix, section 4; the runbook's push carries 2026111602).
 - Read numbers off the screen. Do not quote figures from earlier checks: test data changes.
 
 ### 3.1 Learner: Priya, `uat_learner_airpay` (4 min)
@@ -248,6 +256,11 @@ Juma is the Country L&D Lead for ZEEA in Tanzania.
 **Say:** "Same platform, separate organisation. Juma sees two people and four courses, and nothing of Airpay's. The
 same design would carry a second customer later; today the isolation we have proven is between our three tenants."
 
+**If asked how it is proven (verbal; deck slide 13 shows organisations kept apart, without test figures):**
+CI runs a blocking group of 2,203 automated tests, including the
+checks that one tenant cannot see another's data, on every push to the production branch and every pull request; a
+failure blocks the change. It passed on 17 November, on a Moodle 5.2 test build.
+
 **Do not click:** a cross-tenant request; Create user; Swahili (UAT has no Swahili core language pack yet, and the
 Swahili pack still needs a native speaker's read). As the ZEEA learner (Fatma), do not open "Browse Airpay Library":
 a learner gets "no permission", by design.
@@ -304,7 +317,8 @@ default, per customer and per tenant. View only. Do not change a switch.
 6. Known rough edges, if they appear: some catalog cards show 0 or 1 enrolments (test data). Two layout defects
    (on a phone the course index covered most of the course page; at 1280 px the floating help button covered the end
    of the footer copyright line) are fixed in theme 2026111600 (development copy, 16 November). They are fixed on UAT
-   only if Wednesday's deploy carries that theme version; check on Wednesday which one UAT runs.
+   only if Wednesday morning's push carries that theme version or a later one (the runbook's push carries
+   2026111602); check which one UAT runs after the push.
 
 ---
 
@@ -317,13 +331,18 @@ default, per customer and per tenant. View only. Do not change a switch.
 - If the page does not load: switch the VPN off (or on) once and reload. If it still fails, go to the deck. Spend no
   more than one minute.
 
-**If UAT is down: the deck.** `moodle-enhancement/docs/business/AIRPAY-ACADEMY-2.0-UAT-SHOWCASE-DECK-2026-09-21.pptx`
-(slide 12: the asks; slide 13: the demo path). It is from September. Correct these out loud:
-- UAT moved to Moodle 5.3 on 21 October; the deck says 5.2.
-- The security annex lines total ₹55 to 115 lakh; the deck prints ₹52 to 109 lakh.
-- The rehearsal is now recommended on the new 5.3 server, not on UAT.
-- Production needs a new 5.3 server (PHP 8.3, MySQL 8.4), not an in-place upgrade of today's server.
-- The three open security items on slide 7 are the September status: (to confirm on Wednesday).
+**If UAT is down: the deck,**
+`moodle-enhancement/docs/business/csuite-2026-11-18/SENTIENTIA-CSUITE-DECK-2026-11-18.pptx`
+(slide 3: what changes for each group; then the walk stops: 4 for the learner, 5 for Hindi and the phone, 6 for
+compliance, 7 for the manager, 8 for the trainer's formats, 9 for the live poll, 10 for AI authoring, 11 for skills
+and insight, 12 for the L&D admin, 13 for the second tenant; slides 14 to 16: the full feature list, with the
+storefront and erasure on slide 16; slide 17: why owning the platform matters). The deck has no demo-path, asks or
+decisions slide: make those points verbally. It replaces the September showcase deck
+(`AIRPAY-ACADEMY-2.0-UAT-SHOWCASE-DECK-2026-09-21.pptx`), which still says Moodle 5.2 and ₹52 to 109 lakh, and the
+rejected first version (`SENTIENTIA-CSUITE-DECK-2026-11-18-v1-asks-REJECTED.pptx`): do not show either. Say this
+out loud:
+- The three open security items from the September audit are not in the deck; if asked, their status is (to confirm
+  on Wednesday).
 
 **Screenshots from UAT** (test personas only, safe to show):
 - `moodle-enhancement/docs/visual-evidence/2026-10-21/uat/`: login and front page on Moodle 5.3, desktop and phone.
@@ -342,8 +361,8 @@ before later fixes). Use only these, which passed:
   compliance, 57 guest catalog, 58 guest login.
 - `moodle-enhancement/docs/visual-evidence/2026-10-22/scorm-resume/`: a SCORM course resuming in the Moodle player.
 - **Caution:** the development copy holds a test import of a production backup. Team lists, reports and the
-  compliance matrix can show real employees' names. Look at each image before Thursday and do not project one that
-  does.
+  compliance matrix can show real employees' names. Look at each image before the meeting and do not project one
+  that does.
 
 **AI authoring, if asked for more:** `moodle-enhancement/docs/business/SENTIENTIA-CONTENT-ENGINE-DECK-2026-10-15.pptx`
 and the clickable prototypes `moodle-enhancement/docs/research/2026-10-15-scorm-lxp/prototypes/index.html` (open
@@ -356,22 +375,37 @@ screenshot, and move to the next persona. Do not troubleshoot in the room. Note 
 
 ---
 
-## 6. Wednesday 18 November: pre-demo checklist
+## 6. Wednesday 18 November, before the meeting
 
-### A. UAT deploy (Nitin's call)
+The meeting is the same morning. Order: the UAT push first (A), then B to D on the deployed code, screenshots (E) if
+time allows, then the room (F). The timings come from the runbook below: start by **demo time minus 3 h 15** (minus
+3 h 00 if its step 0 was done the night before; for a 10:30 demo, start by 07:15); **go/no-go at demo minus 2 h**;
+**no server change after demo minus 45 min**. If time runs short, do at least B (network and phones) and C (demo data
+per persona, look only), and use the section 5 screenshots for any stop not checked.
 
-What is waiting since the 11 November deploy:
-- Theme 2026111200: no empty drawer in course edit mode; the footer scrolls with the page. Visible.
-- Authoring 2026111200: the course-document schema, switched off. Not visible.
-- Audit events: cart 1.2.2, proctoring 1.0.6, platform 2026111300. Not visible on the walk.
-- AI gateway 2026111300: the price fix. Not visible. It must reach UAT before any live key.
-- Anything committed 14 to 18 November: (to confirm on Wednesday; none in git on the morning of 16 November).
-- Not included: the privacy erasure work, which is still in progress and not committed.
+### A. UAT push, first thing (Nitin's call)
 
-Nothing in this list is needed for the demo itself. Deploy only if you want UAT on the same code as the repository
-before Thursday. If yes: deploy in the morning, dry run first, then do the whole walk (D) on the deployed code. Every
-UAT deploy so far kept a backup on the server first. If the walk fails and the fix is not quick, go back to the
-11 November code and demo that.
+Follow `moodle-enhancement/docs/cutover/UAT-DEPLOY-RUNBOOK-2026-11-18.md`: steps 0 to 5 with the VPN on (export from
+git, read-only pre-flight on the box, deploy with a dry run first, verify against git, server smoke), then the VPN off
+for its step 6 (browser smoke, Nitin signs in himself) and step 7, which is D below. Its section 4 has the stop rules
+and the rollback. The deploy keeps a backup of the replaced files on the server first; the database cannot be rolled
+back (the new versions and tables are additive).
+
+What goes: everything developed since the 11 November deploy (runbook section 1: 106 files; or 81 if the overnight
+commit of the compliance report, authoring, skills AI and notifications fixes is not in or its CI is red).
+- Theme 2026111602 (includes 2026111200 and 2026111600): no empty drawer in course edit mode; the footer scrolls with
+  the page and clears the floating help button; the course content list starts collapsed on a phone; Priya's
+  course-header countdown may show a different date. Visible.
+- Compliance report 1.0.8 (106-file push only): after the next hourly rebuild, Sneha may show exempt in every course
+  of Joseph's and Meera's matrix. Rahul unchanged. Possibly visible.
+- Authoring (the course-document schema, switched off), audit events (cart 1.2.2, proctoring 1.0.6, platform
+  1.13.1), the AI gateway price fix (it must reach UAT before any live key), notifications, skills AI, courses and
+  analytics fixes. Not visible on the walk.
+- The privacy erasure fix (ADR-035 Option A, `local_sentientia_privacy` 1.1.0), committed 17 November, with both
+  switches off. Not visible. First time on UAT.
+
+If step 4 of the runbook is not green by the go/no-go, roll the code back (runbook section 4) and demo on the
+11 November code.
 
 ### B. Network
 
@@ -398,7 +432,7 @@ Look, do not change. Note what you see.
 | Hindi | `?lang=hi` on a dashboard; is the language menu item visible? | Use `?lang=hi` |
 
 During the rehearsal walk, do not take Priya's AML & KYC quiz, do not approve the request, and do not check out.
-Each one changes the data you need on Thursday.
+Each one changes the data you need in the meeting.
 
 ### D. Persona walk
 
@@ -407,8 +441,9 @@ Each one changes the data you need on Thursday.
   the logged-in learner check still open since then (decision C4 of 12 November).
 - Three flows were never confirmed on screen with interaction: the learner quiz-to-certificate flow, the manager
   approval, and the live poll with an audience. Try the last two once; then reset as in C.
-- Anything broken: decide the same afternoon whether it is fixed overnight, the stop is skipped, or a screenshot is
-  shown.
+- Anything broken: decide on the spot. If the page belongs to a component of this morning's push, the runbook's
+  rollback for that component applies (its section 4), before the go/no-go. Otherwise skip the stop or show a
+  screenshot (section 5). No fix and no server change after demo minus 45 min.
 
 ### E. Screenshots for the deck
 
@@ -416,11 +451,13 @@ Each one changes the data you need on Thursday.
   banner, the cart at "Payment Coming Soon", the ZEEA admin's user and course lists, the Hindi dashboard.
 - Save them under `moodle-enhancement/docs/visual-evidence/2026-11-18/` with a short README: what, when, which
   account. UAT holds test personas only, so these are safe to project.
-- Use them in the deck in place of the September captures (your call).
+- Only if the walk leaves time (the runbook allows 15 minutes). The final deck carries no product screenshots, so
+  these are the fallback if a page fails in the room; adding them to the deck later is your call.
 
 ### F. Room
 
-- Thursday morning: sign in each persona window; check that the session timeout leaves enough time.
+- After the walk, just before the meeting: sign in each persona window; check that the session timeout leaves enough
+  time.
 - Handout on the second device. Notifications off. Browser zoom so the sidebar and the page fit the projector.
 
 ---
@@ -446,13 +483,21 @@ why we ask IT for dates today.
   closes with the payment fix. Their status today: (to confirm on Wednesday).
 - Fixed and verified on UAT: cross-tenant self-enrolment, account enumeration, rate limits, security headers, an
   app-scoped database user.
+- Tenant isolation: CI runs a blocking group of 2,203 automated tests, including the checks that one tenant cannot
+  see another's data, on every push to the production branch and every pull request; a failure blocks the change.
+  It passed on 17 November, on a Moodle 5.2 test build (verbal; deck slide 13 shows organisations kept apart).
 - No independent penetration test or certification yet. That is the security budget, VAPT first.
 - DPDP: plugins declare the personal data they hold and support data export and erasure. Consent for WhatsApp and SMS
   is logged. There is a DPDP statement page. A Moodle privacy test on 13 November found a few gaps in older plugins;
   they are being closed.
 - Erasure: a rehearsal on the development copy on 13 November (nothing was sent) found a Moodle core bug: a deletion
   request can show "Deleted" while some data stays behind. Rule: no deletion request is approved on production until
-  the fix is in place and the DPO's retention decision is recorded. The fix's status: (to confirm on Wednesday).
+  the fix is in place and the DPO's retention decision is recorded. The fix (ADR-035, Option A) is built and
+  committed with both its switches off: a read-only check on the development copy left none of the 16,844 leftover
+  records in scope uncovered, and its privacy-erasure test group passed in CI on 17 November. It goes to UAT in
+  this morning's push, still off, and stays off until the DPO, with legal, records the log-retention decision and a
+  residue check passes on UAT (verbal; deck slide 16 lists "Deletion that leaves nothing behind" as ready, switched
+  on when we choose).
 - AI and personal data: course content sent for generation is de-identified. The learner chat assistant sends the
   learner's own name, role and courses by design, which is why a self-hosted option in India is proposed for
   evaluation. Whether the AI provider can process data in India is not confirmed; it is the first question for
@@ -497,7 +542,7 @@ core stays GPL v3, and what is sold is hosting, implementation and support.
 
 ---
 
-## 8. To confirm on Wednesday
+## 8. To confirm on Wednesday morning, before the meeting
 
 1. UAT loads over the VPN in the meeting room (all logged-in checks so far: VPN off).
 2. Phones reach the live-poll join page on office Wi-Fi and mobile data; the town-hall poll is still running; whether
@@ -510,11 +555,12 @@ core stays GPL v3, and what is sold is hosting, implementation and support.
 8. Manager Team performance on UAT.
 9. How long a UAT session stays signed in.
 10. Status of the September security items (payment-hash fix, reCAPTCHA keys, the item that rides on the payment fix).
-11. Status of the erasure fix, and whether anything from 14 to 18 November is committed for the deploy.
+11. What the morning push carried (the runbook's 106 or 81 files; the erasure fix, switches off, is in both), that the
+    runbook's check against git (its step 4) is green, and which theme version UAT runs after it.
 12. Whether UAT holds any imported production records. The UAT handout says UAT holds test data only and the
     migration plan calls UAT a fresh install, while the same plan's status note says all user data on UAT and local is
     a test import. Until checked, say only "test data".
-13. Whether the IT and Finance e-mails go out before Thursday (both are unsent drafts).
+13. Whether the IT and Finance e-mails go out before the meeting (both are unsent drafts).
 14. Any date IT has already given for the 5.3 server or the backup.
 15. When BizLMS is switched off for good after cutover; the support-engineer ask.
 
@@ -531,7 +577,15 @@ core stays GPL v3, and what is sold is hosting, implementation and support.
   September deck)
 - `moodle-enhancement/docs/business/SENTIENTIA-CONTENT-ENGINE-CSUITE-BRIEF-2026-10-15.md` (content engine, residency)
 - `moodle-enhancement/PROJECT-STATE.md`, entries 2026-09-29 to 2026-11-13 (5.3 upgrade, UAT checks, Log in as, PWA,
-  open items, the 11-12/11-13 commits)
+  open items, the 11-12/11-13 commits) and 2026-11-17 (CI green with the 2,203-test tenant-isolation group; ADR-035
+  Option A committed with its switches off)
+- `moodle-enhancement/docs/business/csuite-2026-11-18/SENTIENTIA-CSUITE-DECK-2026-11-18.pptx` (the C-suite features
+  deck, 18 slides: what Academy 2.0 adds over today's airpay.academy; slide pointers in this script match it) and its
+  source `csuite-2026-11-18/deck-content.md`. It replaces the rejected first version with the status and asks slides,
+  `csuite-2026-11-18/SENTIENTIA-CSUITE-DECK-2026-11-18-v1-asks-REJECTED.pptx`
+- `moodle-enhancement/docs/cutover/UAT-DEPLOY-RUNBOOK-2026-11-18.md` (the Wednesday morning UAT push: what goes, the
+  sequence and timings, stop rules and rollback)
+- `moodle-enhancement/docs/adr/ADR-035-privacy-erasure-completeness.md` (the erasure fix, Option A)
 - `moodle-enhancement/docs/cutover/NITIN-DECISIONS-2026-11-12.md` (section C: C1 budgets, C2 Finance, C3 IT, C4
   learner check)
 - `moodle-enhancement/docs/cutover/DRAFT-CSUITE-SPEND-ANNEX-2026-11-12.md`
