@@ -12,8 +12,9 @@ require_once($CFG->libdir . '/excellib.class.php');
 
 // Gate on the dedicated export capability (see classes/permission.php). This
 // supersedes the earlier inline C-002 fix. It authorises site admins, course
-// managers, and the BizLMS Compliance Officer role (id 9, assigned at category
-// context) — but NOT line managers: bulk PII export is deliberately tighter
+// managers, and the BizLMS org-admin role (shortname 'administrator', id 9 in
+// the Airpay data, assigned at system or category context; sites without that
+// role grant it to nobody else) — but NOT line managers: bulk PII export is deliberately tighter
 // than the dashboard's view access, which managers still retain in index.php.
 // Using the capability also drops the phantom `local/courses:manage` reference
 // (that capability is only registered on the BizLMS production stack).

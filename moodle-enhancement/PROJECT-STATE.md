@@ -8,6 +8,42 @@
 
 ---
 
+## 2026-11-17 - Security: compliance export granted to "role id 9" (Opus 5.5)
+
+**Found** by a read-only review on 2026-11-16. `local_sentientia_compliance_report` granted
+`local/sentientia_compliance_report:export` (RISK_PERSONAL: Excel/CSV of every employee in the tenant with id,
+email, name, designation, department and compliance status) to role id 9, whatever that role was. In the Airpay data
+id 9 is `administrator`, the BizLMS org admin and the intended holder (local copy checked read-only; `sentientiaauthor`
+is id 11 there). On a fresh install id 9 is the first role a plugin creates. Since T-01 (1dc599466, 2026-09-08) that
+is the Sentientia Author role, created by `local_sentientia_authoring`, which installs before the compliance report.
+
+**Exposure.** Fresh Sentientia installs built from code at or after 2026-09-08: the product as shipped to a new
+customer, the `v4.2.0-sentientia-5.2-package-2026-09-10` package, PHPUnit sites. There, every Sentientia Author
+could open the report at tenant level and export their own tenant's matrix (not other tenants). The role check in
+`viewer_scope` had the same hard-code for on-screen access. Airpay is not affected: production data, the local
+copy, UAT (installed 2026-09-03, role 9 = `administrator`) and the Stage B in-place upgrade all keep id 9 as the
+org admin. No real customer runs a fresh install yet.
+
+**Fix (both plugin trees identical, version 2026111702 / 1.0.8; merged into the main checkout and committed
+2026-11-18 ~00:20 on Nitin's go, see below):** the grant and
+`viewer_scope` look the role up by shortname `administrator` and skip sites without it; upgrade 2026111702 removes the
+old grant from a role 9 that is not `administrator` and not manager-archetype, and grants nothing. The plugin's other
+grant (holders of `local/courses:manage`) is dead on fresh installs and the local copy, and may still fire on the
+Stage B in-place target; left as is, since repointing it would widen bulk-PII export. PHPUnit tests written in
+`permission_test` (+5) and `team_scope_test` (+1, 1 rewritten); lint and drift gate clean; **tests not run** (needs
+a PHPUnit re-init; the shared XAMPP environment was busy with the overnight privacy run). Details in
+`state-cards/sentientia_compliance_report-state.md`. Merge with the parallel courseid-0 exclusion fix (2026111701 /
+1.0.7, main checkout, no upgrade step): merged `version.php` = 2026111702 / 1.0.8. The revoke step is numbered
+2026111702, above it, so the old ordering hazard is gone: it runs whichever change ships first.
+
+**Resolved 2026-11-17 evening (Nitin):** merge, test and commit it tonight and carry it in Wednesday morning's UAT
+push (a no-op on UAT data: role 9 is `administrator` there). Merged by the main session from worktree
+`brave-yonath-1848a0` (that session was not running) with the all-course exclusion fix. Local PHPUnit after re-init
+(Moodle 5.1.3+): `permission_test` 11/11, `team_scope_test` 20/20, `global_exclusion_test` 5/5, full
+compliance_report suite 55/55, 0 failures; the local upgrade kept role 9's single `:export` grant (role 9 =
+`administrator` locally). Not changed: `theme/sentientia/layout/dashboard.php:80` also hard-codes `roleid = 9`
+(onboarding redirect only).
+
 ## 2026-11-16 - Demo week, day 1: quick wins by day, heavy lifting at night (Opus 5.5)
 
 **Plan (Nitin, 11-16).** C-suite demo Thursday 2026-11-19 on UAT. Quick wins by day, heavy jobs at night, nothing

@@ -227,21 +227,40 @@ final class team_scope_test extends \advanced_testcase {
     }
 
     public function test_a_compliance_admin_keeps_tenant_scope(): void {
+        // The BizLMS org-admin role at a category, as UAT's tenant admins hold
+        // it. Found by shortname, so its id does not matter. No archetype, so
+        // only the role assignment can admit E1 (a manager archetype would
+        // admit through moodle/site:viewreports instead).
+        $roleid = create_role('Administrator', permission::COMPLIANCE_ROLE_SHORTNAME, '', '');
+        $category = $this->getDataGenerator()->create_category();
+        role_assign($roleid, $this->p['E1']->id, \context_coursecat::instance($category->id)->id);
+
+        $scope = viewer_scope::for_user($this->p['E1']);
+
+        $this->assertSame(viewer_scope::LEVEL_TENANT, $scope->level);
+        $this->assertNull($scope->userids);
+    }
+
+    public function test_role_id_9_is_not_the_compliance_admin_on_a_vanilla_site(): void {
         global $DB;
-        // The BizLMS compliance role (id 9) at a category, as UAT's tenant
-        // admins hold it. Inserted directly: create_role() cannot promise id 9,
-        // and the check reads role_assignments.roleid without joining {role}.
+        // Until 2026-11-17 any role with id 9 at a category admitted its holder
+        // to the whole tenant. On a fresh install id 9 is the Sentientia Author
+        // role. Inserted directly, as the old check read role_assignments.roleid
+        // without joining {role}, so this reproduces it whatever role 9 is.
+        $this->assertFalse($DB->record_exists('role', ['shortname' => permission::COMPLIANCE_ROLE_SHORTNAME]),
+            'Precondition: a vanilla site has no BizLMS org-admin role.');
         $category = $this->getDataGenerator()->create_category();
         $DB->insert_record('role_assignments', (object) [
             'roleid' => 9, 'contextid' => \context_coursecat::instance($category->id)->id,
             'userid' => $this->p['E1']->id, 'timemodified' => time(), 'modifierid' => 0,
             'component' => '', 'itemid' => 0, 'sortorder' => 0,
         ]);
+        accesslib_clear_all_caches_for_unit_testing();
 
-        $scope = viewer_scope::for_user($this->p['E1']);
-
-        $this->assertSame(viewer_scope::LEVEL_TENANT, $scope->level);
-        $this->assertNull($scope->userids);
+        // level_for(), not for_user(): a null from for_user() could also mean
+        // an unresolved tenant, which would let this pass for the wrong reason.
+        $this->assertNull(viewer_scope::level_for($this->p['E1']),
+            'Holding role id 9 must not admit anyone on a site without the org-admin role.');
     }
 
     public function test_an_admission_to_the_tenant_outranks_managing_people(): void {

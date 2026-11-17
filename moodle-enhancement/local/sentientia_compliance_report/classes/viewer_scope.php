@@ -23,8 +23,11 @@ defined('MOODLE_INTERNAL') || die();
  *
  *   site    site admin                                  every tenant
  *   tenant  compliance admin (local/courses:manage or   their own tenant
- *           the BizLMS compliance role, id 9, at a
- *           category), a moodle/site:viewreports
+ *           the BizLMS org-admin role, shortname
+ *           'administrator', at a category - id 9
+ *           on the Airpay data, looked up by
+ *           shortname since 2026-11-17), a
+ *           moodle/site:viewreports
  *           holder (HRBP, trainer), or a holder of
  *           the export capability (export.php hands
  *           them the tenant anyway)
@@ -44,9 +47,6 @@ final class viewer_scope {
     public const LEVEL_TENANT = 'tenant';
     /** Line manager: their reporting tree inside their tenant. */
     public const LEVEL_TEAM = 'team';
-
-    /** BizLMS compliance officer role, assigned at course-category context. */
-    private const COMPLIANCE_ROLE_ID = 9;
 
     /**
      * @param string $level     one of the LEVEL_* constants
@@ -120,12 +120,16 @@ final class viewer_scope {
                 && has_capability('local/courses:manage', $systemcontext, $userid)) {
             return self::LEVEL_TENANT;
         }
-        if ($DB->record_exists_sql(
+        // The BizLMS org-admin role at a category. Until 2026-11-17 this was
+        // role id 9, whatever that role was; on a fresh install that is the
+        // Sentientia Author role. Sites without the org-admin role skip this.
+        $complianceroleid = permission::compliance_role_id();
+        if ($complianceroleid !== null && $DB->record_exists_sql(
                 "SELECT 1
                    FROM {role_assignments} ra
                    JOIN {context} ctx ON ctx.id = ra.contextid
                   WHERE ra.userid = :uid AND ra.roleid = :roleid AND ctx.contextlevel = :level",
-                ['uid' => $userid, 'roleid' => self::COMPLIANCE_ROLE_ID, 'level' => CONTEXT_COURSECAT])) {
+                ['uid' => $userid, 'roleid' => $complianceroleid, 'level' => CONTEXT_COURSECAT])) {
             return self::LEVEL_TENANT;
         }
         if (has_capability('moodle/site:viewreports', $systemcontext, $userid)) {

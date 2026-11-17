@@ -1,12 +1,95 @@
 ﻿# State Card â€” `local_airpay_compliance_report`
 
 **Component:** `local_airpay_compliance_report`
-**Version:** `2026052900` / `1.0.0`
+**Version:** `2026111702` / `1.0.8`
 **Maturity:** `MATURITY_STABLE`
-**Status:** Live on airpay.academy. Compliance training audit + escalation.
-**Last refreshed:** 2026-06-02 (export gated on a capability â€” PII protection)
+**Status:** Not live: Sentientia LMS is not in production yet (live airpay.academy is still BizLMS). Compliance training audit + escalation.
+**Last refreshed:** 2026-11-17 (export grant keyed on the org-admin shortname, not role id 9; see the last section)
 
 ---
+
+## 2026-11-17 - All-courses exclusions applied in the snapshot (1.0.7, 2026111701)
+
+**Defect.** `exclude_user()` (Configure tab, "Excluded Users") writes one `local_compliance_exemptions`
+row with `courseid = 0`: "excluded from ALL compliance tracking". `rebuild_snapshot()` looked
+exemptions up by the exact `userid_courseid` key, so `userid_0` matched no course, and an excluded
+learner went through the whole loop. With `auto_enrol` = 1 (as on the local production copy) that meant:
+manual enrolment into every applicable compliance course, the `welcome` mail, `reminder1` / `reminder2`
+(daily, because the dedup window is 24 h), `overdue_alert` to the learner on overdue days 1-3,
+`weekly_escalation` to their manager on overdue day 7, 14 and so on, and a place in every report. The
+local production copy has no victims today (0 active courseid-0 rows). On UAT,
+`tools/uat/provision_test_users.php` excludes `uat_author_airpay` and then rebuilds, so that test account
+was enrolled and mailed in this way.
+
+**Fix.** `rebuild_snapshot()` gets one more condition: an active, unexpired `courseid = 0` row exempts the
+user from every course that applies to their tenant, exactly as a per-course exemption does for one course.
+The row gets status `exempted`; there is no enrolment lookup, no auto-enrol and no mail. The `is_active` /
+`expiry_date` rule is the same, because the row comes from the same query. The tenant check still runs
+first, so a course of another tenant gets no row. Enrolments made before the fix are left in place.
+
+**No upgrade step.** The hourly `refresh_snapshot` task upserts every row for each active user and each
+applicable active course, so an excluded learner's rows turn `exempted` on the next run.
+
+**An excluded learner after the fix:**
+
+| View | What it shows |
+|---|---|
+| Matrix, CSV/XLSX export | still listed. In a tenant-scoped view every course column says Exempted and the row counts as complete (`all_completed`). In the site-wide view another tenant's pinned course shows Not Enrolled and the row is not green (true of every learner) |
+| Defaulters | not listed for courses that are still active and apply to their tenant; frozen rows (see "Found, not changed") still show |
+| KPI tiles | Exempted +1 per applicable course. They stay in `total`, so they lower the compliance rate. The tiles are cached with no expiry (see below) |
+| Department scorecard | in the department total, never completed or overdue, so they lower the rate |
+| Manager report | counted in team members and assignments, never completed, so they lower the team rate |
+| Theme admin dashboard widget | counted in "assigned", not overdue, so they lower the compliant % |
+| Notifications daily digest | already left out (NOT EXISTS on courseid 0 or the course) |
+
+**Cross-tree.** `classes/compliance_engine.php` is reconciled. In `send_escalation()` the ME copy read
+`$mc->deadline_date ? ...`, and `local_compliance_courses` has no such column, so every escalation raised
+"Undefined property". Both copies now use the top-level `!empty(...)` form and are byte-identical. That
+was the only difference between them. Its CONTENT line is removed from `tools/tree-drift-baseline.txt`.
+
+**Tests.** `tests/global_exclusion_test.php` has 5 tests (`@covers` + `@group tenant_isolation`, docblock
+only). They were written and linted but not run yet. They cover:
+- an excluded learner beside an identical control learner who is not excluded: exempted on every
+  tenant course, not auto-enrolled, no message of any kind to the learner, no email-log row, no
+  escalation to their manager; plus how that learner shows in the defaulters, KPIs and matrix;
+- a per-course exemption, which still covers only its course;
+- an expired exclusion, which lets the learner back in and is switched off, beside one that expires
+  later and still applies;
+- `include_user()` letting the learner back in, with the exempted rows overwritten;
+- tenant scope: an excluded ZEEA learner gets rows only for global + ZEEA courses, and another ZEEA
+  learner is tracked as before.
+
+**Found, not changed (each is Nitin's call):**
+- **Frozen rows are counted.** `rebuild_snapshot()` never deletes rows. A row is left frozen when its
+  course is taken off the list, when the learner moves to another tenant and the course no longer
+  applies, or when the user is suspended or deleted. The KPIs and the scorecard read the snapshot raw.
+  The defaulters list joins `{user}` without a deleted/suspended filter, and its EXISTS does not check
+  `is_active`. The matrix lists anyone with any row, so a learner who moved tenant also stays in the
+  old tenant's matrix. The manager report and the theme widget filter on the user's current path but
+  not on user state or active courses. Only the digest filters these rows out. Proposed fix: the
+  rebuild stores its start time in config when it finishes successfully, and every reader adds
+  `s.snapshot_date >= :lastrebuild`. That catches all three cases in one condition, with no deletes.
+- **Exempted rows are in every denominator.** The rate is completed / total, while the matrix treats an
+  exempted cell as done. Because an exemption is checked before completion, an excluded learner who had
+  completed a course now counts as exempted rather than completed, so the rate drops a little. Proposed
+  fix: completed / (total - exempted). The page text says "excluded from all compliance tracking"; if
+  that should mean "not in the reports at all", say so.
+- **The KPI tiles never refresh.** index.php caches them through `make_from_params()`, with no TTL and
+  no `db/caches.php`, and nothing purges that cache after a rebuild. The tiles therefore show whatever
+  was computed after the last cache purge. Proposed fix: purge the `dashboard` area at the end of
+  `rebuild_snapshot()`.
+- **Managers never get the overdue alert.** The dedup key in `send_escalation()` (user, course, type)
+  leaves out `sent_to`. The learner's `overdue_alert` is logged first, so the manager's copy is always
+  suppressed; managers only ever get `weekly_escalation`.
+- **Auto-enrolment ends at the deadline.** It sets `timeend` to the deadline, and the rebuild accepts any
+  enrolment row. An overdue learner is still chased for a course they can no longer open.
+- **The "last refreshed" stamp never shows.** index.php reads it from
+  `local_sentientia_compliance_snapshot.timemodified`, a table that does not exist.
+- **The theme widget's "Mandatory" count includes inactive courses.**
+- **Stale comments in the notifications digest.** The digest (`sentientia_notifications`, uncommitted
+  work in this checkout) has comments in `daily_digest.php` and its test saying that rebuild_snapshot()
+  does not match courseid 0. That is no longer true. Its NOT EXISTS is still right for the hour between
+  an exclusion and the next rebuild. The comments are left for that work's owner.
 
 ## Mission
 
@@ -323,3 +406,56 @@ Noted, not changed: the CI PostgreSQL PHPUnit job uses pre-5.1 paths (no `public
 ## 2026-10-08 Moodle 5.3 compat FX-18
 
 Every `fputcsv()` / `fgetcsv()` / `str_getcsv()` call in this plugin now passes the `$escape` argument explicitly with the historic default (`',', '"', '\\'`, and `null` for the `fgetcsv` length). The output and the parsing are byte-identical; PHP 8.4 deprecates relying on the default, and the notice would otherwise be written into the CSV stream on a 8.4 host (UAT and production run PHP 8.3). No version bump, no schema change.
+
+## 2026-11-17 - SECURITY: export grant went to role id 9, whatever it was (1.0.8, 2026111702)
+
+**Defect.** `permission::grant_export_to_default_roles()` (run by `db/install.php` and upgrade step 2026052900)
+granted `:export` to role id 9 whenever a role with that id existed. `:export` is RISK_PERSONAL: an Excel/CSV of
+every employee in the holder's tenant (employee id, email, full name, designation, department, status per mandatory
+course). `viewer_scope::level_for()` also admitted any holder of role id 9 at a category to the whole tenant's report.
+
+**Which role is id 9.**
+- Airpay production data (local copy, read-only query 2026-11-17): `administrator`, archetype manager, the BizLMS
+  org admin. This is the intended holder. `sentientiaauthor` is id 11 there. The code called role 9 the "Compliance
+  Officer / OrgAdmin" role; BizLMS has no compliance-officer role, so the shortname to look up is `administrator`.
+  It holds `:export` there together with `manager` (id 1).
+- UAT: `administrator` (`tools/uat/provision_test_users.php` places it at id 9; ADR-031 notes, 2026-09-30). Not
+  re-checked live.
+- Fresh install (reasoned from install order, no install run): core creates ids 1-8; plugins install by type, then
+  alphabetically, and `local` comes after every other type. The only plugin that creates a role at install time is
+  `local_sentientia_authoring` (`author_role::ensure()`, T-01, commit 1dc599466, 2026-09-08). It installs before
+  `local_sentientia_compliance_report`, so id 9 is the Sentientia Author role and the install granted it `:export`.
+
+**Exposure.** Every fresh Sentientia install built from code at or after 2026-09-08: the product as packaged for a new
+customer (Enterprise N), the 2026-09-10 standalone package, and PHPUnit sites. There, anyone holding the Sentientia
+Author role could open the report at tenant level and download the export for their own tenant. They could not see
+other tenants. Airpay is not affected: production data, the local copy, UAT (installed 2026-09-03, before T-01) and
+the Stage B in-place upgrade all keep id 9 = `administrator`. No real customer runs a fresh install yet.
+
+**Fix.**
+- `permission::COMPLIANCE_ROLE_SHORTNAME = 'administrator'` and `permission::compliance_role_id()`. The grant goes to
+  that role only where it exists; a vanilla site grants nothing beyond the `manager` archetype default.
+- `viewer_scope` uses the same resolver for the category admission (was role id 9).
+- Upgrade 2026111702 calls `permission::revoke_misdirected_export_grant()`. It removes ALLOW at system context from
+  role 9 only when role 9 is not `administrator` and not manager-archetype (the archetype default would have granted
+  that one anyway). It leaves an admin-set PREVENT/PROHIBIT alone and grants nothing. No-op on Airpay data and UAT.
+- Step 1 of the grant (holders of `local/courses:manage`) is dead on fresh installs and on the local copy: ADR-025
+  renamed the capability and nothing declares the old name. It can still fire on the Stage B in-place target,
+  where the kept BizLMS plugins' role_capabilities rows survive. On Airpay data those holders are understood to be
+  manager-archetype roles (see local_sentientia_analytics permission.php), not verified. Left in place: pointing it
+  at `local/sentientia_courses:manage` would widen bulk-PII export and is Nitin's call.
+
+**Tests.** `permission_test`: vanilla site, the Sentientia Author role does not get `:export` (also checks what the
+install step left); the shortname grant works at category context; the revoke removes the misdirected grant and is
+idempotent; it keeps the grant where role 9 is `administrator`, where it is manager-archetype, and an admin PROHIBIT.
+`team_scope_test`: the compliance admin is found by shortname; role id 9 at a category no longer admits on a vanilla
+site. Written, `php -l` and lint-on-save clean, drift gate OK. **Not run yet:** the version bump needs a PHPUnit
+re-init, and the shared XAMPP PHPUnit environment was busy with the overnight privacy run.
+
+**Not changed.** `theme/sentientia/layout/dashboard.php:80` also hard-codes `roleid = 9` (it only skips the onboarding
+redirect for role-9 holders at a category). `tools/uat/provision_test_users.php` still warns that the compliance
+branch needs `administrator` at id 9; that is no longer true.
+
+**Merge with the courseid-0 exclusion fix** (other session, main checkout, 2026111701 / 1.0.7, no upgrade step):
+the merged `version.php` is `2026111702` / `1.0.8`, and this upgrade step stays at 2026111702. It is numbered above
+2026111701 on purpose, so it also runs on a site that took 2026111701 first.

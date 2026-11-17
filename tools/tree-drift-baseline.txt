@@ -12,7 +12,6 @@
 #
 # Generated 2026-09-22 with --update-baseline
 CONTENT sentientia_analytics/db/caches.php
-CONTENT sentientia_compliance_report/classes/compliance_engine.php
 CONTENT sentientia_courses/lang/en/local_sentientia_courses.php
 CONTENT sentientia_courses/lang/hi/local_sentientia_courses.php
 CONTENT sentientia_courses/templates/share_page.mustache

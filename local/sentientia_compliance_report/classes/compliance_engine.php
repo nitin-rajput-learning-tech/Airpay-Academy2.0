@@ -51,7 +51,10 @@ class compliance_engine {
         $exemptions = $DB->get_records_select('local_compliance_exemptions',
             'is_active = 1 AND (expiry_date IS NULL OR expiry_date > :now)',
             ['now' => $now]);
-        $exempt_map = []; // userid_courseid => true
+        // userid_courseid => true. courseid 0 is exclude_user()'s "excluded
+        // from ALL compliance tracking" row, so "userid_0" exempts that user
+        // from every course that applies to them (checked below).
+        $exempt_map = [];
         foreach ($exemptions as $ex) {
             $exempt_map[$ex->userid . '_' . $ex->courseid] = true;
         }
@@ -77,8 +80,11 @@ class compliance_engine {
                 $stats['total']++;
                 $key = $user->id . '_' . $mc->courseid;
 
-                // Check exemption.
-                if (isset($exempt_map[$key])) {
+                // Check exemption: this course, or all courses (courseid 0).
+                // Until 2026-11-17 only this course was checked, so a user
+                // excluded from all tracking was still auto-enrolled, mailed,
+                // escalated to their manager and counted as overdue.
+                if (isset($exempt_map[$key]) || isset($exempt_map[$user->id . '_0'])) {
                     self::upsert_snapshot($user->id, $mc->courseid, $costcenterid, $dept_path,
                         self::STATUS_EXEMPTED, null, 0, null, null, 0, $now);
                     continue;
