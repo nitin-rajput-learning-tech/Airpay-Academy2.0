@@ -144,6 +144,22 @@ added to the defined scope. The scheduled resume task stays disabled (IT securit
   Option A below.
 - **A4 re-run did NOT run tonight.** Option A was still in its fix phase at 04:11, so the restore could not start by
   the 04:30 cutoff (Nitin's rule). It needs a new window. The 11-13 dump is also past the harness's 48 h gate.
+  The first CI run of Option A (`bee62721a`) passed BOTH blocking groups (tenant_isolation, privacy_erasure).
+- **Nitin's decisions, 2026-11-17 ~06:00 (all as recommended):**
+  1. A4 re-run AFTER the demo, with a fresh backup and an updated pre-check. The local deploy hold is LIFTED now:
+     deploy the four uncommitted fixes (skillsai/authoring author caps, notifications digest, gamification test tag,
+     compliance_report all-course exclusions) to local, PHPUnit re-init, run their four new test files, commit and
+     push if they pass, before Wednesday's UAT window.
+  2. Digest deadline lines: flag stays OFF until after the demo; then per tenant, Airpay first.
+  3. Playwright: re-point to Moodle 5.x after the demo (like phpunit-52: 5.x checkout, our plugins, the Sentientia
+     theme), advisory until green.
+  4. Compliance report, after the demo: fix frozen rows and the KPI cache; fix the manager "overdue" alert;
+     take exempted learners out of the rates (completed / (total - exempted)).
+  5. Reminder/overdue tasks stay OFF; after the demo, make escalations fire on the day their wording says, review
+     the 1-day windows with course owners, estimate the volume, then enable for Airpay only.
+  6. Option A flags stay OFF until the DPO records the log-retention decision (with legal) and the residue check
+     passes on UAT.
+  7. Ask IT to allow PowerShell/cmd on this dev machine; Bash-only workarounds meanwhile.
 
 - **Option A privacy erasure (ADR-035; `local_sentientia_privacy` 2026111300 / 1.1.0): proved read-only, reviewed,
   fixed; committed and pushed 11-17 ~05:20 (Nitin's 11-16 plan: commit only if review + fix are green); both
