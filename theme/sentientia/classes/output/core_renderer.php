@@ -728,54 +728,69 @@ JS;
 //                 $block_content .= html_writer::end_tag('li');
 //             }
 
+            // FIX 2 (2026-11-18): every plugin hook below runs inside
+            // try/catch. One broken hook (UAT: block_learnerscript's
+            // \local_costcenter\lib\accesslib "Class not found") used to
+            // take the whole page down; now it is skipped with a
+            // developer debugging() line and the rest of the menu renders.
             $pluginnavs = array();
             foreach($local_pluginlist as $key => $local_pluginname){
-                if(file_exists($CFG->dirroot.'/local/'.$key.'/lib.php')){
-                    require_once($CFG->dirroot.'/local/'.$key.'/lib.php');
-                    $functionname = 'local_'.$key.'_leftmenunode';
-                    if(function_exists($functionname)){
-                       // $data = $functionname();
-                        $data = (array)$functionname();
-                         foreach($data as $key => $val){
-                            $pluginnavs[$key][] = $val;
-                        }
+                $functionname = 'local_'.$key.'_leftmenunode';
+                try {
+                    if(!file_exists($CFG->dirroot.'/local/'.$key.'/lib.php')){
+                        continue;
                     }
+                    require_once($CFG->dirroot.'/local/'.$key.'/lib.php');
+                    if(!function_exists($functionname)){
+                        continue;
+                    }
+                    $data = $functionname();
+                } catch (\Throwable $e) {
+                    debugging('left menu hook ' . $functionname . ' failed: ' . $e->getMessage(), DEBUG_DEVELOPER);
+                    continue;
+                }
+                foreach($this->leftmenu_hook_nodes($functionname, $data) as $navkey => $val){
+                    $pluginnavs[$navkey][] = $val;
                 }
             }
-            // ksort($pluginnavs);
-            // foreach($pluginnavs as $pluginnav){
-            //     foreach($pluginnav  as $key => $value){
-            //             $data = $value;
-            //             $block_content .= $data;
-            //     }
-            // }
 
             foreach($block_pluginlist as $key => $local_pluginname){
-                 if(file_exists($CFG->dirroot.'/blocks/'.$key.'/lib.php')){
-                    require_once($CFG->dirroot.'/blocks/'.$key.'/lib.php');
-                    $functionname = 'block_'.$key.'_leftmenunode';
-                    if(function_exists($functionname)){
-                    // $block_content .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_dashboard', 'class'=>'pull-left user_nav_div dashboard row-fluid '));
-                        $data = $functionname();
-                        foreach($data as $key => $val){
-                            $pluginnavs[$key][] = $val;
-                        }
-                    // $block_content .= html_writer::end_tag('li');
+                $functionname = 'block_'.$key.'_leftmenunode';
+                try {
+                    if(!file_exists($CFG->dirroot.'/blocks/'.$key.'/lib.php')){
+                        continue;
                     }
+                    require_once($CFG->dirroot.'/blocks/'.$key.'/lib.php');
+                    if(!function_exists($functionname)){
+                        continue;
+                    }
+                    $data = $functionname();
+                } catch (\Throwable $e) {
+                    debugging('left menu hook ' . $functionname . ' failed: ' . $e->getMessage(), DEBUG_DEVELOPER);
+                    continue;
+                }
+                foreach($this->leftmenu_hook_nodes($functionname, $data) as $navkey => $val){
+                    $pluginnavs[$navkey][] = $val;
                 }
             }
 
             $tool_certificate = $core_component::get_plugin_directory('tool', 'certificate');
             if($tool_certificate){
-                if(file_exists($CFG->dirroot.'/admin/tool/certificate/lib.php')){
-                    require_once($CFG->dirroot.'/admin/tool/certificate/lib.php');
-                    $functionname = 'tool_certificate_leftmenunode';
-                    if(function_exists($functionname)){
-                        $data = $functionname();
-                        foreach($data as  $key => $val){
-                            $pluginnavs[$key][] = $val;
+                $functionname = 'tool_certificate_leftmenunode';
+                $data = null;
+                try {
+                    if(file_exists($CFG->dirroot.'/admin/tool/certificate/lib.php')){
+                        require_once($CFG->dirroot.'/admin/tool/certificate/lib.php');
+                        if(function_exists($functionname)){
+                            $data = $functionname();
                         }
                     }
+                } catch (\Throwable $e) {
+                    debugging('left menu hook ' . $functionname . ' failed: ' . $e->getMessage(), DEBUG_DEVELOPER);
+                    $data = null;
+                }
+                foreach($this->leftmenu_hook_nodes($functionname, $data) as $navkey => $val){
+                    $pluginnavs[$navkey][] = $val;
                 }
             }
 
@@ -797,6 +812,33 @@ JS;
         $block_content .= html_writer::end_tag('ul');
 
         return $block_content;
+    }
+
+    /**
+     * Normalise what a plugin's *_leftmenunode() hook returned into an array of menu HTML.
+     *
+     * Arrays pass through unchanged. A string is wrapped the way the old
+     * (array) cast on the local_* hooks did, so string-returning BizLMS hooks
+     * still render. null/false/'' give nothing. Anything else is ignored with
+     * a developer debugging() line instead of a foreach warning on a non-array.
+     *
+     * @param string $functionname The hook that produced $data (for the debug line).
+     * @param mixed $data The hook's return value.
+     * @return array
+     */
+    private function leftmenu_hook_nodes(string $functionname, $data): array {
+        if (is_array($data)) {
+            return $data;
+        }
+        if ($data === null || $data === false || $data === '') {
+            return [];
+        }
+        if (is_string($data)) {
+            return [$data];
+        }
+        debugging('left menu hook ' . $functionname . ' returned ' . gettype($data) . ', expected an array',
+            DEBUG_DEVELOPER);
+        return [];
     }
     /**
      * returns the link of the costcenter scheme css file to load in header of every layout
@@ -1642,52 +1684,65 @@ JS;
                     $admin = html_writer::link($admin_url, '<i class="fa fa-home" aria-hidden="true"></i><span class="user_navigation_link_text">'.get_string('home','theme_sentientia').'</span>',array('class'=>'user_navigation_link'));
                     $block_content .= $admin;
                 $block_content .= html_writer::end_tag('li');
+            // FIX 2 (2026-11-18): same try/catch guard as
+            // left_navigation_quick_links(). This popover is in navbar.mustache
+            // (dashboard + course editing), where the UAT site-admin crash hit.
             $pluginnavs = array();
             foreach($local_pluginlist as $key => $local_pluginname){
-                if(file_exists($CFG->dirroot.'/local/'.$key.'/lib.php')){
-                    require_once($CFG->dirroot.'/local/'.$key.'/lib.php');
-                    $functionname = 'local_'.$key.'_leftmenunode';
-                    if(function_exists($functionname)){
-                        $data = $functionname();
-                        foreach((array) $data as  $key => $val){
-                            $pluginnavs[$key][] = $val;
-                        }
+                $functionname = 'local_'.$key.'_leftmenunode';
+                try {
+                    if(!file_exists($CFG->dirroot.'/local/'.$key.'/lib.php')){
+                        continue;
                     }
+                    require_once($CFG->dirroot.'/local/'.$key.'/lib.php');
+                    if(!function_exists($functionname)){
+                        continue;
+                    }
+                    $data = $functionname();
+                } catch (\Throwable $e) {
+                    debugging('left menu hook ' . $functionname . ' failed: ' . $e->getMessage(), DEBUG_DEVELOPER);
+                    continue;
+                }
+                foreach($this->leftmenu_hook_nodes($functionname, $data) as $navkey => $val){
+                    $pluginnavs[$navkey][] = $val;
                 }
             }
-            // ksort($pluginnavs);
-            // foreach($pluginnavs as $pluginnav){
-            //     foreach($pluginnav  as $key => $value){
-            //             $data = $value;
-            //             $block_content .= $data;
-            //     }
-            // }
 
             foreach($block_pluginlist as $key => $local_pluginname){
-                 if(file_exists($CFG->dirroot.'/blocks/'.$key.'/lib.php')){
-                    require_once($CFG->dirroot.'/blocks/'.$key.'/lib.php');
-                    $functionname = 'block_'.$key.'_leftmenunode';
-                    if(function_exists($functionname)){
-                    // $block_content .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_dashboard', 'class'=>'pull-left user_nav_div dashboard row-fluid '));
-                        $data = $functionname();
-                        foreach($data as  $key => $val){
-                            $pluginnavs[$key][] = $val;
-                        }
-                    // $block_content .= html_writer::end_tag('li');
+                $functionname = 'block_'.$key.'_leftmenunode';
+                try {
+                    if(!file_exists($CFG->dirroot.'/blocks/'.$key.'/lib.php')){
+                        continue;
                     }
+                    require_once($CFG->dirroot.'/blocks/'.$key.'/lib.php');
+                    if(!function_exists($functionname)){
+                        continue;
+                    }
+                    $data = $functionname();
+                } catch (\Throwable $e) {
+                    debugging('left menu hook ' . $functionname . ' failed: ' . $e->getMessage(), DEBUG_DEVELOPER);
+                    continue;
+                }
+                foreach($this->leftmenu_hook_nodes($functionname, $data) as $navkey => $val){
+                    $pluginnavs[$navkey][] = $val;
                 }
             }
-            if(file_exists($CFG->dirroot.'/admin/tool/certificate/lib.php')){
-                require_once($CFG->dirroot.'/admin/tool/certificate/lib.php');
-                $functionname = 'tool_certificate_leftmenunode';
-                if(function_exists($functionname)){
-                // $block_content .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_dashboard', 'class'=>'pull-left user_nav_div dashboard row-fluid '));
-                    $data = $functionname();
-                    foreach($data as  $key => $val){
-                        $pluginnavs[$key][] = $val;
+
+            $functionname = 'tool_certificate_leftmenunode';
+            $data = null;
+            try {
+                if(file_exists($CFG->dirroot.'/admin/tool/certificate/lib.php')){
+                    require_once($CFG->dirroot.'/admin/tool/certificate/lib.php');
+                    if(function_exists($functionname)){
+                        $data = $functionname();
                     }
-                // $block_content .= html_writer::end_tag('li');
                 }
+            } catch (\Throwable $e) {
+                debugging('left menu hook ' . $functionname . ' failed: ' . $e->getMessage(), DEBUG_DEVELOPER);
+                $data = null;
+            }
+            foreach($this->leftmenu_hook_nodes($functionname, $data) as $navkey => $val){
+                $pluginnavs[$navkey][] = $val;
             }
 
             ksort($pluginnavs);

@@ -175,6 +175,81 @@ body.pagelayout-course:not(.editing) #page-header .courseheader .course_heading 
     }
 }
 
+/* ── Course banner: the title card and the icon toolbar share a row (2026-11-18) ──
+   Above 1200px the toolbar (.course_extended_menu_list: Reports, Download
+   certificate, and for managers the other course_context_header icons) was
+   absolute at the banner's top right (_moodle-overrides.scss, right: 30px),
+   on top of the title card, which grows to the banner's full width: a long
+   course title ran under the buttons (UAT, the POSH 2026 course at 1920px).
+   From 993px to 1200px custom_media.scss makes it static after .course_heading
+   and it hung over the banner's bottom edge (half of each button outside the
+   banner at 1024px).
+   Above 992px the banner is a two-column grid: the title (.heading) and the
+   toolbar share the first row, the title column takes the width the toolbar
+   leaves and the title wraps in it; the meta row (rating, enrolments,
+   progress / Start) spans both columns below, at the bottom as before
+   (its .mt-auto). .course_heading steps aside (display: contents) so its two
+   children are grid items; its 2rem top margin (_moodle-overrides.scss) moves
+   to the title and the toolbar. The banner grows around a wrapped title, 240px
+   at least (the slab height); view mode keeps min-height: 0 from the
+   compaction rule above, which is more specific. The toolbar's top is about
+   the title's first line. The toolbar takes 40% of the banner at most (a
+   manager's nine icons are about 515px): past that its buttons wrap onto a
+   second row, right-aligned, so the title keeps at least 60%. Without grid or display: contents support the old
+   layout stays. 992px and below: unchanged, the toolbar under the meta row. */
+@media (min-width: 993px) {
+    #page-header .courseheader {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) fit-content(40%);
+        grid-template-rows: auto 1fr;
+        column-gap: var(--ap-space-4);
+        block-size: auto;
+        min-block-size: 240px;
+    }
+    #page-header .courseheader > .course_heading {
+        display: contents !important;  /* preserved: the template's .d-flex utility is display: flex !important */
+    }
+    #page-header .courseheader > .course_heading > .heading {
+        grid-column: 1;
+        grid-row: 1;
+        min-inline-size: 0;
+        margin-block-start: var(--ap-space-8);
+    }
+    #page-header .courseheader > .course_heading > .heading .page-header-headings {
+        min-inline-size: 0;
+        overflow-wrap: anywhere;  /* a title with one very long word wraps in its column too */
+    }
+    #page-header .courseheader > .course_heading > .row {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+    #page-header .courseheader > .context-header-settings-menu {
+        grid-column: 2;
+        grid-row: 1;
+        align-self: start;
+        margin-block-start: calc(var(--ap-space-8) + var(--ap-space-3));
+    }
+    #page-header .courseheader .course_extended_menu_list {
+        position: static;
+        float: none;
+        min-inline-size: 0;
+        justify-content: flex-end;
+    }
+}
+
+/* The toolbar paints above the banner's gradient overlay (.courseheader::before,
+   absolute, 92% opaque), at every width (2026-11-18). Static, it sat under the
+   overlay: only the icon glyphs (.icon is position: relative) came through, the
+   buttons' own boxes were tinted blue and a click on a button outside its glyph
+   reached the banner, not the link (seen at 1024, 768 and 390px). 199 is the
+   z-index the absolute toolbar already had, so it stacks against the rest of
+   the page as before, above the sticky title card (z-index 5), so the managers'
+   cog dropdown opens over the card. */
+#page-header .courseheader > .context-header-settings-menu {
+    position: relative;
+    z-index: 199;
+}
+
 /* ── Dark mode: the banner's title card (2026-11-16) ─────────────────────
    _legacy-admin.scss ("Course title at top - STICKY", body.path-course-view)
    paints .page-header-headings rgba(255,255,255,.92), a literal the dark token
