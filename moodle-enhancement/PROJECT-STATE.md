@@ -1,5 +1,5 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-11-18 ~01:00 (**C-suite demo MOVED UP to Wednesday 18 November, morning; everything developed so far goes to UAT first thing (Nitin, over his VPN, per `docs/cutover/UAT-DEPLOY-RUNBOOK-2026-11-18.md`). Committed tonight: the fresh-install fixes (`cdd4fc310`) and the compliance_report security + exclusions fix (`0706fdadf`, 2026111702). New C-suite deck: what Academy 2.0 adds over today's airpay.academy, no operational detail. See the 2026-11-17/18 entry.**)
+**Updated:** 2026-11-18 12:35 (**Midday: three demo fixes on UAT (`bc2227c20`, theme 2026111800 + certificate redesign); see the 2026-11-18 midday entry.** Earlier, ~01:00: **C-suite demo MOVED UP to Wednesday 18 November, morning; everything developed so far goes to UAT first thing (Nitin, over his VPN, per `docs/cutover/UAT-DEPLOY-RUNBOOK-2026-11-18.md`). Committed tonight: the fresh-install fixes (`cdd4fc310`) and the compliance_report security + exclusions fix (`0706fdadf`, 2026111702). New C-suite deck: what Academy 2.0 adds over today's airpay.academy, no operational detail. See the 2026-11-17/18 entry.**)
 **Before that, 2026-11-16** (**Demo week. Theme 2026111600-02, reminder tasks (courses 2026111600) and Option A privacy committed; CI green. See the 2026-11-16 entry.**)
 **Before that, 2026-11-13** (**Nitin's 11-12 decisions carried out; see the 2026-11-12 / 11-13 entry.**
 - Committed and on `production`: subagent-stall fix, Stage 0-2 tooling, working permission rules, hook and gate fixes, theme A2/A3, A1 (ADR-034 slice 1), A5 (audit events + tenant trail), AI gateway pricing.
@@ -8,6 +8,32 @@
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
 
 ---
+
+## 2026-11-18 midday - three demo fixes on UAT before the 13:15 freeze (Opus 5.5)
+
+On Nitin's go (demo 14:00 or later; all three fixes approved), commit `bc2227c20` (pushed, `production` fast-forwarded),
+deployed 12:22-12:28 IST from a git export (autocrlf off) in `kit-scratch/uat-1118-bc2227c20`:
+- **Course title under the banner buttons** (Nitin's screenshot as Priya, POSH course): `_course-player.scss`, theme
+  2026111800 / 1.0.68-beta. Above 992px title and toolbar share a grid row, the title wraps; the toolbar paints above
+  the gradient overlay at every width. Evidence: `docs/visual-evidence/2026-11-18/course-title-overlap/` (1920-390px,
+  light + dark, manager toolbar). Served UAT CSS contains the new rules.
+- **Admin course page "Class local_costcenter\lib\accesslib not found"**: `core_renderer.php` runs every
+  `*_leftmenunode()` hook in try/catch with a developer `debugging()` line (`leftmenu_hook_nodes()` normalises returns).
+  Proven ON UAT as `admin` by a read-only CLI render: the exact LearnerScript failure is caught, both menus render.
+  Root cause still open: the WF-016 `class_alias` hook exists only in top-level `local/sentientia_org` (hooks.php,
+  hook_callbacks.php, classes/compat/), not in the ME copy UAT runs, so the LearnerScript menu entry stays missing
+  on UAT until that cross-tree drift is fixed (Nitin's call).
+- **Certificate** ("UAT Course Completion", template id 2): new `tools/uat/certificate_template_redesign.php` (dry run
+  default, `--apply`, `--regenerate-issues`, `--sample-pdf` rolled back). Old look: refpoint 1 + posx=20 centred every
+  line on x=20mm. On UAT: created issue field `coursefullname`, 13 elements (frame, logo, title, name, course, date,
+  code, QR, verification line), regenerated all 7 issue PDFs (all test personas), 0 failures, nothing issued or sent.
+  Re-run reports "already up to date". Evidence: `docs/visual-evidence/2026-11-18/certificate-redesign/`
+  (incl. `uat-issued-certificate-test-persona.png`, Priya's stored PDF). Open: `provision_test_users.php:848` should
+  pass `coursefullname` for new issues; the QR verify link may need login (UAT forcelogin).
+- Pre-flight: UAT's 3 files equal `a8de7f4c0` blobs; after: equal `bc2227c20`; theme version 2026111800; upgrade
+  `++ Success`; backups `/tmp/uat-predeploy-backup-20261118-12{2141,2250}.tgz`. No flag touched.
+- Surface walk (12 local personas, Playwright, notes per persona under `kit-scratch/1118/walk/<persona>/NOTES.md`)
+  running; merged checklist goes to `docs/business/csuite-2026-11-18/SURFACE-WALK-2026-11-18.md`.
 
 ## 2026-11-18 - UAT deployed before the C-suite demo (Opus 5.5)
 
