@@ -432,11 +432,18 @@ class compliance_engine {
            ORDER BY u.lastname, u.firstname, s.userid",
             $params, $page * $perpage, $perpage);
 
-        $rows = [];
+        $users = [];
         foreach ($user_ids as $uid_rec) {
-            $user = $DB->get_record('user', ['id' => $uid_rec->userid],
+            $users[] = $DB->get_record('user', ['id' => $uid_rec->userid],
                 'id, firstname, lastname, email, open_path, open_designation, open_employeeid');
+        }
+        // The page's "Department" column printed the designation until
+        // 2026-11-18 (V5 of the 11-18 surface walk); 'department' stays the raw
+        // path for the export, 'department_name' is what the page shows.
+        $deptnames = self::department_names(array_map(fn($u) => (string) ($u->open_path ?? ''), $users));
 
+        $rows = [];
+        foreach ($users as $user) {
             $row = [
                 'userid'       => $user->id,
                 'employee_id'  => $user->open_employeeid ?? '',
@@ -444,6 +451,7 @@ class compliance_engine {
                 'fullname'     => format_string($user->firstname . ' ' . $user->lastname),
                 'designation'  => format_string($user->open_designation ?? ''),
                 'department'   => $user->open_path ?? '',
+                'department_name' => $deptnames[(string) ($user->open_path ?? '')] ?? '',
                 'courses'      => [],
                 'all_completed' => true,
             ];
@@ -483,73 +491,192 @@ class compliance_engine {
     }
 
     /**
+     * Display name of the org unit each user path sits in: the deepest org
+     * unit at or above the path, below the tenant root. A user who sits at
+     * the tenant root itself gets ''.
+     *
+     * @param string[] $paths user open_path values
+     * @return array path => format_string()'d name
+     */
+    private static function department_names(array $paths): array {
+        global $DB;
+        $paths = array_unique($paths);
+        $wanted = [];
+        foreach ($paths as $path) {
+            $segments = array_values(array_filter(explode('/', $path), fn($s) => $s !== ''));
+            $prefix = '/' . ($segments[0] ?? '');
+            for ($i = 1; $i < count($segments); $i++) {
+                $prefix .= '/' . $segments[$i];
+                $wanted[$prefix] = true;
+            }
+        }
+        if (!$wanted || !$DB->get_manager()->table_exists('local_sentientia_org')) {
+            return [];
+        }
+        [$insql, $inargs] = $DB->get_in_or_equal(array_keys($wanted), SQL_PARAMS_NAMED, 'dn');
+        $names = [];
+        foreach ($DB->get_records_select('local_sentientia_org', "path {$insql}", $inargs, '', 'id, path, fullname') as $org) {
+            $names[rtrim((string) $org->path, '/')] = $org->fullname;
+        }
+        $result = [];
+        foreach ($paths as $path) {
+            $segments = array_values(array_filter(explode('/', $path), fn($s) => $s !== ''));
+            $prefix = '/' . ($segments[0] ?? '');
+            $name = '';
+            for ($i = 1; $i < count($segments); $i++) {
+                $prefix .= '/' . $segments[$i];
+                if (isset($names[$prefix])) {
+                    $name = $names[$prefix];
+                }
+            }
+            $result[$path] = ($name === '') ? '' : format_string($name);
+        }
+        return $result;
+    }
+
+    /**
      * Get department compliance scorecard.
+     *
+     * One row per org unit at depth 2 (department) and depth 3 (sub-department)
+     * of the scope's tenant, in tree order: each department is followed by its
+     * sub-departments, which carry their parent's name in 'parentname'. Several
+     * departments have a "Technology" or an "Operations" of their own, and a
+     * flat list of those names could not be told apart (vp_admin1 B4,
+     * 2026-11-18). When $orgpath is deeper than the tenant root - the report's
+     * Department / Sub-department filter - only that unit and the units under
+     * it are listed; until 2026-11-18 the filter was ignored on this tab.
+     *
+     * total, completed and overdue count ASSIGNMENTS (snapshot rows: one per
+     * person per mandatory course) at the unit's path or below it, /-bounded;
+     * users counts the people holding them. A unit with no assignments has
+     * rag 'none' and is_empty true: it used to read 0% and red "Critical",
+     * which turned the tab into a wall of red for units nobody is assigned in.
+     * A line manager ($userids not null) is not shown such units at all.
+     *
+     * analytics_manager::get_compliance_heatmap() reads this too, so the
+     * analytics "Compliance by Department" card and this tab cannot disagree.
+     *
+     * @param string $orgpath scope; '' = tenant 1 (site admin, as before)
+     * @param int[]|null $userids a line manager's team; null = no restriction
+     * @return array[] rows, see above
      */
     public static function get_department_scorecard(string $orgpath = '', ?array $userids = null): array {
         global $DB;
         [$teamsql, $teamargs] = self::users_filter($userids, 'userid');
 
-        $orgfilter = '';
-        $params = [];
-        if (!empty($orgpath)) {
-            // Match exact tenant root OR descendant (`'/1' . '%'` would leak /10, /177).
-            $orgfilter = "AND (s.department_path = :orgexact OR s.department_path LIKE :orgprefix)";
-            $params['orgexact']  = $orgpath;
-            $params['orgprefix'] = $DB->sql_like_escape($orgpath) . '/%';
-        }
-
-        // Get departments at depth 3 (or top-level if no specific org).
+        // Departments of the scope's tenant (tenant 1 when unscoped, as before).
+        $orgpath = rtrim(trim($orgpath), '/');
         $parts = explode('/', trim($orgpath ?: '/1', '/'));
         $toporg = '/' . ($parts[0] ?? '1');
+        $narrowto = ($orgpath !== '' && $orgpath !== $toporg) ? $orgpath : '';
 
-        $all_descendants = \local_sentientia_org\org_manager::get_descendants($toporg);
-        $departments = array_filter($all_descendants, function($cc) {
-            return in_array(($cc->depth ?? 0), [2, 3]);
+        $orgsbypath = [];
+        foreach (\local_sentientia_org\org_manager::get_descendants($toporg) as $org) {
+            $path = rtrim((string) ($org->path ?? ''), '/');
+            if ($path !== '') {
+                $orgsbypath[$path] = $org;
+            }
+        }
+        $units = [];
+        foreach ($orgsbypath as $path => $org) {
+            $depth = (int) ($org->depth ?? 0);
+            if ($depth !== 2 && $depth !== 3) {
+                continue;
+            }
+            if ($narrowto !== '' && $path !== $narrowto && strpos($path, $narrowto . '/') !== 0) {
+                continue;
+            }
+            $units[$path] = ['org' => $org, 'depth' => $depth, 'total' => 0, 'completed' => 0,
+                'overdue' => 0, 'users' => []];
+        }
+        if (!$units) {
+            return [];
+        }
+
+        // One grouped query, rolled up in PHP. This was three COUNT queries
+        // per unit - about 225 on the Airpay tree - each scoped with the
+        // /-bounded helper; the roll-up below credits a row to a unit only
+        // when the unit's path is the row's path or a whole-segment prefix of
+        // it, which is the same rule ('/1/2' never collects '/1/20').
+        [$tenantsql, $tenantargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+            $toporg, '', 'department_path', 'sct');
+        $rs = $DB->get_recordset_sql(
+            "SELECT department_path, userid, COUNT(*) AS total,
+                    SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed,
+                    SUM(CASE WHEN status = 'overdue' THEN 1 ELSE 0 END) AS overdue
+               FROM {local_compliance_snapshot}
+              WHERE {$tenantsql}{$teamsql}
+           GROUP BY department_path, userid",
+            $tenantargs + $teamargs);
+        foreach ($rs as $row) {
+            $prefix = '';
+            foreach (explode('/', trim((string) $row->department_path, '/')) as $segment) {
+                $prefix .= '/' . $segment;
+                if (isset($units[$prefix])) {
+                    $units[$prefix]['total'] += (int) $row->total;
+                    $units[$prefix]['completed'] += (int) $row->completed;
+                    $units[$prefix]['overdue'] += (int) $row->overdue;
+                    $units[$prefix]['users'][(int) $row->userid] = true;
+                }
+            }
+        }
+        $rs->close();
+
+        // Tree order: a department, then its sub-departments, each by name.
+        $sortkey = [];
+        foreach ($units as $path => $unit) {
+            $parentpath = substr($path, 0, (int) strrpos($path, '/'));
+            $parent = ($unit['depth'] === 3) ? ($orgsbypath[$parentpath] ?? null) : null;
+            $units[$path]['parent'] = $parent;
+            $sortkey[$path] = ($parent !== null)
+                ? [(string) $parent->fullname, $parentpath, (string) $unit['org']->fullname]
+                : [(string) $unit['org']->fullname, $path, ''];
+        }
+        uksort($units, function ($a, $b) use ($sortkey) {
+            foreach ([0, 1, 2] as $i) {
+                $cmp = strnatcasecmp($sortkey[$a][$i], $sortkey[$b][$i]);
+                if ($cmp !== 0) {
+                    return $cmp;
+                }
+            }
+            return 0;
         });
 
         $results = [];
-        foreach ($departments as $dept) {
-            // `$dept->path . '%'` over-counted every sibling department whose id
-            // shares a digit prefix: scoping to /1/2 also swallowed /1/20 and
-            // /1/21. Same defect class as the admin-dashboard over-count that
-            // shipped twice; routed through the /-bounded shared helper
-            // 2026-09-22 and locked by tenant_test's boundary suite.
-            [$deptsql, $deptargs] = \local_sentientia_platform\tenant::path_descendant_filter(
-                (string) $dept->path, '', 'department_path', 'dept');
-
-            $deptargs += $teamargs;
-            $total = $DB->count_records_sql(
-                "SELECT COUNT(*) FROM {local_compliance_snapshot} WHERE {$deptsql}{$teamsql}",
-                $deptargs);
+        foreach ($units as $path => $unit) {
+            $total = $unit['total'];
             if ($userids !== null && $total === 0) {
                 // A manager sees the departments their team is in, not every
                 // department of the tenant with a row of zeros.
                 continue;
             }
-
-            $completed = $DB->count_records_sql(
-                "SELECT COUNT(*) FROM {local_compliance_snapshot}
-                  WHERE {$deptsql}{$teamsql} AND status = 'completed'",
-                $deptargs);
-
-            $overdue = $DB->count_records_sql(
-                "SELECT COUNT(*) FROM {local_compliance_snapshot}
-                  WHERE {$deptsql}{$teamsql} AND status = 'overdue'",
-                $deptargs);
-
-            $rate = $total > 0 ? round(($completed / $total) * 100) : 0;
-            $rag = ($rate >= 90) ? 'green' : (($rate >= 70) ? 'amber' : 'red');
+            $completed = $unit['completed'];
+            $overdue = $unit['overdue'];
+            $rate = $total > 0 ? (int) round(($completed / $total) * 100) : 0;
+            $rag = ($total === 0) ? 'none' : (($rate >= 90) ? 'green' : (($rate >= 70) ? 'amber' : 'red'));
+            $org = $unit['org'];
+            $parent = $unit['parent'];
 
             $results[] = [
-                'department'  => format_string($dept->fullname),
-                'total'       => $total,
-                'completed'   => $completed,
-                'overdue'     => $overdue,
-                'rate'        => $rate,
-                'rag'         => $rag,
-                'is_green'    => ($rag === 'green'),
-                'is_amber'    => ($rag === 'amber'),
-                'is_red'      => ($rag === 'red'),
+                'department'       => format_string($org->fullname),
+                // For exports and other non-HTML output: not HTML-escaped.
+                'department_plain' => format_string($org->fullname, true, ['escape' => false]),
+                'parentname'       => ($parent !== null) ? format_string($parent->fullname) : '',
+                'parentname_plain' => ($parent !== null) ? format_string($parent->fullname, true, ['escape' => false]) : '',
+                'has_parent'       => ($parent !== null),
+                'path'             => $path,
+                'depth'            => $unit['depth'],
+                'users'            => count($unit['users']),
+                'total'            => $total,
+                'completed'        => $completed,
+                'overdue'          => $overdue,
+                'has_overdue'      => ($overdue > 0),
+                'rate'             => $rate,
+                'rag'              => $rag,
+                'is_empty'         => ($total === 0),
+                'is_green'         => ($rag === 'green'),
+                'is_amber'         => ($rag === 'amber'),
+                'is_red'           => ($rag === 'red'),
             ];
         }
 

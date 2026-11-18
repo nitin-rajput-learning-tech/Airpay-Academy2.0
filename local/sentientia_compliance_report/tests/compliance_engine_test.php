@@ -331,4 +331,121 @@ final class compliance_engine_test extends \advanced_testcase {
         sort($ids);
         $this->assertSame([1, 10, 177], $ids, 'site admins (empty scope) see every BU');
     }
+
+    /** An org unit below a root, with a fixed id. */
+    private function add_org(int $id, string $name, int $parentid, string $path, int $depth): void {
+        global $DB;
+        $this->add_root_org($id, $name);
+        $DB->update_record('local_sentientia_org', (object) [
+            'id' => $id, 'parentid' => $parentid, 'path' => $path, 'depth' => $depth]);
+    }
+
+    /**
+     * Tenant 1: Payments (/1/2) > Technology (/1/2/3); Lending (/1/4) >
+     * Technology (/1/4/5); Admin (/1/6), nobody assigned; Twenty (/1/20), the
+     * /-boundary look-alike of /1/2.
+     */
+    private function seed_scorecard_tree(): void {
+        $this->ensure_bizlms_schema();
+        $this->add_root_org(1, 'Airpay');
+        $this->add_org(2, 'Payments', 1, '/1/2', 2);
+        $this->add_org(3, 'Technology', 2, '/1/2/3', 3);
+        $this->add_org(4, 'Lending', 1, '/1/4', 2);
+        $this->add_org(5, 'Technology', 4, '/1/4/5', 3);
+        $this->add_org(6, 'Admin', 1, '/1/6', 2);
+        $this->add_org(20, 'Twenty', 1, '/1/20', 2);
+
+        $this->add_mandatory_course(9001, 'POSH', 1);
+        $this->add_mandatory_course(9002, 'InfoSec', 2);
+        $a = $this->user_at_path('/1/2/3');
+        $b = $this->user_at_path('/1/2');
+        $c = $this->user_at_path('/1/4/5');
+        $d = $this->user_at_path('/1/20');
+        $this->add_snapshot($a->id, 9001, '/1/2/3', 'completed');
+        $this->add_snapshot($a->id, 9002, '/1/2/3', 'overdue');
+        $this->add_snapshot($b->id, 9001, '/1/2', 'completed');
+        $this->add_snapshot($c->id, 9001, '/1/4/5', 'completed');
+        $this->add_snapshot($d->id, 9001, '/1/20', 'overdue');
+    }
+
+    /**
+     * 11-18 surface walk (vp_admin1 B4): the scorecard was a flat list in
+     * which a department with nobody assigned read 0% and red "Critical", and
+     * the two "Technology" rows could not be told apart. Now: tree order,
+     * the parent's name on each sub-department, a neutral status for a unit
+     * with no assignments, and Overdue flagged only when there is any.
+     */
+    public function test_scorecard_is_a_tree_with_neutral_empty_units(): void {
+        $this->resetAfterTest();
+        $this->seed_scorecard_tree();
+
+        $rows = compliance_engine::get_department_scorecard('/1');
+        $this->assertSame(['/1/6', '/1/4', '/1/4/5', '/1/2', '/1/2/3', '/1/20'], array_column($rows, 'path'),
+            'each department followed by its sub-departments, by name');
+        $bypath = array_column($rows, null, 'path');
+
+        // Payments: a (2 assignments) + b (1); d at /1/20 is not under /1/2.
+        $this->assertSame(3, $bypath['/1/2']['total']);
+        $this->assertSame(2, $bypath['/1/2']['completed']);
+        $this->assertSame(1, $bypath['/1/2']['overdue']);
+        $this->assertSame(2, $bypath['/1/2']['users']);
+        $this->assertSame(67, $bypath['/1/2']['rate']);
+        $this->assertTrue($bypath['/1/2']['has_overdue']);
+        $this->assertSame(1, $bypath['/1/20']['total']);
+
+        // Sub-departments carry the parent's name.
+        $this->assertSame('Payments', $bypath['/1/2/3']['parentname']);
+        $this->assertSame('Lending', $bypath['/1/4/5']['parentname']);
+        $this->assertFalse($bypath['/1/2']['has_parent']);
+
+        // Lending: one completed assignment, nothing overdue.
+        $this->assertSame(100, $bypath['/1/4']['rate']);
+        $this->assertTrue($bypath['/1/4']['is_green']);
+        $this->assertFalse($bypath['/1/4']['has_overdue']);
+
+        // Admin: nobody assigned - not "Critical".
+        $this->assertTrue($bypath['/1/6']['is_empty']);
+        $this->assertSame('none', $bypath['/1/6']['rag']);
+        $this->assertFalse($bypath['/1/6']['is_red']);
+        $this->assertSame(0, $bypath['/1/6']['total']);
+    }
+
+    /**
+     * The report's Department / Sub-department filter narrows the scorecard
+     * to that unit and the units under it (it was ignored on this tab).
+     */
+    public function test_scorecard_follows_the_department_filter(): void {
+        $this->resetAfterTest();
+        $this->seed_scorecard_tree();
+
+        $this->assertSame(['/1/2', '/1/2/3'],
+            array_column(compliance_engine::get_department_scorecard('/1/2'), 'path'));
+        $this->assertSame(['/1/2/3'],
+            array_column(compliance_engine::get_department_scorecard('/1/2/3'), 'path'));
+        // The tenant root is the whole tenant.
+        $this->assertCount(6, compliance_engine::get_department_scorecard('/1'));
+    }
+
+    /**
+     * V5 (11-18 surface walk): the matrix "Department" column printed the
+     * designation. department_name is the org unit the person sits in.
+     */
+    public function test_matrix_department_name_is_the_org_unit(): void {
+        $this->resetAfterTest();
+        $this->ensure_bizlms_schema();
+        $this->add_root_org(1, 'Airpay');
+        $this->add_org(2, 'Payments', 1, '/1/2', 2);
+        $this->add_org(3, 'Finance & Accounts', 2, '/1/2/3', 3);
+        $this->add_mandatory_course(9101, 'POSH', 1);
+
+        $deep = $this->user_at_path('/1/2/3/99', 'E1', 'Analyst');   // below the deepest org unit
+        $root = $this->user_at_path('/1', 'E2');
+        $this->add_snapshot($deep->id, 9101, '/1/2/3/99', 'completed');
+        $this->add_snapshot($root->id, 9101, '/1', 'completed');
+
+        $rows = array_column(compliance_engine::get_compliance_matrix('/1')['rows'], null, 'userid');
+        $this->assertSame(format_string('Finance & Accounts'), $rows[$deep->id]['department_name']);
+        $this->assertSame('Analyst', $rows[$deep->id]['designation']);
+        $this->assertSame('', $rows[$root->id]['department_name'], 'nobody\'s department at the tenant root');
+    }
 }

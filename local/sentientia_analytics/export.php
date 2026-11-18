@@ -29,6 +29,9 @@ if (!\local_sentientia_analytics\permission::can_export()) {
 }
 
 $range = optional_param('range', '30d', PARAM_ALPHANUMEXT);
+if (!in_array($range, \local_sentientia_analytics\analytics_manager::RANGES, true)) {
+    $range = '30d';  // as the dashboard does; the "Period" line used to echo any value given
+}
 $format = optional_param('format', 'csv', PARAM_ALPHA);
 
 // Tenant scoping. This used to be tenant_manager::get_tenant_path(), which
@@ -61,7 +64,8 @@ if ($format === 'csv') {
         foreach ($data['kpis'] as $kpi) {
             $label = $kpi['label'] ?? $kpi['name'] ?? 'KPI';
             $value = $kpi['value'] ?? $kpi['current'] ?? 0;
-            $trend = $kpi['trend']['label'] ?? '';
+            // 'trend' became a display string in Phase B0; the trend label is in trend_obj.
+            $trend = $kpi['trend_obj']['label'] ?? '';
             fputcsv($output, [$label, $value, $trend], ',', '"', '\\');
         }
     }
@@ -82,7 +86,11 @@ if ($format === 'csv') {
     fputcsv($output, ['Department', 'Users', 'Compliance Rate', 'RAG Status'], ',', '"', '\\');
     if (!empty($data['heatmap'])) {
         foreach ($data['heatmap'] as $dept) {
-            fputcsv($output, [$dept['department'], $dept['users'], $dept['rate'] . '%', strtoupper($dept['rag'])], ',', '"', '\\');
+            // department_plain: 'department' is HTML-escaped for the page and put "&amp;" in the CSV.
+            $deptname = empty($dept['has_parent'])
+                ? $dept['department_plain']
+                : $dept['parentname_plain'] . ' > ' . $dept['department_plain'];
+            fputcsv($output, [$deptname, $dept['users'], $dept['rate'] . '%', strtoupper($dept['rag'])], ',', '"', '\\');
         }
     }
     fputcsv($output, [], ',', '"', '\\');

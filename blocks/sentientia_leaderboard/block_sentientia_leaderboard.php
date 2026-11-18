@@ -61,14 +61,19 @@ class block_sentientia_leaderboard extends block_base {
         $this->content->text = '';
         $this->content->footer = '';
 
-        // Master flag gate — render an info notice in the block when off.
+        // Master flag gate. Surface walk 2026-11-18: learners were shown the
+        // flag key. Only someone who can change site configuration gets the
+        // flag hint; everyone else gets empty content, so block_base::is_empty()
+        // hides the block outside editing mode.
         if (class_exists('\\local_sentientia_platform\\feature_flags')) {
             if (!\local_sentientia_platform\feature_flags::is_enabled(
                     'sentientia.leaderboards.enabled')) {
-                $this->content->text = $OUTPUT->notification(
-                    get_string('feature_disabled',
-                        'local_sentientia_leaderboard'),
-                    \core\output\notification::NOTIFY_INFO);
+                if (has_capability('moodle/site:config', \context_system::instance())) {
+                    $this->content->text = $OUTPUT->notification(
+                        get_string('feature_disabled',
+                            'local_sentientia_leaderboard'),
+                        \core\output\notification::NOTIFY_INFO);
+                }
                 return $this->content;
             }
         }

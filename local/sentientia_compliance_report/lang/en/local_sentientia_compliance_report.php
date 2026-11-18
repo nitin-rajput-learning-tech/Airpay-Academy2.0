@@ -147,3 +147,23 @@ $string['error_noaccess'] = 'You do not have access to the compliance report. It
 $string['scope_team'] = 'Showing your reporting team only: {$a} people - your direct reports and everyone who reports to them.';
 $string['error_notenant'] = 'Your account is not linked to an organisation, so the compliance report cannot be scoped to it. Ask an administrator to set your organisation.';
 $string['manager_left'] = 'no longer with the organisation';
+
+// Empty states and the scorecard (11-18 surface walk, 2026-11-18). 'nodata'
+// above is the site administrator's wording; everyone else gets nodata_pending.
+$string['nodata_title'] = 'No compliance data yet';
+$string['nodata_pending'] = 'Compliance figures have not been calculated yet. Please check again later, or ask your L&D administrator.';
+$string['nodata_scope_title'] = 'No compliance assignments';
+$string['nodata_scope'] = 'Nobody in this view has a mandatory course assigned yet.';
+$string['empty_matrix_title'] = 'No employees to show';
+$string['empty_matrix'] = 'No employees match this view. Try the first page or clear the filters.';
+$string['empty_defaulters_title'] = 'Nobody is overdue';
+$string['empty_defaulters'] = 'No one in this view is past the deadline for a mandatory course.';
+$string['empty_scorecard_title'] = 'No departments to show';
+$string['empty_scorecard'] = 'No department in this view has mandatory-course assignments.';
+$string['empty_manager_title'] = 'No manager teams to show';
+$string['empty_manager'] = 'No one in this view has a line manager on record, so there is nothing to group by manager.';
+$string['scorecard_no_assignments'] = 'No assignments';
+$string['scorecard_show_empty'] = 'Show {$a} departments with no assignments';
+$string['scorecard_show_empty_one'] = 'Show 1 department with no assignments';
+$string['scorecard_hide_empty'] = 'Hide departments with no assignments';
+$string['matrix_showing'] = 'Showing {$a->from}–{$a->to} of {$a->total} employees';

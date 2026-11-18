@@ -6,6 +6,9 @@ $fa-version: "6.3.0" !default;
 @import "fontawesome/brands";
 @import "fontawesome/regular";
 @import "fontawesome/solid";
+// FA4 names FA6 dropped (fa-comment-o, fa-lightbulb-o, ...) and FA4-style brand icons: only the shim rules that
+// change no icon that renders today. See the file header (surface walk 2026-11-18).
+@import "fontawesome-v4-shims-subset";
 @import "fontawesome/fontawesome";
 
 // FA4 backward compatibility — map old 'FontAwesome' family to FA6.

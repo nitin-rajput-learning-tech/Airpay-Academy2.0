@@ -51,6 +51,12 @@ if ($action === 'enrolnow') {
             get_string('enrolled_welcome', 'local_sentientia_catalog'), null,
             \core\output\notification::NOTIFY_SUCCESS);
     }
+    // Persona walk 2026-11-18: the course's own self-enrolment, where this viewer may use it (course.php's
+    // fallback button for a free course posts here). enrolment::self_enrol() re-applies every rule and refuses
+    // priced courses; core's enrol_self() queues its own "You are enrolled" notice, so the redirect adds none.
+    if (\local_sentientia_catalog\enrolment::self_enrol($id)) {
+        redirect(new moodle_url('/course/view.php', ['id' => $id]));
+    }
     // Policy declined (not internal / flag off) or enrol failed → safe
     // fallback to the cart so the click is never silently lost.
     \local_sentientia_catalog\commerce::add_to_cart($id);
@@ -64,10 +70,29 @@ $is_loggedin = isloggedin() && !isguestuser();
 $added = optional_param('added', 0, PARAM_INT);
 
 // Check if already enrolled (for logged-in users).
+// Persona walk 2026-11-18: is_enrolled() without $onlyactive also counts a suspended, ended or not-yet-started
+// enrolment, and "Continue Learning" on one of those went to /course/view.php, which sends a learner without an
+// active enrolment to /enrol/index.php, which the theme sends back here. $is_enrolled keeps its meaning (any
+// enrolment: no Enroll or Request button); $is_active says the course opens now; $inactivemessage says why not.
 $is_enrolled = false;
+$is_active = false;
+$canview = false;
+$inactivemessage = '';
 if ($is_loggedin) {
     $coursecontext = context_course::instance($id);
     $is_enrolled = is_enrolled($coursecontext, $USER);
+    $is_active = $is_enrolled && is_enrolled($coursecontext, $USER, '', true);
+    // Someone core lets into the course without an enrolment (moodle/course:view: a site or category admin).
+    $canview = !$is_active && is_viewing($coursecontext, $USER);
+    if ($is_enrolled && !$is_active && !$canview) {
+        $inactive = \local_sentientia_catalog\enrolment::inactive_enrolment($id, (int) $USER->id);
+        $when = !empty($inactive->time) ? userdate($inactive->time, get_string('strftimedate', 'langconfig')) : '';
+        $inactivemessage = match ($inactive->reason ?? 'suspended') {
+            'notstarted' => get_string('enrolment_notstarted', 'local_sentientia_catalog', $when),
+            'ended' => get_string('enrolment_ended', 'local_sentientia_catalog', $when),
+            default => get_string('enrolment_suspended', 'local_sentientia_catalog'),
+        };
+    }
 }
 
 // Visual-pass finding 7 (a), 2026-10-15: "Request enrolment" where a request is the learner's way in
@@ -78,6 +103,16 @@ $requeststate = ($is_loggedin && !$is_enrolled)
     ? \local_sentientia_catalog\enrolment::request_state($USER, $id, $pricing) : 'none';
 if ($requeststate === 'request') {
     $PAGE->requires->js_call_amd('local_sentientia_request/request_button', 'init');
+}
+
+// Persona walk 2026-11-18: a free course with neither one-click enrolment nor a request on offer used to link to
+// /enrol/index.php, which this theme never renders (it redirects back to this page), so the button went nowhere.
+// Now: "Open course" for someone core lets in anyway, the course's own self-enrolment where this viewer may use it
+// (enrolment::self_enrol_instance(); the button posts to the 'enrolnow' action), and otherwise a notice, no button.
+$selfenrol = false;
+if ($is_loggedin && !$is_enrolled && !$canview && $pricing['is_free'] && $requeststate === 'none'
+        && !\local_sentientia_catalog\enrolment::should_offer_oneclick($USER, $pricing)) {
+    $selfenrol = \local_sentientia_catalog\enrolment::self_enrol_instance($id) !== null;
 }
 
 // Get enrollment count.
@@ -134,12 +169,21 @@ echo $OUTPUT->header();
                     <?php endif; ?>
                 </div>
                 <div style="display:flex; gap:8px;">
-                    <?php if ($is_enrolled): ?>
+                    <?php if ($is_active || ($is_enrolled && $canview)): ?>
                         <a href="<?php echo (new moodle_url('/course/view.php', ['id' => $id]))->out(); ?>"
                            style="padding:10px 24px; border-radius:10px; font-size:15px; font-weight:600;
                                   background:linear-gradient(135deg,#0066a7,#0d5da1); color:#fff; text-decoration:none;">
                             <i class="fa fa-play-circle"></i> Continue Learning
                         </a>
+                    <?php elseif ($is_enrolled): ?>
+                        <!-- An enrolment that does not let the learner in now (suspended, ended, not started): say why. -->
+                        <span role="status"
+                              style="display:inline-block; max-width:420px; padding:10px 16px; border-radius:10px;
+                                     font-size:14px; font-weight:600; line-height:1.4;
+                                     background:var(--ap-surface-2,#f8f9fc); color:var(--ap-text-secondary,#5a6070);
+                                     border:1px solid var(--ap-border,#e3eaf3);">
+                            <i class="fa fa-info-circle" aria-hidden="true"></i> <?php echo s($inactivemessage); ?>
+                        </span>
                     <?php elseif ($pricing['is_free'] && $is_loggedin && \local_sentientia_catalog\enrolment::should_offer_oneclick($USER, $pricing)): ?>
                         <!-- One-click immediate enrol (internal tenant + flag ON). -->
                         <form method="post" action="<?php echo (new moodle_url('/local/sentientia_catalog/course.php', ['id' => $id]))->out(false); ?>" style="display:inline;">
@@ -167,11 +211,32 @@ echo $OUTPUT->header();
                             <i class="fa fa-clock-o"></i> <?php echo s(get_string('requestpending_short', 'local_sentientia_request')); ?>
                         </span>
                     <?php elseif ($pricing['is_free'] && $is_loggedin): ?>
-                        <a href="<?php echo (new moodle_url('/enrol/index.php', ['id' => $id]))->out(); ?>"
+                        <?php if ($canview): ?>
+                        <a href="<?php echo (new moodle_url('/course/view.php', ['id' => $id]))->out(); ?>"
                            style="padding:10px 24px; border-radius:10px; font-size:15px; font-weight:600;
                                   background:linear-gradient(135deg,#0066a7,#0d5da1); color:#fff; text-decoration:none;">
-                            <i class="fa fa-sign-in"></i> Enroll Now — Free
+                            <i class="fa fa-play-circle"></i> <?php echo s(get_string('open_course', 'local_sentientia_catalog')); ?>
                         </a>
+                        <?php elseif ($selfenrol): ?>
+                        <!-- The course's own self-enrolment, which this viewer may use (enrolment::self_enrol_instance()). -->
+                        <form method="post" action="<?php echo (new moodle_url('/local/sentientia_catalog/course.php', ['id' => $id]))->out(false); ?>" style="display:inline;">
+                            <input type="hidden" name="sesskey" value="<?php echo sesskey(); ?>">
+                            <input type="hidden" name="action" value="enrolnow">
+                            <button type="submit" style="padding:10px 24px; border-radius:10px; font-size:15px; font-weight:600;
+                                    background:linear-gradient(135deg,#0066a7,#0d5da1); color:#fff; border:none; cursor:pointer;">
+                                <i class="fa fa-sign-in"></i> <?php echo s(get_string('enrol_now_free', 'local_sentientia_catalog')); ?>
+                            </button>
+                        </form>
+                        <?php else: ?>
+                        <!-- Nothing this learner can enrol through here: say so, not a button that goes nowhere. -->
+                        <span role="status"
+                              style="display:inline-block; max-width:420px; padding:10px 16px; border-radius:10px;
+                                     font-size:14px; font-weight:600; line-height:1.4;
+                                     background:var(--ap-surface-2,#f8f9fc); color:var(--ap-text-secondary,#5a6070);
+                                     border:1px solid var(--ap-border,#e3eaf3);">
+                            <i class="fa fa-info-circle" aria-hidden="true"></i> <?php echo s(get_string('enrolment_managed', 'local_sentientia_catalog')); ?>
+                        </span>
+                        <?php endif; ?>
                     <?php elseif (!$is_loggedin): ?>
                         <form method="post" action="<?php echo (new moodle_url('/local/sentientia_catalog/course.php', ['id' => $id]))->out(false); ?>" style="display:inline;">
                             <input type="hidden" name="sesskey" value="<?php echo sesskey(); ?>">

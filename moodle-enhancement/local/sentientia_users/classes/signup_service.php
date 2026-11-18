@@ -306,6 +306,17 @@ class signup_service {
     }
 
     /**
+     * Tenant root (costcenter id) that self-signups are assigned to: 77 (Public) unless
+     * signup_tenant_path says otherwise. Users there are consumers (the type signup writes);
+     * user_manager::profile_type_provider() uses it for accounts with no user_type row.
+     *
+     * @return int 0 when the configured path has no numeric root
+     */
+    public static function signup_tenant_root(): int {
+        return self::derive_costcenterid_from_path(self::get_tenant_path());
+    }
+
+    /**
      * Return the tenant path to assign new signups to (e.g. '/77').
      * Falls back to Public tenant if config is unset.
      */

@@ -269,7 +269,8 @@ $string['download_certificate'] = 'प्रमाणपत्र डाउन�
 // स्ट्रिंग्स (nav_manageusers, nav_managecourses, nav_onlineexams,
 // nav_classrooms, nav_compliance) और kpi_overdue को दोबारा इस्तेमाल करती हैं।
 // -- Admin KPI tiles + trend lines (admin_kpis). {$a} = formatted count / rate.
-$string['kpi_active_users'] = 'एक्टिव यूज़र';
+// kpi_active_users: पिछले 30 दिनों में लॉग इन करने वाले यूज़र (surface walk 2026-11-18)।
+$string['kpi_active_users'] = 'एक्टिव (30 दिन)';
 $string['kpi_courses'] = 'कोर्स';
 $string['kpi_completions'] = 'पूर्णताएँ';
 $string['kpi_enrolments'] = 'एनरोलमेंट';

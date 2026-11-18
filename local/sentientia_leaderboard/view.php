@@ -29,7 +29,9 @@ if (!$board) {
 if (class_exists('\\local_sentientia_platform\\feature_flags')) {
     if (!\local_sentientia_platform\feature_flags::is_enabled(
             'sentientia.leaderboards.enabled')) {
-        throw new moodle_exception('feature_disabled',
+        // Surface walk 2026-11-18: the flag key is for admins only.
+        throw new moodle_exception(
+            has_capability('moodle/site:config', $context) ? 'feature_disabled' : 'feature_unavailable',
             'local_sentientia_leaderboard');
     }
 }

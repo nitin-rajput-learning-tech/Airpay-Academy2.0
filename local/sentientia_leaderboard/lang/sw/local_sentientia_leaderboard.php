@@ -84,6 +84,7 @@ $string['last_recomputed_at'] = 'Ilisasishwa mwisho: {$a}';
 $string['live_indicator'] = 'Mubashara — inasasishwa papo hapo';
 $string['polling_fallback'] = 'Inasasishwa kila sekunde 30';
 $string['feature_disabled'] = 'Mbao za vinara hazijawashwa. Mwombe msimamizi awashe sentientia.leaderboards.enabled.';
+$string['feature_unavailable'] = 'Mbao za vinara za kozi na majaribio bado hazipatikani. Angalia tena baadaye.';
 $string['type_disabled'] = 'Aina hii ya ubao haijawashwa.';
 $string['block_title'] = 'Ubao wa vinara';
 $string['block_choose'] = 'Chagua ubao wa vinara';

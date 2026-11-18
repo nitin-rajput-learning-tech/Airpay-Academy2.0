@@ -423,3 +423,42 @@ The `data-bs-toggle` / `data-bs-target` attributes added in 2026100801 are REMOV
 ## 2026-10-08 Moodle 5.3 compat FX-21 round 1 (no version change)
 
 `cli/seed_badges.php`: the empty `if (file_exists(.../awardlib.php)) { }` block that FX-21 left behind is removed from the top-level copy (the moodle-enhancement copy never had it); the two copies are now byte-identical, so the file leaves the cross-tree drift baseline. Behaviour is unchanged: the block had no body. The script uses only `BADGE_*` constants and `$DB`; none of the symbols defined by 5.1's `badges/lib/awardlib.php` (the selector classes and `process_manual_award`/`process_manual_revoke`). Dead-code removal only, no version bump.
+
+## 2026-11-18 Cross-tree drift fix, WF-016 hook in both trees (version 2026111800, release 1.6.2)
+
+UAT 2026-11-18: the site admin's course page failed with `Class "local_costcenter\lib\accesslib" not found` (now caught in
+the theme, bc2227c20, but the LearnerScript left-menu entry stayed missing). Cause: the WF-016 compat layer
+(`db/hooks.php`, `classes/hook_callbacks.php`, `classes/compat/bizlms_lib.php`) existed only in `local/sentientia_org/`,
+not in `moodle-enhancement/local/sentientia_org/`, the copy UAT and CI run. The two copies are byte-identical again and
+the six `sentientia_org` lines are out of `tools/tree-drift-baseline.txt`. Per file:
+
+- `db/hooks.php`, `classes/hook_callbacks.php`, `classes/compat/bizlms_lib.php`: top-level copy (the only one, f5ae11b08).
+- `db/upgrade.php`: top-level copy. It is the ME file plus the 2026061700 violet repaint step (372352818, top tree only).
+  The step only runs on sites below 2026061700, so it does not run on UAT now.
+- `classes/test/bizlms_fixture.php`: ME copy (f730a5b14, 2026-08-03, newer). Its open_* defs follow
+  `local_sentientia_core\substrate::user_fields()`, which is what CI and local PHPUnit use. The top copy (06-11) also
+  provisioned `open_costcenterid`/`open_departmentid`, which the production user table does not have.
+- `version.php`: merged (top copy's Brand comment kept), bumped to 2026111800 so the upgrade re-reads `db/hooks.php`.
+- `hook_callbacks::after_config()`: the `class_exists()` guards now autoload, so a real `local_costcenter` would win as
+  the doc block always said (with `false` the alias always shadowed it). No `local_costcenter` code exists on any tree,
+  so behaviour is unchanged.
+- NEW `tests/hook_callbacks_test.php`: hook registered, aliases resolve, idempotent, the LearnerScript
+  `(new accesslib())::get_module_context()` call shape, `get_userdate()`, and (skipped where block_learnerscript is not
+  installed, e.g. CI) `block_learnerscript_leftmenunode()` as admin.
+
+Known gaps in the accesslib fork, recorded, not changed: `get_module_context()` always returns the system context;
+`get_costcenter_info($id, 'path')` ignores the second argument and returns the record (LearnerScript classroom reports
+expect the path string); `get_costcenter_path_field_concatsql()` with an explicit path returns named placeholders
+without their params. The two menu callers use only `get_module_context()`.
+
+DECISION OPEN BEFORE THE UAT DEPLOY (tenant isolation, review 2026-11-18): with no path,
+`get_costcenter_path_field_concatsql()` returns `''` for every non-admin, because `get_user_role_switch_path()` reads
+`$USER->useraccess['currentroleinfo']['contextinfo']` and only the retired airpayux/epsilon renderers ever wrote it.
+55 learnerscript files and `block_trainerdashboard` (classes/manager.php, renderer.php) use that string as their tenant
+filter. On UAT those paths fail today (class not found, fail closed by accident); after this deploy they run unscoped
+for any non-admin holding `block/learnerscript:viewreports` (no archetype default, so only explicit grants, e.g. the
+imported BizLMS tenant-admin roles). Locally it has been this way since 06-11. Check the holders on UAT first; if any
+non-admin role holds it, either remove the grant or make the no-path branch fail closed for non-admins before deploying.
+
+NOT RUN: PHPUnit (the new test is not in the XAMPP tree, and the local site was busy). `php -l` on every touched file in
+both trees, a standalone alias smoke script and `tools/check-tree-drift.php` (no `sentientia_org` findings) pass.

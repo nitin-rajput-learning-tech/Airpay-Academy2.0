@@ -30,6 +30,18 @@ defined('MOODLE_INTERNAL') || die();
  */
 class sidebar_navigation {
 
+    /** The tenant catalogue: the viewer's own tenant tree plus the courses shared to it. */
+    public const CATALOG_TENANT_PAGE = '/local/sentientia_catalog/index.php';
+
+    /** The Public tenant's paid storefront (prices, cart, guest-readable). */
+    public const CATALOG_STOREFRONT_PAGE = '/local/sentientia_catalog/public.php';
+
+    /**
+     * Both catalogue list pages light up the sidebar "Catalog" item, whichever one it links to
+     * (an internal user can still reach public.php from the front page).
+     */
+    private const CATALOG_LIST_PAGES = [self::CATALOG_TENANT_PAGE, self::CATALOG_STOREFRONT_PAGE];
+
     /** @var \moodle_page */
     private $page;
 
@@ -120,7 +132,7 @@ class sidebar_navigation {
      * @return array
      */
     private function get_nav_items(): array {
-        global $CFG;
+        global $CFG, $USER;
 
         $items = [];
         $currenturl = $this->page->url->out(false);
@@ -207,13 +219,16 @@ class sidebar_navigation {
             //
             // Phase A0 (2026-05-14): also gated by the Switchboard flag
             // `commerce.crossTenantRequest.enabled`.
+            // Icons (persona walk 2026-11-18): fa-handshake-o and fa-pencil-square-o are Font Awesome 4
+            // names. The theme loads FA6 without the v4 shims (scss/fontawesome.scss), so they drew
+            // nothing. fa-handshake and fa-edit are the FA6 names (fa-edit is the siteadmin item's icon).
             if ($this->is_non_airpay_tenant_user()
                     && \local_sentientia_platform\feature_flags::is_enabled('commerce.crossTenantRequest.enabled')) {
-                $items[] = $this->item(get_string('nav_browseairpaylibrary', 'theme_sentientia'), 'fa-handshake-o',
+                $items[] = $this->item(get_string('nav_browseairpaylibrary', 'theme_sentientia'), 'fa-handshake',
                     '/local/sentientia_courses/browse_airpay.php', $currenturl);
             }
             if (has_capability('local/sentientia_exams:view', $sys)) {
-                $items[] = $this->item(get_string('nav_onlineexams', 'theme_sentientia'), 'fa-pencil-square-o', '/local/sentientia_exams/index.php', $currenturl);
+                $items[] = $this->item(get_string('nav_onlineexams', 'theme_sentientia'), 'fa-edit', '/local/sentientia_exams/index.php', $currenturl);
             }
             if (has_capability('local/sentientia_classroom:view', $sys)) {
                 $items[] = $this->item(get_string('nav_classrooms', 'theme_sentientia'), 'fa-calendar', '/local/sentientia_classroom/index.php', $currenturl);
@@ -250,7 +265,10 @@ class sidebar_navigation {
             }
             $items[] = $this->divider();
             $items[] = $this->item(get_string('nav_courses', 'theme_sentientia'), 'fa-book', '/local/sentientia_catalog/mycourses.php', $currenturl);
-            $items[] = $this->item(get_string('nav_catalog', 'theme_sentientia'), 'fa-compass', '/local/sentientia_catalog/public.php', $currenturl);
+            // Persona walk 2026-11-18: the tenant catalogue for an internal-tenant manager, the
+            // Public storefront for a Public-tenant one. See catalog_path().
+            $items[] = $this->item(get_string('nav_catalog', 'theme_sentientia'), 'fa-compass',
+                self::catalog_path($USER), $currenturl, null, self::CATALOG_LIST_PAGES);
             // Sprint D — managers in non-Airpay tenants (Public/ZEEA)
             // get a "Browse Airpay Library" link so they can request
             // specific Airpay courses for their tenant's catalogue.
@@ -263,7 +281,7 @@ class sidebar_navigation {
             // `commerce.crossTenantRequest.enabled`.
             if ($this->is_non_airpay_tenant_user()
                     && \local_sentientia_platform\feature_flags::is_enabled('commerce.crossTenantRequest.enabled')) {
-                $items[] = $this->item(get_string('nav_browseairpaylibrary', 'theme_sentientia'), 'fa-handshake-o',
+                $items[] = $this->item(get_string('nav_browseairpaylibrary', 'theme_sentientia'), 'fa-handshake',
                     '/local/sentientia_courses/browse_airpay.php', $currenturl);
                 $items[] = $this->item(get_string('nav_myrequests', 'theme_sentientia'), 'fa-clipboard-list',
                     '/local/sentientia_courses/my_requests.php', $currenturl);
@@ -298,7 +316,10 @@ class sidebar_navigation {
         // ═══════════════════════════════════════════════════
         $items[] = $this->item(get_string('myhome'), 'fa-home', '/my/', $currenturl, null, ['/my/index.php']);
         $items[] = $this->item(get_string('nav_courses', 'theme_sentientia'), 'fa-book', '/local/sentientia_catalog/mycourses.php', $currenturl);
-        $items[] = $this->item(get_string('nav_catalog', 'theme_sentientia'), 'fa-compass', '/local/sentientia_catalog/public.php', $currenturl);
+        // Persona walk 2026-11-18: the tenant catalogue for an internal-tenant learner, the Public
+        // storefront for a Public-tenant one. See catalog_path().
+        $items[] = $this->item(get_string('nav_catalog', 'theme_sentientia'), 'fa-compass',
+            self::catalog_path($USER), $currenturl, null, self::CATALOG_LIST_PAGES);
 
         // ── Cart (only for tenants where cart is enabled — Phase 1G) ──
         // Public/ZEEA tenants get a cart link; Airpay tenant employees
@@ -389,6 +410,49 @@ class sidebar_navigation {
         // Airpay tenant root = 1 (per project convention). Anything
         // else with a valid root is a "receiving" tenant.
         return $root > 0 && $root !== 1;
+    }
+
+    /**
+     * The page the sidebar "Catalog" item opens for this user.
+     *
+     * Persona walk 2026-11-18 (vp_learner1 finding 1, vp_manager1 finding 1): the item always opened
+     * public.php, the Public tenant's paid storefront. That page lists only the courses under the
+     * Public tenant root (commerce::get_public_catalog(), '/'-bounded on
+     * enrolment::public_tenant_id()), and catalog course.php refuses each of them to a viewer of
+     * another tenant unless the course is shared there
+     * (catalog_manager::assert_course_visible_to_viewer()). An Airpay employee or manager saw rupee
+     * prices and "Add to cart", and every card opened "no permission (view this course)".
+     *
+     * index.php lists the viewer's own tenant tree plus the courses shared to it
+     * (catalog_manager::get_courses()): the same rule course.php applies, so every card opens.
+     *
+     *   - tenant root is the Public storefront tenant -> public.php, as before. "Storefront tenant" is
+     *     the catalogue's own notion, enrolment::public_tenant_id() (setting
+     *     local_sentientia_pages/public_tenant_id, default 77): the same value public.php lists from
+     *     and the one-click-enrol policy treats as "not internal". No tenant id is hardcoded here.
+     *   - any other resolved tenant root (Airpay /1, ZEEA /177, a future customer) -> index.php.
+     *     ZEEA is internal in this model: public.php shows a ZEEA learner only Public courses, which
+     *     course.php refuses them and the cart will not sell them (cart_manager::tenant_rule_allows()),
+     *     while index.php shows ZEEA's own tree plus what is shared to it. So "cart enabled for the
+     *     tenant" is not the test either: the storefront sells only Public-tenant courses.
+     *   - no resolvable tenant (empty or malformed open_path), a guest or nobody -> public.php, as
+     *     before. index.php lists nothing to an unresolved viewer (catalog_manager::TENANT_UNRESOLVED),
+     *     and guests never see the sidebar (core_renderer::airpay_shell_start()).
+     *   - local_sentientia_catalog not installed -> public.php, as before (the link was never guarded).
+     *
+     * @param \stdClass $user The viewer: needs id and open_path (e.g. $USER).
+     * @return string A site-relative path for moodle_url.
+     */
+    public static function catalog_path(\stdClass $user): string {
+        if (empty($user->id) || isguestuser($user)
+                || !class_exists('\\local_sentientia_catalog\\enrolment')) {
+            return self::CATALOG_STOREFRONT_PAGE;
+        }
+        $root = \local_sentientia_platform\tenant::root_for_user($user);
+        if ($root <= 0 || $root === \local_sentientia_catalog\enrolment::public_tenant_id()) {
+            return self::CATALOG_STOREFRONT_PAGE;
+        }
+        return self::CATALOG_TENANT_PAGE;
     }
 
     /**

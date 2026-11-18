@@ -684,6 +684,16 @@ a.ap-sidebar__roleswitch-item:hover {
     overflow-x: hidden;
 }
 
+/* Surface walk 2026-11-18 (empty band under the topbar): navbar.scss and drawer.scss give #page
+   margin-top: $navbar-height (70px; custom_media.scss makes it 10px below 520px). That reserved room under the old
+   FIXED epsilon navbar. In the app shell the topbar is sticky and in normal flow, so the margin only added an empty
+   band of about 70px above every shell page (dashboard, plugin pages, course pages). Every layout that prints the
+   shell (columns2, drawers, course, dashboard) puts #page directly in .ap-shell__content; layouts without the shell
+   (login, columns1, embedded, secure, course editing) keep the old margin. */
+.ap-shell__content > #page {
+    margin-top: 0;
+}
+
 /* ── Mobile overlay ────────────────────────────── */
 .ap-shell__overlay {
     display: none;

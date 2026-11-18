@@ -11,11 +11,12 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'block_sentientia_leaderboard';
-$plugin->version   = 2026092500;  // ADR-031: board list + gate via board_manager::list_for_viewer()/viewer_can_see(); no :viewall unscope
+$plugin->version   = 2026111800;  // Surface walk 2026-11-18: master flag OFF shows the flag-key notice to moodle/site:config holders only; everyone else gets empty content (block hidden). No schema change.
+// 2026092500: ADR-031: board list + gate via board_manager::list_for_viewer()/viewer_can_see(); no :viewall unscope
 // 2026080400: 2026-08-04 privacy null-provider (GDPR registry closure)
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '0.1.1-alpha';
+$plugin->release   = '0.1.2-alpha';
 $plugin->dependencies = [
     'local_sentientia_leaderboard' => 2026092500,  // board_manager::list_for_viewer() (ADR-031)
 ];

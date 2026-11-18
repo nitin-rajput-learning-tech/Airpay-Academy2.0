@@ -4,7 +4,10 @@
 }}
 <div class="ap-skills">
 
-    {{! KPI Summary }}
+    {{! KPI Summary. Only when the designation has role skills to compare against (has_data): with none it read
+        "0% · 0 of 0 skills met for [blank] · All skills met!" above "No skills data yet" (surface walk 2026-11-18).
+        The empty state below is then the only message. }}
+    {{#has_data}}
     <div class="ap-skills__summary">
         <div class="ap-skills__summary-ring">
             <svg width="90" height="90" viewBox="0 0 90 90">
@@ -17,25 +20,28 @@
             <span class="ap-skills__summary-pct">{{summary.percentage}}%</span>
         </div>
         <div class="ap-skills__summary-text">
-            <h3>Skill Readiness</h3>
-            <p>{{summary.met}} of {{summary.total}} skills met for <strong>{{designation}}</strong></p>
+            <h3>{{# str }}readiness_title, local_sentientia_skills{{/ str }}</h3>
+            {{! summary_text_html: a lang string whose only inserts are two integers and the s()-escaped designation
+                (index.php), so it is safe raw; the triple brace keeps the designation in <strong>. }}
+            <p>{{{summary_text_html}}}</p>
             {{#summary.gaps}}
             <span class="ap-skills__summary-gaps">
-                <i class="fa fa-exclamation-triangle"></i> {{summary.gaps}} skill gaps to close
+                <i class="fa fa-exclamation-triangle" aria-hidden="true"></i> {{summary_gaps_text}}
             </span>
             {{/summary.gaps}}
             {{^summary.gaps}}
             <span class="ap-skills__summary-complete">
-                <i class="fa fa-check-circle"></i> All skills met!
+                <i class="fa fa-check-circle" aria-hidden="true"></i> {{# str }}readiness_allmet, local_sentientia_skills{{/ str }}
             </span>
             {{/summary.gaps}}
         </div>
     </div>
+    {{/has_data}}
 
     {{! Radar Chart (Canvas — rendered by JS below) }}
     {{#has_radar}}
     <div class="ap-skills__section">
-        <h3 class="ap-skills__section-title"><i class="fa fa-line-chart"></i> Skills Radar</h3>
+        <h3 class="ap-skills__section-title"><i class="fa fa-line-chart" aria-hidden="true"></i> {{# str }}skillsradar, local_sentientia_skills{{/ str }}</h3>
         <div class="ap-skills__radar-wrap">
             <canvas id="ap-skills-radar" width="360" height="360"></canvas>
         </div>
@@ -45,7 +51,7 @@
     {{! Gap Analysis Table }}
     {{#has_data}}
     <div class="ap-skills__section">
-        <h3 class="ap-skills__section-title"><i class="fa fa-th-list"></i> Gap Analysis</h3>
+        <h3 class="ap-skills__section-title"><i class="fa fa-th-list" aria-hidden="true"></i> {{# str }}gapanalysis, local_sentientia_skills{{/ str }}</h3>
         <div class="ap-skills__gap-list">
             {{#skills}}
             <div class="ap-skills__gap-item ap-skills__gap-item--{{status}}">
@@ -64,9 +70,9 @@
                     <span class="ap-skills__gap-required">{{required_label}}</span>
                 </div>
                 <div class="ap-skills__gap-status">
-                    {{#is_met}}<span class="ap-badge ap-badge--success"><i class="fa fa-check"></i> Met</span>{{/is_met}}
-                    {{#is_partial}}<span class="ap-badge ap-badge--warning"><i class="fa fa-arrow-up"></i> In Progress</span>{{/is_partial}}
-                    {{#is_missing}}<span class="ap-badge ap-badge--danger"><i class="fa fa-times"></i> Missing</span>{{/is_missing}}
+                    {{#is_met}}<span class="ap-badge ap-badge--success"><i class="fa fa-check" aria-hidden="true"></i> {{# str }}met, local_sentientia_skills{{/ str }}</span>{{/is_met}}
+                    {{#is_partial}}<span class="ap-badge ap-badge--warning"><i class="fa fa-arrow-up" aria-hidden="true"></i> {{# str }}partial, local_sentientia_skills{{/ str }}</span>{{/is_partial}}
+                    {{#is_missing}}<span class="ap-badge ap-badge--danger"><i class="fa fa-times" aria-hidden="true"></i> {{# str }}status_missing, local_sentientia_skills{{/ str }}</span>{{/is_missing}}
                 </div>
             </div>
             {{/skills}}
@@ -91,7 +97,7 @@
     <div class="ap-skills__section">
         <h3 class="ap-skills__section-title"><i class="fa fa-graduation-cap"></i>
             {{#has_interest_recs}}{{# str }}recommended_for_you, local_sentientia_skills{{/ str }}{{/has_interest_recs}}
-            {{^has_interest_recs}}Recommended to Close Gaps{{/has_interest_recs}}
+            {{^has_interest_recs}}{{# str }}recommended_gaps, local_sentientia_skills{{/ str }}{{/has_interest_recs}}
         </h3>
         <div class="ap-skills__recs">
             {{#recommendations}}
@@ -101,7 +107,7 @@
                 </div>
                 <div class="ap-skills__rec-info">
                     <h5>{{coursename}}</h5>
-                    <span>Teaches: {{skill_name}} → {{teaches_label}}</span>
+                    <span>{{teaches_text}}</span>
                 </div>
                 <i class="fa fa-chevron-right ap-skills__rec-arrow"></i>
             </a>
@@ -138,8 +144,8 @@
     {{^has_held_skills}}
     <div class="ap-empty-state">
         <i class="fa fa-line-chart ap-empty-state__icon"></i>
-        <h4 class="ap-empty-state__title">No skills data yet</h4>
-        <p class="ap-empty-state__message">Skills are mapped to your role. Contact your L&D team if your designation isn't set.</p>
+        <h4 class="ap-empty-state__title">{{# str }}noskills_title, local_sentientia_skills{{/ str }}</h4>
+        <p class="ap-empty-state__message">{{# str }}noskills_message, local_sentientia_skills{{/ str }}</p>
     </div>
     {{/has_held_skills}}
     {{/has_data}}

@@ -845,7 +845,15 @@ if (stage('enrol') && !$DRY) {
                 $tplid = (int) ($course->open_certificateid ?? 0);
                 if ($tplid && class_exists('\tool_certificate\template')
                         && !$DB->record_exists('tool_certificate_issues', ['userid' => $user->id, 'courseid' => $course->id, 'templateid' => $tplid, 'archived' => 0])) {
-                    \tool_certificate\template::instance($tplid)->issue_certificate($user->id, null, [], 'tool_certificate', $course->id);
+                    // The redesigned template (tools/uat/certificate_template_redesign.php) prints the course name from the
+                    // issue custom field 'coursefullname', as mod_coursecertificate fills it. Without it the line is empty on
+                    // new issues, so pass it when that field exists (issue_certificate() saves $data through the handler).
+                    $issuedata = [];
+                    if (\tool_certificate\customfield\issue_handler::create()->find_field_by_shortname('coursefullname')) {
+                        $issuedata['coursefullname'] = format_string($course->fullname, true,
+                            ['context' => context_course::instance($course->id), 'escape' => false]);
+                    }
+                    \tool_certificate\template::instance($tplid)->issue_certificate($user->id, null, $issuedata, 'tool_certificate', $course->id);
                 }
             } catch (\Throwable $e) { warn("completion $username/$short: " . $e->getMessage()); }
         }

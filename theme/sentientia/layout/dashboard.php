@@ -342,38 +342,26 @@ if (isloggedin() && !isguestuser()) {
             $airpay_dashboard['hasadminkpis'] = true;
 
             // ── Compliance Summary ──
+            // The compliance report's own figures for this viewer (11-18 surface walk B5/B8: this tile said 72%
+            // beside the report's 71%). It used to count them here with its own rules (people by open_path where
+            // the report uses the snapshot's department_path, every compliance course where the report counts the
+            // tenant's active ones); see theme_sentientia\local\dashboard_compliance. Without the compliance report
+            // plugin and its tables there is no Compliance Overview, as before.
             try {
-                $dbman = $DB->get_manager();
-                // The plugin's tables are local_compliance_* (db/install.xml); the old
-                // local_sentientia_compl_* names never existed, so this widget never rendered.
-                if ($dbman->table_exists('local_compliance_courses') && $dbman->table_exists('local_compliance_snapshot')) {
-                    $mandatorycount = $DB->count_records_sql(
-                        "SELECT COUNT(cc.id) FROM {local_compliance_courses} cc
-                         JOIN {course} c ON c.id = cc.courseid
-                         WHERE 1=1{$tenantjoin_course}", $tenantjoinparams_course);
-                    $overduecount = $DB->count_records_sql(
-                        "SELECT COUNT(s.id) FROM {local_compliance_snapshot} s
-                         JOIN {user} u ON u.id = s.userid
-                         WHERE s.status = 'overdue'{$tenantjoin_user}", $tenantjoinparams_user);
-                    $compliantcount = $DB->count_records_sql(
-                        "SELECT COUNT(s.id) FROM {local_compliance_snapshot} s
-                         JOIN {user} u ON u.id = s.userid
-                         WHERE s.status = 'completed'{$tenantjoin_user}", $tenantjoinparams_user);
-                    $totalassigned = $DB->count_records_sql(
-                        "SELECT COUNT(s.id) FROM {local_compliance_snapshot} s
-                         JOIN {user} u ON u.id = s.userid
-                         WHERE 1=1{$tenantjoin_user}", $tenantjoinparams_user);
-                    $compliancepct = $totalassigned > 0 ? round(($compliantcount / $totalassigned) * 100) : 0;
+                if (class_exists('\\theme_sentientia\\local\\dashboard_compliance')
+                        && \theme_sentientia\local\dashboard_compliance::available()) {
+                    $compliancesummary = \theme_sentientia\local\dashboard_compliance::summary($USER, $scope);
                     $airpay_dashboard['compliance'] = [
-                        'mandatory'   => $mandatorycount,
-                        'overdue'     => $overduecount,
-                        'compliant'   => $compliancepct . '%',
-                        'assigned'    => $totalassigned,
+                        'mandatory'   => number_format($compliancesummary['mandatory']),
+                        'overdue'     => number_format($compliancesummary['overdue']),
+                        'compliant'   => $compliancesummary['rate'] . '%',
+                        'assigned'    => number_format($compliancesummary['total']),
                     ];
                     $airpay_dashboard['hascompliance'] = true;
                 }
             } catch (\Throwable $e) {
-                // Compliance tables may not exist.
+                // The widget is left out; the rest of the dashboard renders.
+                debugging('Dashboard Compliance Overview skipped: ' . $e->getMessage(), DEBUG_DEVELOPER);
             }
 
             // ── Recent Activity (last 10 events) ──
@@ -1058,42 +1046,33 @@ if (isloggedin() && !isguestuser()) {
         }
 
         $enrolledids = array_keys($enrolledcourses ?? []);
-        if (empty($recommendations) && !empty($enrolledids)) {
-            // Get categories of enrolled courses
-            // Bound params (2026-11-16; the ids were implode()d into the SQL text).
-            [$enrolsql, $enrolparams] = $DB->get_in_or_equal($enrolledids, SQL_PARAMS_NAMED, 'enc');
-            $categories = $DB->get_fieldset_sql(
-                "SELECT DISTINCT category FROM {course} WHERE id $enrolsql",
-                $enrolparams
-            );
-            if (!empty($categories)) {
-                [$catsql, $catparams] = $DB->get_in_or_equal($categories, SQL_PARAMS_NAMED, 'cat');
-                [$exsql, $exparams] = $DB->get_in_or_equal($enrolledids, SQL_PARAMS_NAMED, 'ex', false);
-                $params = array_merge($catparams, $exparams);
-                $recs = $DB->get_records_sql(
-                    "SELECT c.id, c.fullname, c.summary, c.category
-                       FROM {course} c
-                      WHERE c.category $catsql
-                        AND c.id $exsql
-                        AND c.visible = 1 AND c.id > 1
-                   ORDER BY c.timecreated DESC",
-                    $params, 0, 3
-                );
-                foreach ($recs as $rec) {
-                    $catname = $DB->get_field('course_categories', 'name', ['id' => $rec->category]);
-                    $recommendations[] = [
-                        'id' => $rec->id,
-                        'fullname' => format_string($rec->fullname),
-                        'summary' => shorten_text(strip_tags(format_string($rec->summary)), 80),
-                        'category' => format_string($catname),
-                        'viewurl' => (new moodle_url('/course/view.php', ['id' => $rec->id]))->out(false),
-                    ];
-                }
+        // class_exists(): course_recommendations is new (2026-11-18). On a site whose class map was built before it
+        // arrived (no cache purge after the deploy) the call below would be an Error, not an Exception; without the
+        // class there is no fallback rail (the old query recommended other tenants' courses).
+        if (empty($recommendations) && !empty($enrolledids)
+                && class_exists('\\theme_sentientia\\local\\course_recommendations')) {
+            // Newest courses in the categories of the enrolled courses. Surface walk 2026-11-18: this query had no
+            // tenant filter and categories are shared between tenants, so an Airpay learner was recommended a ZEEA
+            // course whose link bounced back here. course_recommendations offers only what the catalogue lets the
+            // learner open (own tenant tree or shared to it, ordinary courses), and links to the catalogue's course
+            // page, which shows the enrol or request action.
+            $recs = \theme_sentientia\local\course_recommendations::same_category_courses($USER, $enrolledids, 3);
+            foreach ($recs as $rec) {
+                $recommendations[] = [
+                    'id' => $rec->id,
+                    'fullname' => format_string($rec->fullname),
+                    'summary' => shorten_text(strip_tags(format_string($rec->summary)), 80),
+                    'category' => format_string($rec->categoryname),
+                    'viewurl' => \theme_sentientia\local\course_recommendations::course_url((int) $rec->id)->out(false),
+                ];
             }
         }
         $airpay_dashboard['recommendations'] = $recommendations;
         $airpay_dashboard['hasrecommendations'] = count($recommendations) > 0;
-    } catch (Exception $e) {
+    } catch (\Throwable $e) {
+        // \Throwable, not Exception: an Error or TypeError from the skills plugin or course_recommendations must
+        // cost the rail, not /my/ (2026-11-18).
+        debugging('Dashboard recommendations rail skipped: ' . $e->getMessage(), DEBUG_DEVELOPER);
         $airpay_dashboard['hasrecommendations'] = false;
     }
     } // end else (learner branch)
@@ -1198,11 +1177,16 @@ if (file_exists($sentientia_courses_lib)) {
 }
 
 // Topbar context.
+// messageslink: the shell topbar's Messages link (core_renderer::airpay_shell_start() prints the same), '' when the
+// user may not use messaging. The dashboard paints its own topbar, which had no bell and no Messages link (11-18
+// surface walk V4); dashboard.mustache prints the bell itself.
 $templatecontext['topbar'] = [
     'wwwroot' => $CFG->wwwroot,
     'breadcrumbs' => $OUTPUT->navbar(),
     'notificationhtml' => '',
     'usermenu' => $OUTPUT->user_menu($USER, ''),
+    'messageslink' => method_exists(\theme_sentientia\output\core_renderer::class, 'topbar_messages_link')
+        ? \theme_sentientia\output\core_renderer::topbar_messages_link() : '',
 ];
 
 // Role switcher (2026-05-27) — surface BizLMS role switching in the shell

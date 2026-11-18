@@ -39,6 +39,8 @@
                 {{#is_partner_employee}}<i class="fa fa-handshake-o"></i>{{/is_partner_employee}}
                 {{#is_operator}}<i class="fa fa-shield"></i>{{/is_operator}}
                 <span class="ap-profile__user-type-label">{{user_type_label}}</span>
+                {{! Roles beyond learning (an admin role, Line manager), surface walk 2026-11-18. }}
+                {{#user_role_label}}<span class="ap-profile__user-role-label">· {{user_role_label}}</span>{{/user_role_label}}
             </p>
             {{/user_type_label}}
             {{#designation}}<p class="ap-profile__role"><i class="fa fa-briefcase"></i> {{designation}}</p>{{/designation}}
@@ -167,25 +169,25 @@
         </div>
         <div class="ap-profile__detail">
             <label>{{#str}}profile_field_weekly_goal_hours, local_sentientia_platform{{/str}}</label>
-            <span>{{#user_type_extras.weekly_goal_hours}}{{user_type_extras.weekly_goal_hours}}h/week{{/user_type_extras.weekly_goal_hours}}{{^user_type_extras.weekly_goal_hours}}—{{/user_type_extras.weekly_goal_hours}}</span>
+            <span>{{#user_type_extras.weekly_goal_hours}}{{#str}}profile_weekly_goal_value, local_sentientia_users, {{user_type_extras.weekly_goal_hours}}{{/str}}{{/user_type_extras.weekly_goal_hours}}{{^user_type_extras.weekly_goal_hours}}—{{/user_type_extras.weekly_goal_hours}}</span>
         </div>
         <div class="ap-profile__detail">
             <label>{{#str}}profile_field_courses_enrolled, local_sentientia_platform{{/str}}</label>
             <span>{{user_type_extras.courses_enrolled}}</span>
         </div>
         <div class="ap-profile__detail">
-            <label>Email</label><span>{{user_email}}</span>
+            <label>{{#str}}email{{/str}}</label><span>{{user_email}}</span>
         </div>
         <div class="ap-profile__detail">
             <label>{{#str}}profile_field_consent_marketing, local_sentientia_platform{{/str}}</label>
-            <span>{{#user_type_extras.consent_marketing}}<i class="fa fa-check text-success"></i> Yes{{/user_type_extras.consent_marketing}}{{^user_type_extras.consent_marketing}}<i class="fa fa-times text-muted"></i> No{{/user_type_extras.consent_marketing}}</span>
+            <span>{{#user_type_extras.consent_marketing}}<i class="fa fa-check text-success" aria-hidden="true"></i> {{#str}}yes{{/str}}{{/user_type_extras.consent_marketing}}{{^user_type_extras.consent_marketing}}<i class="fa fa-times text-muted" aria-hidden="true"></i> {{#str}}no{{/str}}{{/user_type_extras.consent_marketing}}</span>
         </div>
         <div class="ap-profile__detail">
             <label>{{#str}}profile_field_consent_leaderboard, local_sentientia_platform{{/str}}</label>
-            <span>{{#user_type_extras.consent_leaderboard}}<i class="fa fa-check text-success"></i> Yes{{/user_type_extras.consent_leaderboard}}{{^user_type_extras.consent_leaderboard}}<i class="fa fa-times text-muted"></i> No{{/user_type_extras.consent_leaderboard}}</span>
+            <span>{{#user_type_extras.consent_leaderboard}}<i class="fa fa-check text-success" aria-hidden="true"></i> {{#str}}yes{{/str}}{{/user_type_extras.consent_leaderboard}}{{^user_type_extras.consent_leaderboard}}<i class="fa fa-times text-muted" aria-hidden="true"></i> {{#str}}no{{/str}}{{/user_type_extras.consent_leaderboard}}</span>
         </div>
         <div class="ap-profile__detail">
-            <label>Phone</label><span>{{phnumber}}</span>
+            <label>{{#str}}phone{{/str}}</label><span>{{phnumber}}</span>
         </div>
         <div class="ap-profile__detail">
             <label>{{#str}}profile_field_hire_date, local_sentientia_platform{{/str}}</label><span>{{joindate}}</span>

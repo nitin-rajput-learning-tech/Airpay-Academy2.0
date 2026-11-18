@@ -15,6 +15,16 @@ $PAGE->set_title(get_string('reviewqueue', 'local_sentientia_proctoring'));
 $PAGE->set_heading(get_string('reviewqueue', 'local_sentientia_proctoring'));
 require_capability('local/sentientia_proctoring:review', $ctx);
 
+// Persona walk 2026-11-18: lib.php links this page from the user Preferences menu, so the navbar took that node
+// as the active one and printed "Preferences / Review queue". The Preferences link stays; the trail is set here
+// instead. Proctoring admin, the page that links here, is the parent for a reviewer who may open it.
+$PAGE->navbar->ignore_active();
+if (has_capability('local/sentientia_proctoring:viewattempts', $ctx)) {
+    $PAGE->navbar->add(get_string('adminhome', 'local_sentientia_proctoring'),
+        new moodle_url('/local/sentientia_proctoring/admin.php'));
+}
+$PAGE->navbar->add(get_string('reviewqueue', 'local_sentientia_proctoring'), $PAGE->url);
+
 $columns = [
     ['key' => 'user_name',     'label' => 'Candidate', 'sortable' => false],
     ['key' => 'quiz_name',     'label' => 'Quiz',      'sortable' => false],

@@ -60,3 +60,11 @@ $string['storefront_checkout_freeleft'] = 'आपकी बास्केट �
 // Owner decision CRS-14 (2026-10-07) — सीखने वाले की "प्रगति में" सूची में रहने वाले BizLMS छद्म-कोर्स (open_coursetype 1) का कार्ड लेबल, open_module के अनुसार।
 $string['coursetype_exam'] = 'परीक्षा';
 $string['coursetype_forum'] = 'फ़ोरम';
+
+// Persona walk 2026-11-18 — course.php अब /enrol/index.php से लिंक नहीं करता (थीम उसे वापस course.php पर भेजती है):
+// जहाँ पृष्ठ पर कुछ भी सीखने वाले का नामांकन नहीं कर सकता, वह यह बताता है; और जो नामांकन प्रवेश नहीं देता, वह कारण बताता है।
+$string['enrolment_managed'] = 'इस कोर्स में नामांकन आपकी L&D टीम द्वारा प्रबंधित किया जाता है।';
+$string['enrolment_suspended'] = 'इस कोर्स में आपका नामांकन निलंबित है। अपनी L&D टीम से संपर्क करें।';
+$string['enrolment_notstarted'] = 'इस कोर्स में आपका नामांकन {$a} से शुरू होगा।';
+$string['enrolment_ended'] = 'इस कोर्स में आपका नामांकन {$a} को समाप्त हो गया। अपनी L&D टीम से संपर्क करें।';
+$string['open_course'] = 'कोर्स खोलें';

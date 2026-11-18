@@ -39,7 +39,13 @@ $PAGE->set_context($systemcontext);
 $PAGE->set_title(get_string('analytics', 'local_sentientia_analytics'));
 $PAGE->set_pagelayout('standard');
 
-$range = optional_param('range', '30d', PARAM_ALPHA);
+// PARAM_ALPHA stripped the digits, so ?range=90d arrived as 'd' and every pill
+// but YTD showed the 30-day figures with no pill marked (11-18 surface walk,
+// vp_compliance1 item 5). The range drives the KPI cards (get_kpis()).
+$range = optional_param('range', '30d', PARAM_ALPHANUM);
+if (!in_array($range, \local_sentientia_analytics\analytics_manager::RANGES, true)) {
+    $range = '30d';
+}
 $orgid = optional_param('orgid', 0, PARAM_INT);
 
 // Determine org scope. Whatever is asked for is clamped to what this user may
@@ -82,7 +88,7 @@ if ($canviewall) {
     foreach ($orgs as $o) {
         $org_options[] = [
             'id' => $o->id,
-            'name' => format_string($o->fullname),
+            'name' => format_string($o->fullname),  // HTML: triple braces in the template
             'selected' => ($o->id == $orgid),
         ];
     }
@@ -96,18 +102,24 @@ $funnel     = $manager::get_funnel($orgpath);
 $heatmap    = $manager::get_compliance_heatmap($orgpath);
 $top_courses = $manager::get_course_effectiveness(10, $orgpath);
 
-// Add drill-down URLs to heatmap departments.
+// Add drill-down URLs and the people count ("1 user" / "N users") to heatmap departments.
 $drillbase = new moodle_url('/local/sentientia_analytics/drilldown.php');
 foreach ($heatmap as $k => $dept) {
     $dept = (array) $dept;
     $dept['drilldown_url'] = $drillbase->out(false) . '?type=department&path=' . urlencode($dept['path'] ?? $orgpath);
+    $users = (int) ($dept['users'] ?? 0);
+    $dept['users_label'] = ($users === 1)
+        ? get_string('heatmap_users_one', 'local_sentientia_analytics')
+        : get_string('heatmap_users', 'local_sentientia_analytics', number_format($users));
     $heatmap[$k] = $dept;
 }
 
 // Add drill-down URLs to course effectiveness — $DB returns stdClass, convert to arrays.
+// The table listed shortnames (VIE01, IT01, ...); it shows the course name now.
 foreach ($top_courses as $k => $course) {
     $course = (array) $course;
     $course['course_drilldown_url'] = $drillbase->out(false) . '?type=course&courseid=' . (int)($course['id'] ?? 0);
+    $course['coursename'] = format_string($course['fullname'] ?? '', true, ['context' => $systemcontext]);
     $top_courses[$k] = $course;
 }
 
@@ -118,8 +130,21 @@ $data = [
     'has_funnel'    => !empty($funnel),
     'heatmap'       => $heatmap,
     'has_heatmap'   => !empty($heatmap),
+    // Empty state for the heatmap card, shown only where a compliance source exists.
+    'heatmap_empty' => (empty($heatmap) && $manager::compliance_source_available()) ? [
+        'icon'    => 'th',
+        'title'   => get_string('heatmap_empty_title', 'local_sentientia_analytics'),
+        'message' => get_string('heatmap_empty', 'local_sentientia_analytics'),
+        'size'    => 'sm',
+    ] : null,
+    'funnel_empty_state' => [
+        'icon'    => 'filter',
+        'title'   => get_string('funnel_empty', 'local_sentientia_analytics'),
+        'size'    => 'sm',
+    ],
     'top_courses'   => $top_courses,
     'has_courses'   => !empty($top_courses),
+    'courses_heading' => get_string('courseeff_heading', 'local_sentientia_analytics', 10),
     'range'         => $range,
     'range_7d'      => ($range === '7d'),
     'range_30d'     => ($range === '30d'),

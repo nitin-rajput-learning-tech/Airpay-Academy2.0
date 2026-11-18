@@ -84,6 +84,7 @@ $string['last_recomputed_at'] = 'शेवटचे अपडेट: {$a}';
 $string['live_indicator'] = 'लाइव्ह — रिअल टाइममध्ये अपडेट होत आहे';
 $string['polling_fallback'] = 'दर 30 सेकंदांनी अपडेट होते';
 $string['feature_disabled'] = 'लीडरबोर्ड्स चालू नाहीत. sentientia.leaderboards.enabled सुरू करण्यासाठी ॲडमिनला सांगा.';
+$string['feature_unavailable'] = 'कोर्स आणि क्विझ लीडरबोर्ड्स अजून उपलब्ध नाहीत. नंतर पुन्हा पहा.';
 $string['type_disabled'] = 'हा बोर्ड प्रकार चालू नाही.';
 $string['block_title'] = 'लीडरबोर्ड';
 $string['block_choose'] = 'एक लीडरबोर्ड निवडा';

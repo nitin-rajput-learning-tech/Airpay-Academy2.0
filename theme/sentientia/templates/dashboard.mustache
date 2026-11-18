@@ -180,7 +180,12 @@
                     </form>
                 </div>
                 <div class="ap-topbar__right">
-                    {{! User avatar + dark mode moved to sidebar. Topbar is clean. }}
+                    {{! User avatar + dark mode live in the sidebar. The Notifications bell and the Messages link are
+                        the ones core_renderer::airpay_shell_start() prints on every other shell page (11-18 surface
+                        walk V4: /my/ alone had neither). topbar.messageslink is empty when the user may not use
+                        messaging. }}
+                    <a class="ap-topbar__iconlink" href="{{{config.wwwroot}}}/message/output/popup/notifications.php" title="{{#str}}notifications{{/str}}" aria-label="{{#str}}notifications{{/str}}"><i class="fa fa-bell" aria-hidden="true"></i></a>
+                    {{{ topbar.messageslink }}}
                 </div>
             </header>
 
@@ -850,10 +855,15 @@
             {{{ layerone_bottom_one }}}
             {{{ layerone_bottom_two }}}
             {{/blocksdrawer}}
-        </div>
-    </div>
+        </div>{{! end #page-content }}
+    </div>{{! end #page }}
     {{{ output.standard_after_main_region_html }}}
-                </div>{{! end #page }}
+                {{! Footer (11-18 surface walk V4: /my/ had none). As in columns2: inside the content scroller, as its
+                    last element. The partial prints standard_end_of_body_html, so this template no longer prints it
+                    itself; it also prints standard_footer_html and debug_footer_html, as on every other shell page.
+                    A stray closing div used to stand here: it closed main early (the browser recovered), and the
+                    footer would have landed outside the content column. }}
+                {{> theme_sentientia/footer }}
             </main>{{! end .ap-shell__content }}
         </div>{{! end .ap-shell__main }}
     </div>{{! end .ap-shell }}
@@ -862,6 +872,21 @@
 {{! Sidebar + dark mode JS }}
 <script>
 (function() {
+    // Page chrome printed by the before_footer_html_generation hook (11-18 surface walk V4). Core prints that hook's
+    // output directly after the page's main content, and this layout keeps the main content in the hidden
+    // #page-content (the dashboard replaces core's block region). So the mobile bottom nav (local_sentientia_platform)
+    // and the assistant button (local_sentientia_assistant, behind ai.assistant.enabled) were hidden on /my/ only.
+    // Move them next to the hidden container, where they are in view as on every other shell page. They are moved,
+    // not copied: the plugins still decide whether they are printed at all.
+    var hiddenContent = document.getElementById('page-content');
+    if (hiddenContent && hiddenContent.parentNode) {
+        var afterHidden = hiddenContent.nextSibling;
+        Array.prototype.forEach.call(
+            hiddenContent.querySelectorAll('.airpay-mobile-nav, #airpay-assistant'),
+            function(chrome) { hiddenContent.parentNode.insertBefore(chrome, afterHidden); }
+        );
+    }
+
     var sidebar = document.getElementById('ap-sidebar');
     var toggle = document.getElementById('ap-sidebar-toggle');
     var mobileToggle = document.getElementById('ap-sidebar-mobile-toggle');
@@ -1001,15 +1026,16 @@
 </script>
 
 {{!
-     2026-06-09 fix - emit the end-of-body output. Without this line the
+     2026-06-09 fix - the end-of-body output must be emitted. Without it the
      RequireJS/AMD bootstrap, the trailing js-helper require(loader,drawer)
      block below, and every PAGE-requires js_call_amd call (the dashboard
      charts) never flush - so require is undefined and all JS-driven UI is
-     dead. Every sibling layout template emits this; the dashboard had
-     regressed without it. NB keep this comment free of curly-brace pairs
-     so Mustache does not terminate it early.
+     dead. Since 2026-11-18 the footer partial inside main emits it, as in
+     columns2 (it is a token core replaces at the very end, so its position
+     does not change what loads). Do not emit it here as well: core replaces
+     every copy of the token, so the page JS would load twice. NB keep this
+     comment free of curly-brace pairs so Mustache does not terminate it early.
 }}
-{{{ output.standard_end_of_body_html }}}
 </body>
 {{/use_shell}}
 

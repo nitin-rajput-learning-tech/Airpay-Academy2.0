@@ -66,10 +66,14 @@ $radar = $manager::get_radar_data($userid);
 $recommendations = [];
 $hasinterestrecs = false;
 foreach ($manager::get_recommended_courses($userid, 5, true) as $r) {
+    $teacheslabel = $manager::LEVELS[(int) ($r['teaches_level'] ?? 0)] ?? '';
     $recommendations[] = [
         'coursename'    => $r['fullname'],
         'skill_name'    => $r['skill_name'],
-        'teaches_label' => $manager::LEVELS[(int) ($r['teaches_level'] ?? 0)] ?? '',
+        'teaches_label' => $teacheslabel,
+        // Plain text, escaped by the template's {{ }} (was hard-coded English "Teaches: X → Y").
+        'teaches_text'  => get_string('rec_teaches', 'local_sentientia_skills',
+            (object) ['skill' => $r['skill_name'], 'level' => $teacheslabel]),
         'detailurl'     => $r['viewurl'],
     ];
     $hasinterestrecs = $hasinterestrecs || ($r['reason'] ?? '') === 'interest';
@@ -90,8 +94,29 @@ if ($manager::flag_enabled($manager::FLAG_RECS)) {
 $summary_pct = $analysis['summary']['percentage'] ?? 0;
 $summary_offset = round(238.76 * (1 - $summary_pct / 100), 2);
 
+// Summary sentences (surface walk 2026-11-18: hard-coded English, and shown even with no role skills). The template
+// prints them only when has_data is true. summary_text_html is rendered raw so the designation keeps its <strong>:
+// its only inserts are two integers and the designation, which is plain text (get_gap_analysis($plain = true)) and
+// is s()-escaped here.
+$summarytexthtml = '';
+$summarygapstext = '';
+if (!empty($analysis['has_data'])) {
+    $summary = $analysis['summary'];
+    $summarytexthtml = get_string('readiness_summary', 'local_sentientia_skills', (object) [
+        'met'         => (int) $summary['met'],
+        'total'       => (int) $summary['total'],
+        'designation' => html_writer::tag('strong', s($analysis['designation'] ?? '')),
+    ]);
+    $gaps = (int) $summary['gaps'];
+    $summarygapstext = $gaps === 1
+        ? get_string('readiness_gaps_one', 'local_sentientia_skills')
+        : get_string('readiness_gaps', 'local_sentientia_skills', $gaps);
+}
+
 $data = array_merge($analysis, $radar, [
     'summary_offset'       => $summary_offset,
+    'summary_text_html'    => $summarytexthtml,
+    'summary_gaps_text'    => $summarygapstext,
     'has_recommendations'  => !empty($recommendations),
     'recommendations'      => $recommendations,
     'has_interest_recs'    => $hasinterestrecs,

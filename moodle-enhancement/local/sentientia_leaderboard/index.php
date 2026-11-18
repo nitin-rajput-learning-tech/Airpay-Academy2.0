@@ -28,12 +28,20 @@ if (class_exists('\\local_sentientia_platform\\feature_flags')) {
             'sentientia.leaderboards.enabled')) {
         $PAGE->set_url('/local/sentientia_leaderboard/index.php');
         $PAGE->set_context($context);
-        $PAGE->set_title(get_string('pluginname', 'local_sentientia_leaderboard'));
-        $PAGE->set_heading(get_string('pluginname', 'local_sentientia_leaderboard'));
+        $PAGE->set_pagelayout('standard');
+        // Surface walk 2026-11-18: the title was the product plugin name
+        // ("Sentientia LMS - Real-time Leaderboards"); use the page's own heading.
+        $PAGE->set_title(get_string('heading_index', 'local_sentientia_leaderboard'));
+        $PAGE->set_heading(get_string('heading_index', 'local_sentientia_leaderboard'));
         echo $OUTPUT->header();
+        // Surface walk 2026-11-18: learners were shown the flag key. Only
+        // someone who can change site configuration gets the flag hint.
+        $canconfigure = has_capability('moodle/site:config', $context);
         echo $OUTPUT->notification(
-            get_string('feature_disabled', 'local_sentientia_leaderboard'),
-            \core\output\notification::NOTIFY_WARNING);
+            get_string($canconfigure ? 'feature_disabled' : 'feature_unavailable',
+                'local_sentientia_leaderboard'),
+            $canconfigure ? \core\output\notification::NOTIFY_WARNING
+                : \core\output\notification::NOTIFY_INFO);
         echo $OUTPUT->footer();
         exit;
     }

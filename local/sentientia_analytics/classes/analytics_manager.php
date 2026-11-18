@@ -13,6 +13,9 @@ defined('MOODLE_INTERNAL') || die();
 
 class analytics_manager {
 
+    /** The time ranges get_range_dates() knows; anything else is read as 30d. */
+    public const RANGES = ['7d', '30d', '90d', 'ytd'];
+
     /**
      * Get KPI widgets data with time-range comparison.
      *
@@ -24,11 +27,14 @@ class analytics_manager {
         global $DB;
 
         // Cache the 8-count KPI block; same range+org returns same result for 5 min.
+        // Only the counts are cached: the labels are strings in the VIEWER's
+        // language, and this is an application cache shared by every viewer.
+        // (Until 2026-11-18 the labels were English literals.)
         $cache = \cache::make('local_sentientia_analytics', 'kpis');
-        $cachekey = 'kpis_' . md5($range . '|' . ($orgpath ?: 'all'));
+        $cachekey = 'kpis_v2_' . md5($range . '|' . ($orgpath ?: 'all'));
         $cached = $cache->get($cachekey);
         if ($cached !== false) {
-            return $cached;
+            return self::kpi_cards($cached);
         }
 
         [$current_start, $current_end, $previous_start, $previous_end] = self::get_range_dates($range);
@@ -106,37 +112,49 @@ class analytics_manager {
               WHERE ci.timecreated >= :start AND ci.timecreated < :end $orgfilter",
             array_merge($params, ['start' => $previous_start, 'end' => $previous_end]));
 
-        // Phase B0 iter X — KPI shape now includes both the legacy `trend`
-        // object (kept for any consumer that still reads .is_up/.is_down)
-        // AND the canonical stat_card partial fields:
-        //   - color   : semantic variant ('primary' instead of hex)
-        //   - icon    : FA name WITHOUT the 'fa-' prefix
-        //   - trend   : already-formatted string for the partial's trend slot
-        //   - trenddir: "up" / "down" / "flat" — drives the arrow + colour
-        //   - trend_obj: legacy trend object — kept to avoid breaking tests
-        //                and consumers that read trend.is_up etc.
-        $result = [];
-        $kpis = [
-            ['Active Users',    $active_current, $active_previous, 'users',        'primary'],
-            ['New Enrolments',  $enrol_current,  $enrol_previous,  'user-plus',    'accent'],
-            ['Completions',     $comp_current,   $comp_previous,   'check-circle', 'success'],
-            ['Certificates',    $cert_current,   $cert_previous,   'certificate',  'warning'],
+        // [label string id, current, previous, icon, variant] - see kpi_cards().
+        $counts = [
+            ['kpi_active_users',   $active_current, $active_previous, 'users',        'primary'],
+            ['kpi_new_enrolments', $enrol_current,  $enrol_previous,  'user-plus',    'accent'],
+            ['kpi_completions',    $comp_current,   $comp_previous,   'check-circle', 'success'],
+            ['kpi_certificates',   $cert_current,   $cert_previous,   'certificate',  'warning'],
         ];
-        foreach ($kpis as [$label, $cur, $prev, $icon, $variant]) {
+        $cache->set($cachekey, $counts);
+        return self::kpi_cards($counts);
+    }
+
+    /**
+     * KPI cards from the cached counts, labelled in the viewer's language.
+     *
+     * Phase B0 iter X — KPI shape includes both the legacy `trend`
+     * object (kept for any consumer that still reads .is_up/.is_down)
+     * AND the canonical stat_card partial fields:
+     *   - color   : semantic variant ('primary' instead of hex)
+     *   - icon    : FA name WITHOUT the 'fa-' prefix
+     *   - trend   : already-formatted string for the partial's trend slot
+     *   - trenddir: "up" / "down" / "flat" — drives the arrow + colour
+     *   - trend_obj: legacy trend object — kept to avoid breaking tests
+     *                and consumers that read trend.is_up etc.
+     *
+     * @param array $counts rows of [label string id, current, previous, icon, variant]
+     * @return array
+     */
+    private static function kpi_cards(array $counts): array {
+        $result = [];
+        foreach ($counts as [$labelid, $cur, $prev, $icon, $variant]) {
             $trendobj = self::trend($cur, $prev);
             $dir = $trendobj['direction'] ?? 'flat';
             $result[] = [
-                'label'     => $label,
+                'label'     => get_string($labelid, 'local_sentientia_analytics'),
                 'value'     => $cur,
                 'previous'  => $prev,
                 'icon'      => $icon,
                 'color'     => $variant,
-                'trend'     => $trendobj['label'] . ' vs previous',
+                'trend'     => get_string('kpi_vs_previous', 'local_sentientia_analytics', $trendobj['label']),
                 'trenddir'  => ($dir === 'up' || $dir === 'down') ? $dir : 'flat',
                 'trend_obj' => $trendobj,  // legacy — preserves .is_up / .is_down
             ];
         }
-        $cache->set($cachekey, $result);
         return $result;
     }
 
@@ -146,11 +164,13 @@ class analytics_manager {
     public static function get_funnel(string $orgpath = ''): array {
         global $DB;
 
+        // Counts only in the shared cache; stage names are added per viewer
+        // (funnel_stages()), in the viewer's language.
         $cache = \cache::make('local_sentientia_analytics', 'funnel');
-        $cachekey = 'funnel_' . md5($orgpath ?: 'all');
+        $cachekey = 'funnel_v2_' . md5($orgpath ?: 'all');
         $cached = $cache->get($cachekey);
         if ($cached !== false) {
-            return $cached;
+            return self::funnel_stages($cached);
         }
 
         $orgfilter = '';
@@ -183,129 +203,96 @@ class analytics_manager {
         $max = max($enrolled, 1);
 
         $result = [
-            ['stage' => 'Enrolled',  'count' => $enrolled,  'pct' => 100,                             'width' => 100],
-            ['stage' => 'Started',   'count' => $started,   'pct' => round($started / $max * 100),    'width' => round($started / $max * 100)],
-            ['stage' => 'Completed', 'count' => $completed, 'pct' => round($completed / $max * 100),  'width' => round($completed / $max * 100)],
-            ['stage' => 'Certified', 'count' => $certified, 'pct' => round($certified / $max * 100),  'width' => round($certified / $max * 100)],
+            ['stage' => 'enrolled',  'count' => $enrolled,  'pct' => 100,                             'width' => 100],
+            ['stage' => 'started',   'count' => $started,   'pct' => round($started / $max * 100),    'width' => round($started / $max * 100)],
+            ['stage' => 'completed', 'count' => $completed, 'pct' => round($completed / $max * 100),  'width' => round($completed / $max * 100)],
+            ['stage' => 'certified', 'count' => $certified, 'pct' => round($certified / $max * 100),  'width' => round($certified / $max * 100)],
         ];
         $cache->set($cachekey, $result);
-        return $result;
+        return self::funnel_stages($result);
+    }
+
+    /**
+     * Name each cached funnel stage in the viewer's language. 'stage' was an
+     * English literal until 2026-11-18; 'stagekey' keeps the stable id.
+     *
+     * @param array $stages rows with 'stage' = enrolled|started|completed|certified
+     * @return array
+     */
+    private static function funnel_stages(array $stages): array {
+        foreach ($stages as $i => $row) {
+            $stages[$i]['stagekey'] = $row['stage'];
+            $stages[$i]['stage'] = get_string('funnel_' . $row['stage'], 'local_sentientia_analytics');
+        }
+        return $stages;
+    }
+
+    /**
+     * Whether the compliance report plugin, which owns the mandatory-course
+     * list and the compliance snapshot, is installed. Without it there is no
+     * compliance figure to show.
+     */
+    public static function compliance_source_available(): bool {
+        global $DB;
+        return class_exists('\local_sentientia_compliance_report\compliance_engine')
+            && $DB->get_manager()->table_exists('local_compliance_snapshot');
     }
 
     /**
      * Get compliance heat map — RAG status by department.
+     *
+     * Read from the compliance report's Department Scorecard
+     * (compliance_engine::get_department_scorecard()), so the two pages show
+     * the same rate for the same department: completed mandatory-course
+     * assignments over all assignments, from the compliance snapshot, with
+     * the scorecard's RAG bands (green >= 90, amber >= 70). Departments with
+     * no assignments are left out, as departments with no users were before.
+     *
+     * Until 2026-11-18 this counted every visible course with an end date as
+     * mandatory, so the denominator was users x all dated courses and nearly
+     * every department read 0% in red while the scorecard read 60-91% and the
+     * dashboard 72% (11-18 surface walk, vp_compliance1 item 1, vp_admin1 B4).
+     *
+     * 'department' and 'parentname' are format_string()'d (HTML): render them
+     * with triple braces; 'department_plain' is for CSV.
+     *
+     * @param string $orgpath tenant scope, '' = tenant 1 (as the scorecard)
+     * @return array[]
      */
     public static function get_compliance_heatmap(string $orgpath = ''): array {
-        global $DB;
-
-        // Cache: compliance_heatmap is heavy (was N+1 over departments) and changes
+        // Cache: the scorecard reads the whole snapshot of a tenant and changes
         // slowly enough that a 5-minute TTL is fine for executive dashboards.
         $cache = \cache::make('local_sentientia_analytics', 'compliance_heatmap');
-        $cachekey = 'heatmap_' . md5($orgpath ?: 'all');
+        $cachekey = 'heatmap_v2_' . md5($orgpath ?: 'all');
         $cached = $cache->get($cachekey);
         if ($cached !== false) {
             return $cached;
         }
 
-        // Get departments (depth 3) under the requested top org.
-        $parts = explode('/', trim($orgpath ?: '/1', '/'));
-        $toporg = '/' . ($parts[0] ?? '1');
-
-        $departments = $DB->get_records_sql(
-            "SELECT cc.id, cc.fullname, cc.path
-               FROM {local_sentientia_org} cc
-              WHERE cc.path LIKE :pathprefix AND cc.depth = 3
-           ORDER BY cc.fullname",
-            ['pathprefix' => $toporg . '/%']);
-
-        if (empty($departments)) {
-            $cache->set($cachekey, []);
-            return [];
-        }
-
-        // ── ONE QUERY: count users grouped by exact open_path (no per-dept N+1) ──
-        // We then roll up in PHP into per-department totals using path prefixes.
-        $user_path_counts = $DB->get_records_sql(
-            "SELECT open_path AS p, COUNT(*) AS cnt
-               FROM {user}
-              WHERE deleted = 0 AND suspended = 0
-                AND open_path IS NOT NULL AND open_path <> ''
-                AND open_path LIKE :prefix
-           GROUP BY open_path",
-            ['prefix' => $toporg . '/%']);
-
-        // ── ONE QUERY: completion counts grouped by exact user open_path ──
-        $completion_path_counts = $DB->get_records_sql(
-            "SELECT u.open_path AS p, COUNT(DISTINCT cc.id) AS cnt
-               FROM {course_completions} cc
-               JOIN {user} u ON u.id = cc.userid
-               JOIN {course} c ON c.id = cc.course
-              WHERE u.deleted = 0 AND u.open_path LIKE :prefix
-                AND c.enddate > 0 AND cc.timecompleted IS NOT NULL
-           GROUP BY u.open_path",
-            ['prefix' => $toporg . '/%']);
-
-        // ── ONE QUERY: hoisted out of the loop. Same value for every dept. ──
-        // `$toporg . '/%'` excluded every course sitting at the tenant root
-        // itself ('/1'), which on this data is most of them — so this
-        // denominator was short and every department's compliance rate read
-        // high. Exact-or-descendant via the shared helper; fixed 2026-09-22.
-        [$mandsql, $mandargs] = \local_sentientia_platform\tenant::path_descendant_filter(
-            $toporg, '', 'open_path', 'mand');
-        $mandatory_courses = $DB->count_records_sql(
-            "SELECT COUNT(*) FROM {course}
-              WHERE enddate > 0 AND visible = 1 AND id > 1 AND {$mandsql}",
-            $mandargs);
-
-        if ($mandatory_courses == 0) {
-            $cache->set($cachekey, []);
-            return [];
-        }
-
-        // Per-department rollup: a user at /1/2/3/4 contributes to dept /1/2/3.
-        // Match each user_path to the dept whose path is a prefix of the user_path.
-        $dept_paths = [];
-        foreach ($departments as $dept) {
-            $dept_paths[$dept->path] = ['users' => 0, 'completed' => 0];
-        }
-        foreach ($user_path_counts as $row) {
-            foreach ($dept_paths as $dpath => &$tot) {
-                if ($row->p === $dpath || str_starts_with($row->p, $dpath . '/')) {
-                    $tot['users'] += (int) $row->cnt;
-                }
-            }
-            unset($tot);
-        }
-        foreach ($completion_path_counts as $row) {
-            foreach ($dept_paths as $dpath => &$tot) {
-                if ($row->p === $dpath || str_starts_with($row->p, $dpath . '/')) {
-                    $tot['completed'] += (int) $row->cnt;
-                }
-            }
-            unset($tot);
-        }
-
         $heatmap = [];
-        foreach ($departments as $dept) {
-            $total_users = $dept_paths[$dept->path]['users'] ?? 0;
-            if ($total_users == 0) {
-                continue;
+        if (self::compliance_source_available()) {
+            $scorecard = \local_sentientia_compliance_report\compliance_engine::get_department_scorecard($orgpath);
+            foreach ($scorecard as $row) {
+                if (!empty($row['is_empty'])) {
+                    continue;
+                }
+                $heatmap[] = [
+                    'department'       => $row['department'],
+                    'department_plain' => $row['department_plain'],
+                    'parentname'       => $row['parentname'],
+                    'parentname_plain' => $row['parentname_plain'],
+                    'has_parent'       => $row['has_parent'],
+                    'path'             => $row['path'],
+                    'users'            => $row['users'],
+                    'total'            => $row['total'],
+                    'completed'        => $row['completed'],
+                    'rate'             => $row['rate'],
+                    'rag'              => $row['rag'],
+                    'is_green'         => $row['is_green'],
+                    'is_amber'         => $row['is_amber'],
+                    'is_red'           => $row['is_red'],
+                ];
             }
-            $completed_mandatory = $dept_paths[$dept->path]['completed'] ?? 0;
-            $expected = $total_users * $mandatory_courses;
-            $rate = $expected > 0 ? (int) round(($completed_mandatory / $expected) * 100) : 0;
-            $rag = ($rate >= 80) ? 'green' : (($rate >= 50) ? 'amber' : 'red');
-
-            $heatmap[] = [
-                'department' => format_string($dept->fullname),
-                'path'       => $dept->path,
-                'users'      => $total_users,
-                'rate'       => $rate,
-                'rag'        => $rag,
-                'is_green'   => ($rag === 'green'),
-                'is_amber'   => ($rag === 'amber'),
-                'is_red'     => ($rag === 'red'),
-            ];
         }
 
         $cache->set($cachekey, $heatmap);

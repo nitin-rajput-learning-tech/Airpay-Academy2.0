@@ -71,3 +71,35 @@ $string['error_outofscope'] = 'That part of the organisation is outside your acc
 // 'fullnamedisplay', which is a name-format template, not a label, and
 // printed the raw placeholder "{$a->firstname} {$a->lastname}".
 $string['atrisk_col_learner'] = 'Learner';
+
+// Dashboard chrome, KPI cards and funnel stages (2026-11-18). These were
+// English literals in templates/dashboard.mustache and analytics_manager.
+$string['businessunit_label'] = 'Business unit:';
+$string['range_label'] = 'Period for the KPI cards';
+$string['range_7d'] = '7 days';
+$string['range_30d'] = '30 days';
+$string['range_90d'] = '90 days';
+$string['range_ytd'] = 'YTD';
+$string['kpi_active_users'] = 'Active Users';
+$string['kpi_new_enrolments'] = 'New Enrolments';
+$string['kpi_completions'] = 'Completions';
+$string['kpi_certificates'] = 'Certificates';
+$string['kpi_vs_previous'] = '{$a} vs previous';
+$string['funnel_heading'] = 'Engagement Funnel';
+$string['funnel_empty'] = 'No enrolment data available yet.';
+$string['funnel_enrolled'] = 'Enrolled';
+$string['funnel_started'] = 'Started';
+$string['funnel_completed'] = 'Completed';
+$string['funnel_certified'] = 'Certified';
+$string['heatmap_heading'] = 'Compliance by Department';
+$string['heatmap_note'] = 'Completed mandatory-course assignments, as on the compliance report\'s Department Scorecard.';
+$string['heatmap_viewusers'] = 'View the people in this department';
+$string['heatmap_users'] = '{$a} users';
+$string['heatmap_users_one'] = '1 user';
+$string['heatmap_empty_title'] = 'No compliance assignments yet';
+$string['heatmap_empty'] = 'No department in this view has mandatory-course assignments.';
+$string['courseeff_heading'] = 'Course Effectiveness (Top {$a})';
+$string['col_course'] = 'Course';
+$string['col_enrolled'] = 'Enrolled';
+$string['col_completed'] = 'Completed';
+$string['col_rate'] = 'Rate';

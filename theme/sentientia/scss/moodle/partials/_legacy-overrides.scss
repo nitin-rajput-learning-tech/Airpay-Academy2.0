@@ -575,12 +575,21 @@ a:hover {
    ═══════════════════════════════════════════════════════════ */
 
 /* Section headers */
+/* min-width: 0 (surface walk 2026-11-18): a section is a grid item of .airpay-dash__two-col. With the default
+   min-width:auto its Chart.js canvas set the minimum, so Course Distribution ran off the right edge at 1440 px and
+   four cards overflowed at 390 px. */
 .airpay-dash__section {
     background: #fff;
     border-radius: 12px;
     padding: 20px 24px;
     border: 1px solid #e2e6ef;
     box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    min-width: 0;
+}
+/* The chart canvases (Enrolment Trend, Course Distribution) never grow past their card. Chart.js draws the legend
+   inside the canvas, so this also keeps the doughnut legend in the card. */
+.airpay-dash__section > canvas {
+    max-width: 100%;
 }
 .airpay-dash__section-title {
     font-family: 'Montserrat', sans-serif;
@@ -595,13 +604,15 @@ a:hover {
 }
 
 /* Two-column layout (Deadlines + Timeline) */
+/* minmax(0, …) tracks (surface walk 2026-11-18): a bare fr track has an automatic minimum of its content's
+   min-content width, so a wide chart canvas forced the tracks wider than the page. */
 .airpay-dash__two-col {
     display: grid;
-    grid-template-columns: 1.5fr 1fr;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
     gap: 20px;
 }
 @media (max-width: 992px) {
-    .airpay-dash__two-col { grid-template-columns: 1fr; }
+    .airpay-dash__two-col { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* --- Deadlines --- */

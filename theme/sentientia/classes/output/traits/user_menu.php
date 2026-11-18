@@ -567,7 +567,9 @@ trait user_menu {
                 && ($switchcatid === 0 || (int) $role->highest_catid === $switchcatid));
             $work[] = [
                 'label'      => $label,
-                'icon'       => 'fa-user-circle-o',
+                // fa-user-circle-o is a Font Awesome 4 name: the theme's FA6 build has no v4 shims,
+                // so the sidebar role switcher drew no icon (persona walk 2026-11-18). FA6 name.
+                'icon'       => 'fa-user-circle',
                 '_roleid'    => (int) $role->roleid,
                 '_contextid' => (int) $role->contextid,
                 '_catid'     => (int) $role->highest_catid,

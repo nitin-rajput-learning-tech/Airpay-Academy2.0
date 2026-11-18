@@ -77,6 +77,7 @@ $string['last_recomputed_at'] = 'Last updated: {$a}';
 $string['live_indicator']    = 'Live — updating in real time';
 $string['polling_fallback']  = 'Updates every 30s';
 $string['feature_disabled']  = 'Leaderboards are not enabled. Ask an admin to switch on sentientia.leaderboards.enabled.';
+$string['feature_unavailable'] = 'Course and quiz leaderboards are not available yet. Check back later.';  // Learner-facing; feature_disabled (with the flag key) is for site admins only.
 $string['type_disabled']     = 'This board type is not enabled.';
 
 // ── Block ──────────────────────────────────────────────────────

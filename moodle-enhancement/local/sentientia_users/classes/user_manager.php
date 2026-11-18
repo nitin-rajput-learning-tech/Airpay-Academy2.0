@@ -131,6 +131,76 @@ class user_manager {
     }
 
     /**
+     * The user_type provider for the profile header chip and detail grid.
+     *
+     * A user with a local_sentientia_user_type row gets that type (user_type_factory::for_user()). Without a row the
+     * factory falls back to employee, so a public-tenant learner whose account was not made by self-signup (and never
+     * backfilled) read "Employee" over a grid of N/A employee fields (surface walk 2026-11-18). Without a row, a user in
+     * the self-signup tenant (signup_service, default /77 Public) is a consumer here, as
+     * local_sentientia_platform/cli/classify_existing_users.php classifies that tenant; anyone else keeps the factory's
+     * default. Users with a row are unchanged. A site admin is never made a consumer (that script's rule 1 makes a site
+     * admin an operator, whatever the tenant).
+     *
+     * @param \stdClass $user user record with id and open_path
+     * @return \local_sentientia_platform\user_type_provider
+     */
+    public static function profile_type_provider(\stdClass $user): \local_sentientia_platform\user_type_provider {
+        global $DB;
+        $factory = \local_sentientia_platform\user_type_factory::class;
+        $signuproot = signup_service::signup_tenant_root();
+        if ($signuproot > 0 && \local_sentientia_platform\tenant::root_for_user($user) === $signuproot
+                && !is_siteadmin((int) $user->id)
+                && !$DB->record_exists('local_sentientia_user_type', ['userid' => (int) $user->id])) {
+            return $factory::instantiate('consumer');
+        }
+        return $factory::for_user((int) $user->id);
+    }
+
+    /**
+     * What the user does beyond learning, for the profile header chip (plain text).
+     *
+     * The system-context roles that are not plain learner roles (every archetype but student, user, guest and
+     * frontpage; a custom role with no archetype counts, e.g. an authoring role), in role sort order, then
+     * "Line manager" when the user has direct reports (\local_sentientia_core\org::direct_reports(), the same
+     * source as My Team). Surface walk 2026-11-18: a tenant admin and a line manager both read only "Employee".
+     *
+     * @param int $userid
+     * @return string[] plain-text labels, possibly empty
+     */
+    public static function profile_role_labels(int $userid): array {
+        global $DB;
+        $labels = [];
+        $syscontext = \context_system::instance();
+        $roles = $DB->get_records_sql(
+            "SELECT DISTINCT r.id, r.name, r.shortname, r.archetype, r.sortorder
+               FROM {role_assignments} ra
+               JOIN {role} r ON r.id = ra.roleid
+              WHERE ra.userid = :userid AND ra.contextid = :contextid
+           ORDER BY r.sortorder ASC",
+            ['userid' => $userid, 'contextid' => $syscontext->id]);
+        foreach ($roles as $role) {
+            if (in_array((string) $role->archetype, ['student', 'user', 'guest', 'frontpage'], true)) {
+                continue;
+            }
+            // role_get_name() returns HTML-escaped text; a named role is formatted as plain text instead,
+            // because the template escapes it.
+            $labels[] = trim((string) $role->name) !== ''
+                ? format_string($role->name, true, ['context' => $syscontext, 'escape' => false])
+                : role_get_name($role, $syscontext);
+        }
+        if (class_exists('\\local_sentientia_core\\org')) {
+            try {
+                if (!empty(\local_sentientia_core\org::direct_reports($userid))) {
+                    $labels[] = get_string('profile_role_linemanager', 'local_sentientia_users');
+                }
+            } catch (\Throwable $e) {
+                debugging('Profile line-manager check failed: ' . $e->getMessage(), DEBUG_DEVELOPER);
+            }
+        }
+        return array_values(array_unique($labels));
+    }
+
+    /**
      * Build profile context array for template rendering.
      *
      * Centralizes the 40+ field context that was in renderer.php.
@@ -203,12 +273,22 @@ class user_manager {
         // polymorphic data so the template has it when ready.
         if (class_exists('\\local_sentientia_platform\\user_type_factory')) {
             try {
-                $type_provider = \local_sentientia_platform\user_type_factory::for_user($userid);
+                $type_provider = self::profile_type_provider($user);
                 $type_data     = $type_provider->profile_context($user);
 
                 $context['user_type']        = $type_provider::type_id();
                 $context['user_type_label']  = $type_provider::label();
                 $context['user_type_extras'] = $type_data['extras'] ?? [];
+                if ($type_provider::type_id() === 'consumer') {
+                    // A consumer has no HR join date: "Joined" is the account's creation date then (it read N/A).
+                    if (empty($user->open_joindate) && !empty($type_data['joined_date_str'])) {
+                        $context['joindate'] = $type_data['joined_date_str'];
+                    }
+                    // Nor a designation: the header's briefcase line read "N/A" (it is shown only when non-empty).
+                    if (empty($user->open_designation)) {
+                        $context['designation'] = '';
+                    }
+                }
 
                 // Boolean flags for conditional Mustache rendering — one
                 // per type so templates can `{{#is_consumer}}...{{/is_consumer}}`
@@ -232,6 +312,11 @@ class user_manager {
                 $context['is_operator']         = false;
             }
         }
+
+        // Surface walk 2026-11-18: the header chip read only the user type, so a tenant admin and a line manager both
+        // read "Employee". What the user does beyond learning follows the type in the chip (plain text, {{ }}).
+        $rolelabels = self::profile_role_labels((int) $user->id);
+        $context['user_role_label'] = implode(', ', $rolelabels);
 
         // Capability checks.
         // Cap fix (F-080/F-088, 2026-05-28): dropped the `local/users:edit`

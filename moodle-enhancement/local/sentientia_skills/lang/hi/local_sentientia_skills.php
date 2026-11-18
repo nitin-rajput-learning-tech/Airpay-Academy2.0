@@ -133,3 +133,16 @@ $string['heldskills_title']      = 'आपके पास जो कौशल �
 $string['heldskills_intro']      = 'आपके पद के लिए अभी कोई कौशल निर्धारित नहीं हैं, इसलिए तुलना के लिए कुछ नहीं है। आपके पास पहले से ये कौशल हैं।';
 $string['interests_title']       = 'जिन कौशलों में आपकी रुचि है';
 $string['recommended_for_you']   = 'आपके लिए सुझाव';
+
+// Surface walk 2026-11-18 - My Skills page (dashboard.mustache / index.php were hard-coded English).
+$string['readiness_title']       = 'कौशल तैयारी';
+$string['readiness_summary']     = '{$a->designation} के लिए {$a->total} में से {$a->met} कौशल पूरे';
+$string['readiness_gaps_one']    = '1 कौशल गैप दूर करना है';
+$string['readiness_gaps']        = '{$a} कौशल गैप दूर करने हैं';
+$string['readiness_allmet']      = 'सभी कौशल पूरे!';
+$string['skillsradar']           = 'कौशल रडार';
+$string['status_missing']        = 'मौजूद नहीं';
+$string['recommended_gaps']      = 'गैप दूर करने के लिए सुझाए गए कोर्स';
+$string['rec_teaches']           = 'सिखाता है: {$a->skill} → {$a->level}';
+$string['noskills_title']        = 'अभी कोई कौशल डेटा नहीं';
+$string['noskills_message']      = 'कौशल आपकी भूमिका से जोड़े जाते हैं। अगर आपका पदनाम सेट नहीं है, तो अपनी L&D टीम से संपर्क करें।';

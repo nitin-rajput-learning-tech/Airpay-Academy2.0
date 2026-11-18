@@ -167,3 +167,20 @@ body.dark-mode .airpay-compliance-rpt__scorecard-name { color: #e8eaed; }
     .airpay-compliance-rpt__table { font-size: 0.75rem; }
     .airpay-compliance-rpt__filter-bar { flex-direction: column; align-items: stretch; }
 }
+
+/* Matrix row count, scorecard tree and empty rows (2026-11-18) */
+.airpay-compliance-rpt__showing {
+    margin: 0 0 8px; font-size: 12px;
+    color: var(--ap-color-text-secondary, #5a6070);
+}
+.airpay-compliance-rpt__subunit td:first-child { padding-left: 28px; }
+.airpay-compliance-rpt__parent {
+    color: var(--ap-color-text-secondary, #5a6070); font-size: 0.8em;
+}
+.airpay-compliance-rpt__row-empty td { color: var(--ap-color-text-secondary, #5a6070); }
+.airpay-compliance-rpt__badge-none {
+    background: var(--ap-color-bg-surface-alt, #f8f9fc);
+    color: var(--ap-color-text-secondary, #5a6070);
+    border: 1px solid var(--ap-color-border, #e2e6ef);
+}
+.airpay-compliance-rpt__toggle { margin: 12px 0 0; font-size: 13px; }

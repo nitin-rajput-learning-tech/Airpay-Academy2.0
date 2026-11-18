@@ -19,6 +19,11 @@ $PAGE->set_url(new moodle_url('/local/sentientia_request/index.php'));
 $PAGE->set_pagelayout('standard');
 $PAGE->set_title(get_string('myrequests', 'local_sentientia_request'));
 $PAGE->set_heading(get_string('myrequests', 'local_sentientia_request'));
+// Persona walk 2026-11-18: lib.php links this page from the user Preferences menu, so the navbar took that node
+// as the active one and printed "Preferences / My course requests". The Preferences link stays; the trail is set
+// here instead and holds this page alone.
+$PAGE->navbar->ignore_active();
+$PAGE->navbar->add(get_string('myrequests', 'local_sentientia_request'), $PAGE->url);
 require_capability('local/sentientia_request:request', $ctx);
 
 $columns = [

@@ -84,6 +84,7 @@ $string['last_recomputed_at'] = 'ಕೊನೆಯ ಅಪ್‌ಡೇಟ್: {$a}'
 $string['live_indicator'] = 'ಲೈವ್ — ರಿಯಲ್ ಟೈಮ್‌ನಲ್ಲಿ ಅಪ್‌ಡೇಟ್ ಆಗುತ್ತಿದೆ';
 $string['polling_fallback'] = 'ಪ್ರತಿ 30 ಸೆಕೆಂಡ್‌ಗೆ ಅಪ್‌ಡೇಟ್ ಆಗುತ್ತದೆ';
 $string['feature_disabled'] = 'ಲೀಡರ್‌ಬೋರ್ಡ್‌ಗಳು ಆನ್ ಆಗಿಲ್ಲ. sentientia.leaderboards.enabled ಅನ್ನು ಆನ್ ಮಾಡಲು ಅಡ್ಮಿನ್‌ಗೆ ಕೇಳಿ.';
+$string['feature_unavailable'] = 'ಕೋರ್ಸ್ ಮತ್ತು ಕ್ವಿಜ್ ಲೀಡರ್‌ಬೋರ್ಡ್‌ಗಳು ಇನ್ನೂ ಲಭ್ಯವಿಲ್ಲ. ನಂತರ ಮತ್ತೆ ನೋಡಿ.';
 $string['type_disabled'] = 'ಈ ಬೋರ್ಡ್ ಪ್ರಕಾರ ಆನ್ ಆಗಿಲ್ಲ.';
 $string['block_title'] = 'ಲೀಡರ್‌ಬೋರ್ಡ್';
 $string['block_choose'] = 'ಒಂದು ಲೀಡರ್‌ಬೋರ್ಡ್ ಆಯ್ಕೆ ಮಾಡಿ';

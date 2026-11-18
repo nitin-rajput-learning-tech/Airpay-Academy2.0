@@ -2,9 +2,13 @@
     @template local_sentientia_compliance_report/dashboard
     Compliance reporting dashboard — matrix, defaulters, scorecard, manager report.
 
-    Escaping (F-12, 2026-09-16): fullname / designation / department / name / coursename (config) /
-    entity_name arrive format_string()'d from compliance_engine or index.php and are rendered with
-    triple braces. Raw DB values (matrix course headers, defaulters, manager report, emails) keep double braces.
+    Escaping (F-12, 2026-09-16): fullname / designation / department / department_name / parentname /
+    name / coursename (config) / entity_name arrive format_string()'d from compliance_engine or index.php
+    and are rendered with triple braces. matrix_pagingbar is core paging_bar HTML. Raw DB values (matrix
+    course headers, defaulters, manager report, emails) keep double braces.
+
+    Empty states (2026-11-18): matrix_empty / defaulters_empty / scorecard_empty / manager_empty are
+    contexts for theme_sentientia/components/empty_state (icon, title, message), built in index.php.
 }}
 <div class="airpay-compliance-rpt">
 
@@ -101,6 +105,7 @@
     {{! Tab Content: Compliance Matrix }}
     {{#tab_matrix}}
     {{#has_matrix}}
+    <p class="airpay-compliance-rpt__showing">{{matrix_showing}}</p>
     <div class="airpay-compliance-rpt__table-wrap">
         <table class="airpay-compliance-rpt__table">
             <thead>
@@ -116,9 +121,12 @@
             <tbody>
                 {{#matrix.rows}}
                 <tr class="{{#all_completed}}row-ok{{/all_completed}}">
-                    <td title="{{{fullname}}}"><strong>{{{fullname}}}</strong><br><small>{{employee_id}}</small></td>
+                    {{! The Department column printed the designation until 2026-11-18; the designation now sits under the name.
+                        The title attribute takes fullname with double braces, not triple: format_string() does not escape
+                        quotes, and a quote in a user's name would close the attribute. }}
+                    <td title="{{fullname}}"><strong>{{{fullname}}}</strong><br><small>{{employee_id}}{{#designation}}{{#employee_id}} · {{/employee_id}}{{{designation}}}{{/designation}}</small></td>
                     <td>{{email}}</td>
-                    <td>{{{designation}}}</td>
+                    <td>{{{department_name}}}</td>
                     {{#courses}}
                     <td><span class="badge badge-{{status_class}}">{{status_label}}</span>
                         {{#days_overdue}}<small class="text-danger">{{days_overdue}}d</small>{{/days_overdue}}</td>
@@ -128,15 +136,17 @@
             </tbody>
         </table>
     </div>
+    {{{matrix_pagingbar}}}
     {{/has_matrix}}
     {{^has_matrix}}
-    <p class="text-muted">{{# str }}nodata, local_sentientia_compliance_report{{/ str }}</p>
+    {{#matrix_empty}}{{> theme_sentientia/components/empty_state }}{{/matrix_empty}}
     {{/has_matrix}}
     {{/tab_matrix}}
 
     {{! Tab Content: Defaulters }}
     {{#tab_defaulters}}
     {{#has_defaulters}}
+    <div class="airpay-compliance-rpt__table-wrap">
     <table class="airpay-compliance-rpt__table">
         <thead><tr><th>{{#str}}col_employee, local_sentientia_compliance_report{{/str}}</th><th>{{#str}}col_email, local_sentientia_compliance_report{{/str}}</th><th>{{#str}}col_course, local_sentientia_compliance_report{{/str}}</th><th>{{#str}}col_days_overdue, local_sentientia_compliance_report{{/str}}</th><th>{{#str}}col_progress, local_sentientia_compliance_report{{/str}}</th></tr></thead>
         <tbody>
@@ -151,35 +161,54 @@
             {{/defaulters}}
         </tbody>
     </table>
+    </div>
+    {{/has_defaulters}}
+    {{^has_defaulters}}
+    {{#defaulters_empty}}{{> theme_sentientia/components/empty_state }}{{/defaulters_empty}}
     {{/has_defaulters}}
     {{/tab_defaulters}}
 
-    {{! Tab Content: Department Scorecard }}
+    {{! Tab Content: Department Scorecard. Sub-departments follow their department, indented and
+        prefixed with its name (names such as "Technology" repeat across departments). A unit with no
+        assignments reads "No assignments", not red "Critical"; such units are listed on request only
+        (scorecard_toggle_url). Overdue is red only when there is something overdue. }}
     {{#tab_scorecard}}
     {{#has_scorecard}}
+    <div class="airpay-compliance-rpt__table-wrap">
     <table class="airpay-compliance-rpt__table">
         <thead><tr><th>{{#str}}col_department, local_sentientia_compliance_report{{/str}}</th><th>{{#str}}col_total, local_sentientia_compliance_report{{/str}}</th><th>{{#str}}col_completed, local_sentientia_compliance_report{{/str}}</th><th>{{#str}}col_overdue, local_sentientia_compliance_report{{/str}}</th><th>{{#str}}col_rate, local_sentientia_compliance_report{{/str}}</th><th>{{#str}}col_status, local_sentientia_compliance_report{{/str}}</th></tr></thead>
         <tbody>
             {{#scorecard}}
-            <tr>
-                <td>{{{department}}}</td>
+            <tr class="{{#has_parent}}airpay-compliance-rpt__subunit{{/has_parent}}{{#is_empty}} airpay-compliance-rpt__row-empty{{/is_empty}}">
+                <td>{{#has_parent}}<span class="airpay-compliance-rpt__parent">{{{parentname}}} ›</span> {{/has_parent}}{{{department}}}</td>
                 <td>{{total}}</td>
                 <td>{{completed}}</td>
-                <td class="{{#is_red}}text-danger font-weight-bold{{/is_red}}">{{overdue}}</td>
-                <td>{{rate}}%</td>
-                <td><span class="badge badge-{{#is_green}}success{{/is_green}}{{#is_amber}}warning{{/is_amber}}{{#is_red}}danger{{/is_red}}">
+                <td class="{{#has_overdue}}text-danger font-weight-bold{{/has_overdue}}">{{overdue}}</td>
+                <td>{{^is_empty}}{{rate}}%{{/is_empty}}{{#is_empty}}&ndash;{{/is_empty}}</td>
+                <td>
+                    {{#is_empty}}<span class="badge airpay-compliance-rpt__badge-none">{{#str}}scorecard_no_assignments, local_sentientia_compliance_report{{/str}}</span>{{/is_empty}}
+                    {{^is_empty}}<span class="badge badge-{{#is_green}}success{{/is_green}}{{#is_amber}}warning{{/is_amber}}{{#is_red}}danger{{/is_red}}">
                     {{#is_green}}{{#str}}on_track, local_sentientia_compliance_report{{/str}}{{/is_green}}{{#is_amber}}{{#str}}at_risk, local_sentientia_compliance_report{{/str}}{{/is_amber}}{{#is_red}}{{#str}}critical, local_sentientia_compliance_report{{/str}}{{/is_red}}
-                </span></td>
+                    </span>{{/is_empty}}
+                </td>
             </tr>
             {{/scorecard}}
         </tbody>
     </table>
+    </div>
     {{/has_scorecard}}
+    {{^has_scorecard}}
+    {{#scorecard_empty}}{{> theme_sentientia/components/empty_state }}{{/scorecard_empty}}
+    {{/has_scorecard}}
+    {{#scorecard_toggle_url}}
+    <p class="airpay-compliance-rpt__toggle"><a href="{{scorecard_toggle_url}}">{{scorecard_toggle_label}}</a></p>
+    {{/scorecard_toggle_url}}
     {{/tab_scorecard}}
 
     {{! Tab Content: Manager Report }}
     {{#tab_manager}}
     {{#has_manager_report}}
+    <div class="airpay-compliance-rpt__table-wrap">
     <table class="airpay-compliance-rpt__table">
         <thead><tr><th>{{#str}}col_manager, local_sentientia_compliance_report{{/str}}</th><th>{{#str}}col_team_members, local_sentientia_compliance_report{{/str}}</th><th>{{#str}}col_assignments, local_sentientia_compliance_report{{/str}}</th><th>{{#str}}col_completed, local_sentientia_compliance_report{{/str}}</th><th>{{#str}}col_overdue, local_sentientia_compliance_report{{/str}}</th><th>{{#str}}col_rate, local_sentientia_compliance_report{{/str}}</th></tr></thead>
         <tbody>
@@ -195,6 +224,10 @@
             {{/manager_report}}
         </tbody>
     </table>
+    </div>
+    {{/has_manager_report}}
+    {{^has_manager_report}}
+    {{#manager_empty}}{{> theme_sentientia/components/empty_state }}{{/manager_empty}}
     {{/has_manager_report}}
     {{/tab_manager}}
 

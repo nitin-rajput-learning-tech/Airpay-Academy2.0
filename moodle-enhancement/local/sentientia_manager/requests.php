@@ -17,6 +17,27 @@ $PAGE->set_pagelayout('standard');
 $PAGE->set_title('Enrolment Requests');
 $PAGE->set_heading('Enrolment Requests');
 
+// B7 (surface walk 2026-11-18): a learner's enrolment request is stored by
+// local_sentientia_request (the catalogue's Request enrolment button, the
+// BizLMS import) and routed to their line manager, who decides it on that
+// plugin's Pending approvals page. This page lists local_sentientia_mgr_requests,
+// which nothing writes (approval_manager::create_request() has no caller), so
+// it said "No records found" while Pending approvals listed the same
+// manager's requests. A manager with no rows here is sent to Pending
+// approvals; one with rows keeps this list, under a link to it.
+$approvalsurl = null;
+$approvalscount = 0;
+if (class_exists('\local_sentientia_request\request_manager')
+        && get_capability_info('local/sentientia_request:approve')
+        && has_capability('local/sentientia_request:approve', $context)) {
+    $approvalsurl = new moodle_url('/local/sentientia_request/approvals.php');
+    $approvalscount = \local_sentientia_request\request_manager::pending_count_for_approver((int) $USER->id);
+}
+$haslegacy = $DB->record_exists('local_sentientia_mgr_requests', ['managerid' => (int) $USER->id]);
+if ($approvalsurl !== null && !$haslegacy) {
+    redirect($approvalsurl);
+}
+
 $columns = [
     ['key' => 'when',       'label' => 'When',     'sortable' => false],
     ['key' => 'username',   'label' => 'Requester','sortable' => false],
@@ -31,6 +52,8 @@ $data = [
     'extra_args_json' => json_encode(['status' => 'pending']),
     'index_url'       => (new moodle_url('/local/sentientia_manager/index.php'))->out(false),
     'allocations_url' => (new moodle_url('/local/sentientia_manager/allocations.php'))->out(false),
+    'approvals_url'   => $approvalsurl ? $approvalsurl->out(false) : '',
+    'approvals_count' => $approvalscount,
 ];
 
 echo $OUTPUT->header();

@@ -15,6 +15,13 @@ $string['teamlearning']     = 'टीम लर्निंग डैशबो�
 // Empty-state — manager dashboard with no direct reports (QA Walk T-03).
 $string['emptyteam_title']   = 'अभी तक आपको कोई टीम सदस्य नहीं सौंपा गया है।';
 $string['emptyteam_message'] = 'प्रत्यक्ष अधीनस्थ यूज़र प्रोफ़ाइल में सुपरवाइज़र फ़ील्ड के माध्यम से सौंपे जाते हैं।';
+// Team table "Last Active" for a report inactive for more than 14 days (was hard-coded English).
+$string['lastactive_daysago'] = '{$a} दिन पहले';
+// Enrolment Requests page hand-off to local_sentientia_request's Pending approvals (surface walk 2026-11-18, B7).
+$string['requests_moved_title'] = 'नए नामांकन अनुरोधों पर निर्णय अब "लंबित अनुमोदन" में होता है';
+$string['requests_moved_message'] = 'आपकी टीम के नामांकन अनुरोध वहाँ आपकी प्रतीक्षा करते हैं। नीचे दी गई सूची में इस पेज पर दर्ज पुराने अनुरोध हैं।';
+$string['requests_open_approvals'] = 'लंबित अनुमोदन खोलें ({$a})';
+$string['requests_earlier'] = 'पुराने नामांकन अनुरोध';
 $string['privacy:metadata'] = 'मैनेजर डैशबोर्ड प्लगइन अनुपालन / ऑडिट उद्देश्यों के लिए मैनेजर द्वारा किए गए नामांकन अनुरोध और कोर्स आवंटन रिकॉर्ड करता है।';
 
 // Capability descriptions.

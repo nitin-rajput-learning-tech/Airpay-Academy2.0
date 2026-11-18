@@ -344,7 +344,9 @@ $string['download_certificate'] = 'Download certificate';
 // English is byte-identical, and kpi_overdue (F-13) is reused for every
 // "Overdue" chip. English text is unchanged from what shipped.
 // -- Admin KPI tiles + trend lines (admin_kpis). {$a} = formatted count / rate.
-$string['kpi_active_users'] = 'Active Users';
+// kpi_active_users counts users whose last access is within 30 days, so the label says so (surface walk 2026-11-18;
+// it read only "Active Users" beside a much larger total).
+$string['kpi_active_users'] = 'Active (30 days)';
 $string['kpi_courses'] = 'Courses';
 $string['kpi_completions'] = 'Completions';
 $string['kpi_enrolments'] = 'Enrolments';

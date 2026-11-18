@@ -268,6 +268,34 @@ class core_renderer extends \core_renderer {
     }
 
     /**
+     * The shell topbar's Messages icon link, or '' when the current user may not use messaging.
+     *
+     * Persona walk 2026-11-18 (vp_learner1 finding 6, vp_manager1 5, vp_public77 I-06, vp_admin1
+     * V1/V2): the link used the Font Awesome 4 name fa-comment-o, which the theme's FA6 build
+     * (scss/fontawesome.scss, no v4 shims) does not define, so it was an invisible 38 px link; and
+     * it opened /message/index.php with messaging off, where core throws "Messaging is disabled on
+     * this site". Now it is printed only when core would let the user in: messaging on (the
+     * $CFG->messaging check message/index.php makes), a real logged-in user (message/index.php
+     * sends guests away), and nothing pending before the user may use the site
+     * (\core_user::awaiting_action(), the check core's own navbar popovers make). fa-comment is the
+     * FA6 solid name, the same weight as the bell beside it.
+     *
+     * Public and static so the gate and the icon name are testable without rendering the shell.
+     *
+     * @return string HTML
+     */
+    public static function topbar_messages_link(): string {
+        global $CFG;
+        if (empty($CFG->messaging) || !isloggedin() || isguestuser() || \core_user::awaiting_action()) {
+            return '';
+        }
+        $label = s(get_string('messages', 'message'));
+        return '<a class="ap-topbar__iconlink" href="' . s($CFG->wwwroot . '/message/index.php') . '"'
+            . ' title="' . $label . '" aria-label="' . $label . '">'
+            . '<i class="fa fa-comment" aria-hidden="true"></i></a>';
+    }
+
+    /**
      * Render the sidebar shell opening: sidebar + topbar + content area open tag.
      *
      * Call this from ANY layout template via {{{output.airpay_shell_start}}}.
@@ -337,9 +365,7 @@ class core_renderer extends \core_renderer {
                 . '<a class="ap-topbar__iconlink" href="' . s($CFG->wwwroot . '/message/output/popup/notifications.php') . '"'
                 . ' title="' . s(get_string('notifications')) . '" aria-label="' . s(get_string('notifications')) . '">'
                 . '<i class="fa fa-bell" aria-hidden="true"></i></a>'
-                . '<a class="ap-topbar__iconlink" href="' . s($CFG->wwwroot . '/message/index.php') . '"'
-                . ' title="' . s(get_string('messages', 'message')) . '" aria-label="' . s(get_string('messages', 'message')) . '">'
-                . '<i class="fa fa-comment-o" aria-hidden="true"></i></a>'
+                . self::topbar_messages_link()
                 . '</div>'
                 . '</header>';
 
@@ -1368,6 +1394,49 @@ JS;
             || has_capability('moodle/course:create', $ctx);
     }
 
+    /**
+     * Where custom_secured_redirection() sends a request for /enrol/index.php?id=<courseid>.
+     *
+     * The theme never shows Moodle's enrolment page: self-enrolment is not a way into a course
+     * here (catalogue one-click enrol, requests and the cart are). Until 2026-11-18 every such
+     * request went to /my. Persona walk 2026-11-18 (vp_manager1 finding 3, vp_learner1 15): a
+     * learner who clicked a course they are not enrolled in (catalogue card, recommendation,
+     * deep link) went /course/view.php -> require_login() -> /enrol/index.php -> /my and landed on
+     * the dashboard with no explanation.
+     *
+     * Now the course's catalogue detail page (local/sentientia_catalog/course.php), which carries
+     * the enrol / request / add-to-cart button, when ALL of these hold; otherwise /my, as before:
+     *   - the id is a real course (not the site course);
+     *   - local_sentientia_catalog is installed and its course.php exists;
+     *   - catalog_manager::assert_course_visible_to_viewer() lets this viewer open it. That is the
+     *     exact gate course.php itself applies first (visible course, owned by or shared to the
+     *     viewer's tenant, or a cross-tenant viewer). A course another tenant owns, a hidden
+     *     course or a missing id therefore still goes to /my, and course.php opens for no one it
+     *     did not open for before: this changes only which allowed page the redirect names.
+     *
+     * Public and static so the decision is testable without a page or a renderer.
+     *
+     * @param int $courseid The id parameter of the /enrol/index.php request (0 when absent).
+     * @return \moodle_url
+     */
+    public static function enrol_redirect_url(int $courseid): \moodle_url {
+        $fallback = new \moodle_url('/my');
+        if ($courseid <= (int) SITEID || !class_exists('\\local_sentientia_catalog\\catalog_manager')) {
+            return $fallback;
+        }
+        $catalogdir = \core_component::get_component_directory('local_sentientia_catalog');
+        if (!$catalogdir || !file_exists($catalogdir . '/course.php')) {
+            return $fallback;
+        }
+        try {
+            \local_sentientia_catalog\catalog_manager::assert_course_visible_to_viewer($courseid);
+        } catch (\moodle_exception $e) {
+            // Missing, hidden or another tenant's course: course.php would refuse it too.
+            return $fallback;
+        }
+        return new \moodle_url('/local/sentientia_catalog/course.php', ['id' => $courseid]);
+    }
+
     public function custom_secured_redirection(){
         global $USER, $CFG, $DB, $COURSE;
         $return = new stdClass();
@@ -1384,7 +1453,10 @@ JS;
             $newpageurl = $pageurl;
 
         if($newpageurl == $CFG->wwwroot.'/enrol/index.php' || $newpageurl == $CFG->wwwroot.'/enrol/'){
-            redirect($CFG->wwwroot.'/my');
+            // Self-enrolment stays closed on this theme. Persona walk 2026-11-18: where the course
+            // has a catalogue detail page this viewer may open, land there (enrol / request / cart
+            // button) instead of silently on the dashboard. See enrol_redirect_url().
+            redirect(self::enrol_redirect_url(optional_param('id', 0, PARAM_INT)));
         }
         if($newpageurl == $CFG->wwwroot.'/course/management.php'){
             // SA-04 (QA Walk 2026-05-29): gate the catalog redirect by capability

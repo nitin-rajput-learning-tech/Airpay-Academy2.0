@@ -63,5 +63,20 @@ $string['qr_show_fullscreen_hint'] = 'Fullscreen for projector';
 $string['qr_show_refresh'] = 'Refresh Now';
 $string['qr_show_meta'] = 'Session ID: {$a->id} · Generated: {$a->time}';
 
+// ── Certificate gallery (certificates.php; surface walk 2026-11-18: the page was hard-coded English) ──
+$string['certs_title'] = 'My Certificates';
+$string['certs_count_one'] = '1 certificate earned';
+$string['certs_count'] = '{$a} certificates earned';
+$string['certs_empty_title'] = 'No certificates yet';
+$string['certs_empty_message'] = 'Complete courses with certificates enabled to earn your credentials.';
+$string['certs_browse'] = 'Browse Courses';
+$string['certs_fallback_name'] = 'Certificate';
+$string['certs_download'] = 'Download';
+$string['certs_download_label'] = 'Download the certificate for {$a} (PDF)';
+$string['certs_verify'] = 'Verify';
+$string['certs_verify_label'] = 'Open the verification page for the certificate for {$a}';
+$string['certs_linkedin'] = 'LinkedIn';
+$string['certs_linkedin_label'] = 'Add the certificate for {$a} to your LinkedIn profile';
+
 // Privacy API (null provider).
 $string['privacy:metadata'] = 'The Sentientia pages plugin does not store any personal data. QR attendance scans are recorded in the classroom plugin\'s tables and are described by that plugin\'s privacy provider.';

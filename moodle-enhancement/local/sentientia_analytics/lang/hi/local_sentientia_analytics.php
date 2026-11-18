@@ -67,3 +67,34 @@ $string['error_outofscope'] = 'संगठन का वह हिस्सा 
 
 // At-Risk Learners table (N6, 2026-09-24) - see lang/en.
 $string['atrisk_col_learner'] = 'शिक्षार्थी';
+
+// डैशबोर्ड, KPI कार्ड और फ़नल चरण (2026-11-18) - देखें lang/en.
+$string['businessunit_label'] = 'व्यावसायिक इकाई:';
+$string['range_label'] = 'KPI कार्डों की अवधि';
+$string['range_7d'] = '7 दिन';
+$string['range_30d'] = '30 दिन';
+$string['range_90d'] = '90 दिन';
+$string['range_ytd'] = 'वर्ष में अब तक';
+$string['kpi_active_users'] = 'सक्रिय उपयोगकर्ता';
+$string['kpi_new_enrolments'] = 'नए नामांकन';
+$string['kpi_completions'] = 'पूर्णताएँ';
+$string['kpi_certificates'] = 'प्रमाणपत्र';
+$string['kpi_vs_previous'] = 'पिछली अवधि की तुलना में {$a}';
+$string['funnel_heading'] = 'संलग्नता फ़नल';
+$string['funnel_empty'] = 'अभी कोई नामांकन डेटा उपलब्ध नहीं है।';
+$string['funnel_enrolled'] = 'नामांकित';
+$string['funnel_started'] = 'शुरू किया';
+$string['funnel_completed'] = 'पूर्ण';
+$string['funnel_certified'] = 'प्रमाणित';
+$string['heatmap_heading'] = 'विभाग के अनुसार अनुपालन';
+$string['heatmap_note'] = 'पूर्ण किए गए अनिवार्य पाठ्यक्रम असाइनमेंट, अनुपालन रिपोर्ट के विभाग स्कोरकार्ड के अनुसार।';
+$string['heatmap_viewusers'] = 'इस विभाग के लोगों को देखें';
+$string['heatmap_users'] = '{$a} उपयोगकर्ता';
+$string['heatmap_users_one'] = '1 उपयोगकर्ता';
+$string['heatmap_empty_title'] = 'अभी कोई अनुपालन असाइनमेंट नहीं';
+$string['heatmap_empty'] = 'इस दृश्य के किसी भी विभाग में अनिवार्य पाठ्यक्रम असाइनमेंट नहीं हैं।';
+$string['courseeff_heading'] = 'पाठ्यक्रम प्रभावशीलता (शीर्ष {$a})';
+$string['col_course'] = 'पाठ्यक्रम';
+$string['col_enrolled'] = 'नामांकित';
+$string['col_completed'] = 'पूर्ण';
+$string['col_rate'] = 'दर';

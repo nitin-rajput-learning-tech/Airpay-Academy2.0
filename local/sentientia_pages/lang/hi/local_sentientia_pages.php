@@ -63,5 +63,20 @@ $string['qr_show_fullscreen_hint'] = 'प्रोजेक्टर के ल�
 $string['qr_show_refresh'] = 'अभी रीफ़्रेश करें';
 $string['qr_show_meta'] = 'सत्र ID: {$a->id} · बनाया गया: {$a->time}';
 
+// ── Certificate gallery (certificates.php; surface walk 2026-11-18: the page was hard-coded English) ──
+$string['certs_title'] = 'मेरे प्रमाणपत्र';
+$string['certs_count_one'] = '1 प्रमाणपत्र अर्जित';
+$string['certs_count'] = '{$a} प्रमाणपत्र अर्जित';
+$string['certs_empty_title'] = 'अभी कोई प्रमाणपत्र नहीं';
+$string['certs_empty_message'] = 'प्रमाणपत्र पाने के लिए वे कोर्स पूरे करें जिनमें प्रमाणपत्र चालू हैं।';
+$string['certs_browse'] = 'कोर्स देखें';
+$string['certs_fallback_name'] = 'प्रमाणपत्र';
+$string['certs_download'] = 'डाउनलोड करें';
+$string['certs_download_label'] = '{$a} का प्रमाणपत्र डाउनलोड करें (PDF)';
+$string['certs_verify'] = 'सत्यापित करें';
+$string['certs_verify_label'] = '{$a} के प्रमाणपत्र का सत्यापन पेज खोलें';
+$string['certs_linkedin'] = 'LinkedIn';
+$string['certs_linkedin_label'] = '{$a} का प्रमाणपत्र अपनी LinkedIn प्रोफ़ाइल में जोड़ें';
+
 // Privacy API (null provider).
 $string['privacy:metadata'] = 'Sentientia पेज प्लगइन कोई व्यक्तिगत डेटा संग्रहीत नहीं करता। QR उपस्थिति स्कैन क्लासरूम प्लगइन की तालिकाओं में दर्ज होते हैं और उसी प्लगइन के प्राइवेसी प्रदाता में वर्णित हैं।';

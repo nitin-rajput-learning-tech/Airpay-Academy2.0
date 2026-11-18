@@ -61,12 +61,18 @@
                             {{^streak}}<span style="color:#9ca3af;">—</span>{{/streak}}
                         </td>
                         <td>
+                            {{! A report who never logged in shows Never (it showed the 999-day sentinel as "999d ago"). }}
+                            {{#never_loggedin}}
+                            <span style="color:#dc2626; font-weight:600;">{{lastlogin}}</span>
+                            {{/never_loggedin}}
+                            {{^never_loggedin}}
                             {{#is_inactive}}
-                            <span style="color:#dc2626; font-weight:600;">{{inactive_days}}d ago</span>
+                            <span style="color:#dc2626; font-weight:600;">{{#str}}lastactive_daysago, local_sentientia_manager, {{inactive_days}}{{/str}}</span>
                             {{/is_inactive}}
                             {{^is_inactive}}
                             {{lastlogin}}
                             {{/is_inactive}}
+                            {{/never_loggedin}}
                         </td>
                         <td class="ap-manager__actions">
                             <a href="{{drilldown_url}}" class="ap-manager__action" title="Learning detail">

@@ -52,7 +52,15 @@ $plugin->component = 'local_sentientia_org';
 // 2026100802 - Moodle 5.3 compat FX-20 round 1: the data-bs-toggle / data-bs-target attributes are REMOVED again. The theme's Bootstrap 4 jQuery data-api handles data-toggle on every page; core's Bootstrap 5 data-api is loaded on many pages (5.1/5.2: core/local/dropdown/dialog and collapsable_section; 5.3: usermenu, dialog, collapsable_section), so a click on an element with BOTH attributes ran two toggles (open, close). Templates are byte-identical to before 2026100801. No schema change.
 // 2026101501 - UI fix (visual pass 2026-10-14): admin.php gave org_node.mustache / manage.mustache names already escaped by format_string() and s(), which their {{ }} escaped again, so "Issuance & Loyalty" printed as "Issuance &amp; Loyalty" in the org tree (and in the row menu's data-name). org_manager::plain() is the text form admin.php now uses. No schema change.
 // 2026101502 - review follow-up: org_manager::plain() no longer depends on the site's formatstringstriptags being ON (OFF made format_string() return clean_text() HTML, so the double escape came back); the OFF result is reduced to text. Default (ON) behaviour unchanged. No schema change.
-$plugin->version   = 2026101502;  // UI fix review follow-up: plain() independent of formatstringstriptags (on top of 2026101501)
+// 2026111800 - cross-tree drift fix (UAT admin course page, 2026-11-18): the two copies of this plugin are identical
+// again. The ME copy UAT runs gains the WF-016 after_config hook (db/hooks.php, classes/hook_callbacks.php,
+// classes/compat/bizlms_lib.php) that class_aliases the retired local_costcenter\lib\accesslib and local_costcenter\lib,
+// so block_learnerscript's left-menu node renders instead of failing "class not found"; and the 2026061700 violet
+// repaint step in db/upgrade.php (it does not re-run on sites already past 2026061700). The top copy takes the newer
+// ME test fixture. The alias guards now autoload, so a real local_costcenter would win. The bump re-reads db/hooks.php
+// (hook callbacks are cached). No schema change.
+$plugin->version   = 2026111800;  // cross-tree drift fix: WF-016 hook in both trees (on top of 2026101502)
+// 2026101502: UI fix review follow-up: plain() independent of formatstringstriptags (on top of 2026101501)
 // 2026101501: UI fix: org tree names escaped once (on top of 2026100802 FX-20 round 1)
 // 2026100701:  // ADR-032 IDN-04: copies_files marker (on top of 2026093002 cohort_scope importer)
 // 2026092500: ADR-031 tenant-bounded org tree + parent pick.
@@ -64,4 +72,4 @@ $plugin->release   = '1.5.0'; // ADR-032 org importer + accesslib fallbacks remo
 $plugin->dependencies = [
     'local_sentientia_platform' => 2026100701, // the copies_files marker the two importers implement (IDN-04)
 ];
-$plugin->release   = '1.6.1'; // ADR-032 IDN-04 copies_files marker. 1.6.0: ADR-032 cohort_scope importer + cohort scope table + real privacy provider. 1.5.0: ADR-032 org importer + accesslib fallbacks removed. 1.4.4: ADR-031 tenant scope. 1.4.3: +2026-09-08 cascade_* strings (org cascade filter i18n, en+hi) — this ME tree is what UAT runs
+$plugin->release   = '1.6.2'; // cross-tree drift fix, WF-016 hook in both trees. 1.6.1: ADR-032 IDN-04 copies_files marker. 1.6.0: ADR-032 cohort_scope importer + cohort scope table + real privacy provider. 1.5.0: ADR-032 org importer + accesslib fallbacks removed. 1.4.4: ADR-031 tenant scope. 1.4.3: +2026-09-08 cascade_* strings (org cascade filter i18n, en+hi) — this ME tree is what UAT runs

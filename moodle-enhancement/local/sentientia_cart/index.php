@@ -20,6 +20,12 @@ $PAGE->set_pagelayout('standard');
 $PAGE->set_title(get_string('mycart', 'local_sentientia_cart'));
 $PAGE->set_heading(get_string('mycart', 'local_sentientia_cart'));
 
+// Persona walk 2026-11-18 (I-19): lib.php links this page from the user Preferences menu, so the navbar took
+// that node as the active one and printed "Preferences / My cart and orders". The Preferences link stays; the
+// trail is set here instead and holds this page alone.
+$PAGE->navbar->ignore_active();
+$PAGE->navbar->add(get_string('mycart', 'local_sentientia_cart'), $PAGE->url);
+
 require_capability('local/sentientia_cart:view', $ctx);
 
 if (!\local_sentientia_cart\cart_manager::is_enabled_for_user($USER)) {

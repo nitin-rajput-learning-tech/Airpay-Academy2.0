@@ -9,6 +9,13 @@ $string['teamlearning'] = 'Team Learning Dashboard';
 // Empty-state — manager dashboard with no direct reports (QA Walk T-03).
 $string['emptyteam_title'] = 'You have no team members assigned yet';
 $string['emptyteam_message'] = 'Direct reports are assigned via the user supervisor field on the user profile.';
+// Team table "Last Active" for a report inactive for more than 14 days (was hard-coded English).
+$string['lastactive_daysago'] = '{$a}d ago';
+// Enrolment Requests page hand-off to local_sentientia_request's Pending approvals (surface walk 2026-11-18, B7).
+$string['requests_moved_title'] = 'New enrolment requests are decided in Pending approvals';
+$string['requests_moved_message'] = 'Enrolment requests from your team wait for you there. The list below holds earlier requests recorded on this page.';
+$string['requests_open_approvals'] = 'Open Pending approvals ({$a})';
+$string['requests_earlier'] = 'Earlier enrolment requests';
 $string['privacy:metadata'] = 'The manager dashboard plugin records enrolment requests + course allocations made by managers for compliance / audit purposes.';
 
 // Capability descriptions.

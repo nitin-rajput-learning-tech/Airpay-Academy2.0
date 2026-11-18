@@ -2,30 +2,36 @@
     @template local_sentientia_analytics/dashboard
 
     Advanced analytics dashboard with KPIs, funnel, heatmap, course effectiveness.
+
+    Escaping: org_options.name, heatmap.department / parentname and top_courses.coursename arrive
+    format_string()'d (HTML) and are rendered with triple braces. Double braces escaped them a
+    second time until 2026-11-18 and printed a literal "&amp;" (11-18 surface walk, vp_compliance1 item 4).
+    Every on-screen literal is a lang string (en + hi).
 }}
 <div class="airpay-analytics">
     <div class="airpay-analytics__header">
-        <h2><i class="fa fa-line-chart"></i> Analytics Dashboard</h2>
+        <h2><i class="fa fa-line-chart" aria-hidden="true"></i> {{#str}}analytics, local_sentientia_analytics{{/str}}</h2>
         <div style="display:flex; align-items:center; gap:12px; flex-wrap: wrap;">
             {{! Business Unit Filter }}
             {{#has_org_filter}}
             <form method="get" action="{{{filterurl}}}" style="display:flex; align-items:center; gap:8px;">
                 <input type="hidden" name="range" value="{{range}}">
-                <label class="small text-muted mb-0">Business Unit:</label>
-                <select name="orgid" class="form-select form-select-sm" style="width: auto; min-width: 180px;" onchange="this.form.submit()">
-                    <option value="0">All Business Units</option>
+                <label class="small text-muted mb-0" for="airpay-analytics-orgid">{{#str}}businessunit_label, local_sentientia_analytics{{/str}}</label>
+                <select id="airpay-analytics-orgid" name="orgid" class="form-select form-select-sm" style="width: auto; min-width: 180px;" onchange="this.form.submit()">
+                    <option value="0">{{#str}}allbusinessunits, local_sentientia_analytics{{/str}}</option>
                     {{#org_options}}
-                    <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+                    <option value="{{id}}" {{#selected}}selected{{/selected}}>{{{name}}}</option>
                     {{/org_options}}
                 </select>
             </form>
             {{/has_org_filter}}
 
-            <div class="airpay-analytics__range">
-                <a href="{{baseurl}}?range=7d&orgid={{orgid}}" class="{{#range_7d}}active{{/range_7d}}">7 days</a>
-                <a href="{{baseurl}}?range=30d&orgid={{orgid}}" class="{{#range_30d}}active{{/range_30d}}">30 days</a>
-                <a href="{{baseurl}}?range=90d&orgid={{orgid}}" class="{{#range_90d}}active{{/range_90d}}">90 days</a>
-                <a href="{{baseurl}}?range=ytd&orgid={{orgid}}" class="{{#range_ytd}}active{{/range_ytd}}">YTD</a>
+            {{! The range drives the KPI cards (get_kpis). It arrived as 'd' until 2026-11-18 (PARAM_ALPHA). }}
+            <div class="airpay-analytics__range" role="group" aria-label="{{#str}}range_label, local_sentientia_analytics{{/str}}">
+                <a href="{{baseurl}}?range=7d&orgid={{orgid}}" class="{{#range_7d}}active{{/range_7d}}" {{#range_7d}}aria-current="true"{{/range_7d}}>{{#str}}range_7d, local_sentientia_analytics{{/str}}</a>
+                <a href="{{baseurl}}?range=30d&orgid={{orgid}}" class="{{#range_30d}}active{{/range_30d}}" {{#range_30d}}aria-current="true"{{/range_30d}}>{{#str}}range_30d, local_sentientia_analytics{{/str}}</a>
+                <a href="{{baseurl}}?range=90d&orgid={{orgid}}" class="{{#range_90d}}active{{/range_90d}}" {{#range_90d}}aria-current="true"{{/range_90d}}>{{#str}}range_90d, local_sentientia_analytics{{/str}}</a>
+                <a href="{{baseurl}}?range=ytd&orgid={{orgid}}" class="{{#range_ytd}}active{{/range_ytd}}" {{#range_ytd}}aria-current="true"{{/range_ytd}}>{{#str}}range_ytd, local_sentientia_analytics{{/str}}</a>
             </div>
             {{! Export is a separate capability from view: the CSV carries a
                 named per-learner dataset. Hide the button when the viewer
@@ -51,7 +57,7 @@
         {{! Engagement Funnel }}
         {{#has_funnel}}
         <div class="airpay-analytics__card">
-            <h3><i class="fa fa-filter"></i> Engagement Funnel</h3>
+            <h3><i class="fa fa-filter" aria-hidden="true"></i> {{#str}}funnel_heading, local_sentientia_analytics{{/str}}</h3>
             <div class="airpay-analytics__funnel">
                 {{#funnel}}
                 <div class="airpay-analytics__funnel-stage">
@@ -67,23 +73,24 @@
         {{/has_funnel}}
         {{^has_funnel}}
         <div class="airpay-analytics__card">
-            <h3><i class="fa fa-filter"></i> Engagement Funnel</h3>
-            <div class="ap-empty-state" style="padding:24px;">
-                <i class="fa fa-bar-chart" style="font-size:2rem; color:#d1d5db; display:block; margin-bottom:8px;"></i>
-                <p style="color:#9ca3af; font-size:13px; margin:0;">No enrollment data available for this period.</p>
-            </div>
+            <h3><i class="fa fa-filter" aria-hidden="true"></i> {{#str}}funnel_heading, local_sentientia_analytics{{/str}}</h3>
+            {{#funnel_empty_state}}{{> theme_sentientia/components/empty_state }}{{/funnel_empty_state}}
         </div>
         {{/has_funnel}}
 
-        {{! Compliance Heat Map }}
+        {{! Compliance Heat Map: the compliance report's Department Scorecard figures (since 2026-11-18).
+            Sub-departments carry their department's name, as on the scorecard, but after their own: the name
+            cell is 140px wide and cut with an ellipsis, and "Parent > Name" lost the sub-department's name. The
+            title attribute gives the full name in plain text (the _plain fields, escaped once by double braces). }}
         {{#has_heatmap}}
         <div class="airpay-analytics__card">
-            <h3><i class="fa fa-th"></i> Compliance by Department</h3>
+            <h3><i class="fa fa-th" aria-hidden="true"></i> {{#str}}heatmap_heading, local_sentientia_analytics{{/str}}</h3>
+            <p class="small text-muted">{{#str}}heatmap_note, local_sentientia_analytics{{/str}}</p>
             <div class="airpay-analytics__heatmap">
                 {{#heatmap}}
                 <div class="airpay-analytics__heat-row">
-                    <a href="{{drilldown_url}}" class="airpay-analytics__heat-dept" style="text-decoration:none; color:inherit;" title="Click to view users">{{department}} <i class="fa fa-external-link" style="font-size:10px; opacity:0.5;"></i></a>
-                    <span class="airpay-analytics__heat-users">{{users}} users</span>
+                    <a href="{{drilldown_url}}" class="airpay-analytics__heat-dept" style="text-decoration:none; color:inherit;" title="{{#has_parent}}{{parentname_plain}} › {{/has_parent}}{{department_plain}} · {{#str}}heatmap_viewusers, local_sentientia_analytics{{/str}}">{{{department}}}{{#has_parent}} <span class="text-muted small">· {{{parentname}}}</span>{{/has_parent}} <i class="fa fa-external-link" style="font-size:10px; opacity:0.5;" aria-hidden="true"></i></a>
+                    <span class="airpay-analytics__heat-users">{{users_label}}</span>
                     <div class="airpay-analytics__heat-bar-wrap">
                         <div class="airpay-analytics__heat-bar airpay-analytics__heat-bar--{{rag}}" style="width: {{rate}}%;"></div>
                     </div>
@@ -93,20 +100,28 @@
             </div>
         </div>
         {{/has_heatmap}}
+        {{^has_heatmap}}
+        {{#heatmap_empty}}
+        <div class="airpay-analytics__card">
+            <h3><i class="fa fa-th" aria-hidden="true"></i> {{#str}}heatmap_heading, local_sentientia_analytics{{/str}}</h3>
+            {{> theme_sentientia/components/empty_state }}
+        </div>
+        {{/heatmap_empty}}
+        {{/has_heatmap}}
     </div>
 
     {{! Course Effectiveness }}
     {{#has_courses}}
     <div class="airpay-analytics__card">
-        <h3><i class="fa fa-bar-chart"></i> Course Effectiveness (Top 10)</h3>
+        <h3><i class="fa fa-bar-chart" aria-hidden="true"></i> {{courses_heading}}</h3>
         <table class="airpay-analytics__table">
             <thead>
-                <tr><th>Course</th><th>Enrolled</th><th>Completed</th><th>Rate</th></tr>
+                <tr><th>{{#str}}col_course, local_sentientia_analytics{{/str}}</th><th>{{#str}}col_enrolled, local_sentientia_analytics{{/str}}</th><th>{{#str}}col_completed, local_sentientia_analytics{{/str}}</th><th>{{#str}}col_rate, local_sentientia_analytics{{/str}}</th></tr>
             </thead>
             <tbody>
                 {{#top_courses}}
                 <tr>
-                    <td title="{{fullname}}"><a href="{{course_drilldown_url}}" style="color:inherit; text-decoration:none;">{{shortname}} <i class="fa fa-external-link" style="font-size:10px; opacity:0.4;"></i></a></td>
+                    <td title="{{shortname}}"><a href="{{course_drilldown_url}}" style="color:inherit; text-decoration:none;">{{{coursename}}} <i class="fa fa-external-link" style="font-size:10px; opacity:0.4;" aria-hidden="true"></i></a></td>
                     <td>{{enrolled}}</td>
                     <td>{{completed}}</td>
                     <td><strong>{{completion_rate}}%</strong></td>

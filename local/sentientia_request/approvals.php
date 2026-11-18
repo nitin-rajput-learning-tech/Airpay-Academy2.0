@@ -23,6 +23,19 @@ $PAGE->set_title(get_string('pendingapprovals', 'local_sentientia_request'));
 $PAGE->set_heading(get_string('pendingapprovals', 'local_sentientia_request'));
 require_capability('local/sentientia_request:approve', $ctx);
 
+// Persona walk 2026-11-18 (B7): lib.php links this page from the user Preferences menu, so the navbar took that
+// node as the active one and printed "Preferences / Pending approvals (2)". The Preferences link stays; the trail
+// is set here instead. A line manager (org::is_manager(), the same test has_approvals_entry() uses) gets My Team
+// as the parent; any other approver (L&D admin, course owner) gets this page alone.
+$PAGE->navbar->ignore_active();
+if (\core_component::get_component_directory('local_sentientia_manager') !== null
+        && class_exists('\\local_sentientia_core\\org')
+        && \local_sentientia_core\org::is_manager((int) $USER->id)) {
+    $PAGE->navbar->add(get_string('myteam', 'local_sentientia_manager'),
+        new moodle_url('/local/sentientia_manager/index.php'));
+}
+$PAGE->navbar->add(get_string('pendingapprovals', 'local_sentientia_request'), $PAGE->url);
+
 $columns = [
     ['key' => 'requester_name', 'label' => 'Requester', 'sortable' => false],
     ['key' => 'course_name',    'label' => get_string('col_item', 'local_sentientia_request'), 'sortable' => false],

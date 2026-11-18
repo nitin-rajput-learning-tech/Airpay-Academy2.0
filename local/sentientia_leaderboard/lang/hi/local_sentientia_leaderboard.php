@@ -77,6 +77,7 @@ $string['last_recomputed_at'] = 'अंतिम बार अद्यतन: {
 $string['live_indicator']    = 'लाइव — रीयल-टाइम में अपडेट हो रहा है';
 $string['polling_fallback']  = 'हर 30 सेकंड में अपडेट';
 $string['feature_disabled']  = 'लीडरबोर्ड सक्षम नहीं हैं। व्यवस्थापक से sentientia.leaderboards.enabled को चालू करने के लिए कहें।';
+$string['feature_unavailable'] = 'कोर्स और क्विज़ लीडरबोर्ड अभी उपलब्ध नहीं हैं। बाद में फिर देखें।';
 $string['type_disabled']     = 'यह बोर्ड प्रकार सक्षम नहीं है।';
 
 // ── Block ──────────────────────────────────────────────────────

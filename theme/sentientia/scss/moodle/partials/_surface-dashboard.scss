@@ -132,9 +132,11 @@
    the 2 raw hex literals (#16a34a → --ap-color-success, #dc2626 →
    --ap-color-danger) that previously bypassed the design-token cascade
    and broke dark-mode rendering of the compliant / overdue counters. */
+/* minmax(0, 1fr) + min-width: 0 (surface walk 2026-11-18): at 390 px the second tile column (compliance rate,
+   total assigned) was pushed off the card. The labels may now wrap inside their tile instead. */
 .airpay-dash__compliance-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: var(--ap-space-3);
     padding: var(--ap-space-4);
 }
@@ -144,6 +146,7 @@
     border-radius: var(--ap-radius-sm);
     padding: var(--ap-space-4);
     text-align: center;
+    min-width: 0;
 }
 .airpay-dash__compliance-card__count {
     font-size: 28px;
@@ -158,6 +161,16 @@
     color: var(--ap-color-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    overflow-wrap: break-word;
+}
+@media (max-width: 480px) {
+    .airpay-dash__compliance-grid {
+        gap: var(--ap-space-2);
+        padding: var(--ap-space-2) 0;
+    }
+    .airpay-dash__compliance-card {
+        padding: var(--ap-space-3) var(--ap-space-2);
+    }
 }
 
 /* Welcome header — compact greeting block used by admin / manager / learner
@@ -279,10 +292,21 @@
 
    These are server-controlled hex strings, not user input, so the
    custom-property carrier is purely a presentation channel. */
+/* Surface walk 2026-11-18:
+   - minmax(0, 1fr) tracks, and one column at 768 px and below: at 390 px the row stayed two columns and the streak
+     calendar and leaderboard were cut off at the right edge.
+   - align-items: start: the level card ("Beginner, 70 pts") sizes to its content instead of stretching to the height
+     of the streak + leaderboard column (about 400 px of empty card at 1440 px). */
 .airpay-dash__gamification-row {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: var(--ap-space-4);
+    align-items: start;
+}
+@media (max-width: 768px) {
+    .airpay-dash__gamification-row {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 .airpay-gamification__level {
     border-color: var(--level-color, var(--ap-color-border));

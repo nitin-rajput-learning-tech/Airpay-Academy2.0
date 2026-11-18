@@ -27,11 +27,12 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_leaderboard';
-$plugin->version   = 2026092500;  // ADR-031: :viewall/:promoteboard no default grant (+ revoke step); board scope = tenant::is_cross_tenant()
+$plugin->version   = 2026111800;  // Surface walk 2026-11-18: with the master flag OFF, learners get a plain "not available yet" message; only moodle/site:config holders see the flag key. No schema change.
+// 2026092500: ADR-031: :viewall/:promoteboard no default grant (+ revoke step); board scope = tenant::is_cross_tenant()
 // 2026092202: privacy provider now declares every user table it owns  // T-01 cap back-fill: teacher archetype on manageboard
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '0.2.2-alpha';
+$plugin->release   = '0.2.3-alpha';
 $plugin->dependencies = [
     'local_sentientia_platform' => 2026092500,  // tenant::is_cross_tenant() (ADR-031)
 ];
@@ -52,3 +53,5 @@ $plugin->dependencies = [
 //              (tenant::is_cross_tenant(); no tenant = nothing); the opt-out
 //              bypass is site-admin only; create() refuses tenantless and
 //              cross-tenant boards for scoped actors.
+// 0.2.3-alpha  Surface walk (2026-11-18): flag-OFF message without the flag
+//              key for learners (feature_unavailable); admins keep the hint.

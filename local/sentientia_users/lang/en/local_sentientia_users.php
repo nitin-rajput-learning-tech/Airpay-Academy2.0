@@ -284,6 +284,9 @@ $string['transcript_status_cancelled'] = 'Cancelled';
 $string['transcript_status_unknown'] = 'Unknown';
 $string['position'] = 'Position';
 $string['domain'] = 'Domain';
+// Surface walk 2026-11-18 - profile header chip (roles beyond learning) and the consumer detail grid.
+$string['profile_role_linemanager'] = 'Line manager';
+$string['profile_weekly_goal_value'] = '{$a} h/week';
 $string['hrms_source_bizlms'] = 'Imported from BizLMS';
 // IDN-07 / XC-IMPORTED-HISTORY-READERS (2026-10-07): who sees an HRMS run's rejected lines, and the imported-history flag.
 $string['hrms_lines_uploader_only'] = 'The rejected lines of this run show an e-mail address, an employee code and a name. They are visible only to the person who uploaded the run and to platform administrators.';

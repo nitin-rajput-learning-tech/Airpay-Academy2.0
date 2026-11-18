@@ -1,9 +1,22 @@
 {{!
    Manager — pending enrolment requests from direct reports.
 }}
+{{! B7 (2026-11-18): requests are decided on local_sentientia_request's Pending approvals.
+    requests.php sends a manager with no rows here straight there; this card is for one with rows. }}
+{{#approvals_url}}
+<div class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3" role="status">
+  <div>
+    <strong>{{#str}}requests_moved_title, local_sentientia_manager{{/str}}</strong>
+    <div class="small">{{#str}}requests_moved_message, local_sentientia_manager{{/str}}</div>
+  </div>
+  <a href="{{ approvals_url }}" class="btn btn-sm btn-primary">
+    <i class="fa fa-inbox me-1"></i>{{#str}}requests_open_approvals, local_sentientia_manager, {{ approvals_count }}{{/str}}
+  </a>
+</div>
+{{/approvals_url}}
 <div class="ap-card mb-3">
   <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
-    <h2 class="h4 m-0">Enrolment Requests</h2>
+    <h2 class="h4 m-0">{{#approvals_url}}{{#str}}requests_earlier, local_sentientia_manager{{/str}}{{/approvals_url}}{{^approvals_url}}Enrolment Requests{{/approvals_url}}</h2>
     <div class="btn-group">
       <a href="{{ index_url }}" class="btn btn-sm btn-outline-secondary">
         <i class="fa fa-tachometer-alt me-1"></i>Team dashboard

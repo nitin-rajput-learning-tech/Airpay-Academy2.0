@@ -122,3 +122,16 @@ $string['heldskills_title']      = 'Skills you hold';
 $string['heldskills_intro']      = 'No skills are mapped to your designation yet, so there is nothing to compare against. This is what you already hold.';
 $string['interests_title']       = 'Skills you are interested in';
 $string['recommended_for_you']   = 'Recommended for you';
+
+// Surface walk 2026-11-18 - My Skills page (dashboard.mustache / index.php were hard-coded English).
+$string['readiness_title']       = 'Skill Readiness';
+$string['readiness_summary']     = '{$a->met} of {$a->total} skills met for {$a->designation}';
+$string['readiness_gaps_one']    = '1 skill gap to close';
+$string['readiness_gaps']        = '{$a} skill gaps to close';
+$string['readiness_allmet']      = 'All skills met!';
+$string['skillsradar']           = 'Skills Radar';
+$string['status_missing']        = 'Missing';
+$string['recommended_gaps']      = 'Recommended to Close Gaps';
+$string['rec_teaches']           = 'Teaches: {$a->skill} → {$a->level}';
+$string['noskills_title']        = 'No skills data yet';
+$string['noskills_message']      = 'Skills are mapped to your role. Contact your L&D team if your designation isn\'t set.';

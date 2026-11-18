@@ -78,16 +78,28 @@ class team_manager {
             $inparams);
         foreach ($rows as $r) { $completed_map[(int) $r->userid] = (int) $r->cnt; }
 
-        // 3) Overdue compliance items (if the table exists).
+        // 3) Overdue compliance items, from local_sentientia_compliance_report's
+        // snapshot (local_compliance_snapshot: one row per person per mandatory
+        // course, rebuilt by its refresh_snapshot task). Until 2026-11-18 this
+        // read local_sentientia_compliance_snapshot, a table no plugin creates,
+        // so the guard was always false: every Overdue cell on My Team and on
+        // the dashboard's Team Compliance card read 0 (a green tick) and the
+        // "Overdue Items" tile read 0. The rows counted are the ones the
+        // compliance report's Defaulters tab lists for the same person
+        // (compliance_engine::get_defaulters(): status overdue, course still
+        // on the compliance list), so the two numbers agree. Scoping is
+        // unchanged: only the users in $team.
         $overdue_map = [];
         $dbman = $DB->get_manager();
-        if ($dbman->table_exists('local_sentientia_compliance_snapshot')) {
+        if ($dbman->table_exists('local_compliance_snapshot')
+                && $dbman->table_exists('local_compliance_courses')) {
             $rows = $DB->get_records_sql(
-                "SELECT userid, COUNT(*) AS cnt
-                   FROM {local_sentientia_compliance_snapshot}
-                  WHERE status = 'overdue' AND userid $insql
-               GROUP BY userid",
-                $inparams);
+                "SELECT s.userid, COUNT(*) AS cnt
+                   FROM {local_compliance_snapshot} s
+                  WHERE s.status = :overduestatus AND s.userid $insql
+                    AND EXISTS (SELECT 1 FROM {local_compliance_courses} cx WHERE cx.courseid = s.courseid)
+               GROUP BY s.userid",
+                ['overduestatus' => 'overdue'] + $inparams);
             foreach ($rows as $r) { $overdue_map[(int) $r->userid] = (int) $r->cnt; }
         }
 
@@ -118,8 +130,15 @@ class team_manager {
             // Cap at 100% — completions can exceed current enrolments when a
             // course was un-enrolled but the completion record persists.
             $rate      = $enrolled > 0 ? min(100, round(($completed / $enrolled) * 100)) : 0;
-            $lastlogin_ts = (int) ($m->lastlogin ?: 0);
-            $inactive_days = $lastlogin_ts ? round((time() - $lastlogin_ts) / 86400) : 999;
+            // Surface walk 2026-11-18: a report who never logged in used the
+            // sentinel 999, which My Team printed as "999d ago". never_loggedin
+            // says so; inactive_days is null then. Still flagged inactive.
+            // "Last Active" is the latest of lastaccess and lastlogin, as on the
+            // member page (lastaccess): user.lastlogin is the PREVIOUS login, so
+            // it is 0 for someone who has logged in exactly once.
+            $lastlogin_ts = max((int) ($m->lastaccess ?? 0), (int) ($m->lastlogin ?? 0));
+            $never_loggedin = ($lastlogin_ts === 0);
+            $inactive_days = $never_loggedin ? null : (int) round((time() - $lastlogin_ts) / 86400);
 
             $result[(int) $m->id] = [
                 'id'           => (int) $m->id,
@@ -138,9 +157,10 @@ class team_manager {
                 'has_overdue'  => ($overdue > 0),
                 'streak'       => $streak,
                 'points'       => number_format($points),
-                'lastlogin'    => $lastlogin_ts ? userdate($lastlogin_ts, '%d %b %Y') : 'Never',
+                'lastlogin'    => $lastlogin_ts ? userdate($lastlogin_ts, '%d %b %Y') : get_string('never'),
                 'inactive_days' => $inactive_days,
-                'is_inactive'  => ($inactive_days > 14),
+                'never_loggedin' => $never_loggedin,
+                'is_inactive'  => $never_loggedin || ($inactive_days > 14),
             ];
         }
         return $result;

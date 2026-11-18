@@ -63,3 +63,11 @@ $string['storefront_checkout_freeleft'] = 'Your basket still holds {$a} free cou
 // learner's in-progress rail, by open_module. Everything else keeps its E-Learning, Classroom or Exam label.
 $string['coursetype_exam'] = 'Exam';
 $string['coursetype_forum'] = 'Forum';
+
+// Persona walk 2026-11-18 -- course.php no longer links to /enrol/index.php (the theme sends it back to course.php):
+// where nothing on the page can enrol the learner it says so, and an enrolment that does not let them in says why.
+$string['enrolment_managed'] = 'Enrolment in this course is managed by your L&D team.';
+$string['enrolment_suspended'] = 'Your enrolment in this course is suspended. Contact your L&D team.';
+$string['enrolment_notstarted'] = 'Your enrolment in this course starts on {$a}.';
+$string['enrolment_ended'] = 'Your enrolment in this course ended on {$a}. Contact your L&D team.';
+$string['open_course'] = 'Open course';
