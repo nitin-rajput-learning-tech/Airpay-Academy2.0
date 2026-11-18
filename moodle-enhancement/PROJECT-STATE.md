@@ -9,6 +9,28 @@
 
 ---
 
+## 2026-11-18 - UAT deployed before the C-suite demo (Opus 5.5)
+
+**Deployed `852549a57` to UAT, 09:40-09:46 IST, on Nitin's go**, per `docs/cutover/UAT-DEPLOY-RUNBOOK-2026-11-18.md`
+(Option A: everything to HEAD), from a git export (autocrlf off; step 0 prepared overnight in
+`kit-scratch/uat-1118-852549a57`). Tunnel opened by Nitin (one-time code); office network, no VPN.
+- Pre-flight (step 2), all as expected: 12 components at the 11-11 baseline versions; role 9 = `administrator` (the
+  2026111702 revoke is a no-op); author role `3 of 3` / `2 of 2` (both back-fills no-op); course reminder/overdue tasks
+  disabled; nothing pending; 73 baseline files identical, only the 4 block Hindi packs missing (now added).
+- Deploy (step 3): 106 files, 106 checksums OK; `++ Success` for all 12 components (theme_sentientia; local_sentientia
+  ai, analytics, authoring, cart, compliance_report, courses, notifications, platform, privacy, proctoring, skillsai);
+  no error lines in the upgrade log. Backup on the box: `/tmp/uat-predeploy-backup-20261118-094456.tgz`.
+- Verify (step 4): 106/106 files byte-identical to git; probe diff = only the 12 new versions (theme 2026111602,
+  compliance_report 2026111702, analytics 2026111700, authoring/courses/notifications/skillsai 2026111600, ai/platform/
+  privacy 2026111300, cart/proctoring 2026111200), course tasks still disabled, authoring tables present, no capability
+  change; flags: exactly 4 new keys, all off (content.scd, notifications.digest_deadlines, privacy.completion_gap,
+  privacy.erasure_completeness); nothing pending.
+- Server smoke (step 5): login 200; /my/, catalogue, compliance report 303 to login; no 500; Apache error log quiet.
+- Next: Nitin's browser smoke and persona walk (steps 6-7), then the demo (11:00 or later).
+- IT, 18 November: cmd and PowerShell enabled again; package registries reachable (HTTPS checked from Node, Python and
+  PHP); SSH tunnel fine; antivirus exclusions DECLINED (so full suites run on GitHub CI, targeted tests locally). Still
+  not installed: GitHub CLI, LibreOffice, Apache/MariaDB as Windows services (need admin).
+
 ## 2026-11-17/18 - Demo eve: the demo moved up to Wednesday morning (Opus 5.5)
 
 **Nitin, 11-17 20:30:** the C-suite demo moves to Wednesday 18 November, morning; push everything developed so far
