@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/sentientia_compliance_report/db" VERSION="20260412"
+<XMLDB PATH="local/sentientia_compliance_report/db" VERSION="20261119"
        COMMENT="Airpay Compliance Reporting - mandatory course tracking">
   <TABLES>
 
@@ -13,6 +13,8 @@
                COMMENT="Days from enrolment to complete"/>
         <FIELD NAME="costcenterid"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
                COMMENT="0=all tenants, else specific costcenter ID"/>
+        <FIELD NAME="cohortid"        TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="0=everyone the row reaches, else only members of this cohort (2026-11-20)"/>
         <FIELD NAME="is_active"       TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1"/>
         <FIELD NAME="sort_order"      TYPE="int"  LENGTH="4"  NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="createdby"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>

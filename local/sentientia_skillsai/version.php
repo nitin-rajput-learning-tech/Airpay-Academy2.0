@@ -67,10 +67,17 @@ $plugin->component = 'local_sentientia_skillsai';
 // that role has no system-context role_capabilities row for EITHER cap (the
 // gap's signature; one row means an administrator set it: nothing granted).
 // No schema/flag change.
-$plugin->version   = 2026111600;  // Fresh-install author caps + guarded back-fill step
+// 2026111901 — post-demo plan 2.4 (Analytics). The nightly rebuild_gap_feed
+// task read only the first 500 matching users (BATCH_SIZE) by id, every
+// night; nothing remembered where it stopped, so users after them never got a
+// rebuilt gap feed. It now walks every matching user, 500 per query (keyset on
+// user id), and one user's failure is logged and skipped. No schema/flag/
+// string change; the task still no-ops while sentientia.skillsai.gap_engine
+// is OFF (the default).
+$plugin->version   = 2026111901;  // Nightly gap-feed task rebuilds every matching user, not the first 500
 $plugin->requires  = 2022041900;        // Moodle 4.5+ (matches sibling plugins).
 $plugin->maturity  = MATURITY_ALPHA;    // MVP — needs prod sign-off before flag flips.
-$plugin->release   = '0.1.4-alpha';
+$plugin->release   = '0.1.5-alpha';
 $plugin->dependencies = [
     // Tenant helper + 5-level feature_flags resolver + per-customer config.
     // 2026092500: ADR-031 tenant::is_cross_tenant() / require_same_tenant_user().
@@ -93,3 +100,5 @@ $plugin->dependencies = [
 // 0.1.4-alpha  A fresh install now gives the Sentientia Author role :extract
 //              and :review (they were skipped since 2026090700); a guarded
 //              upgrade step back-fills sites installed with the gap.
+// 0.1.5-alpha  The nightly gap-feed rebuild covers every user with a mapped
+//              designation, batch by batch (it stopped after the first 500).

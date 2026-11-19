@@ -92,6 +92,33 @@ $data = [
 // W1-1 BizLMS parity: explicit AMD bootstrap for the 5-level cascade.
 $PAGE->requires->js_call_amd('theme_sentientia/org_cascade', 'init');
 
+// Verify B fix (2026-11-20): the modal forms on this page (new/edit course,
+// enrol users) register their disabledIf rules through core's
+// M.form.initFormDependencies, which runs from a deferred YUI
+// Y.use('mform') callback queued behind the date selector's calendar
+// modules. On a slow load that callback can fire after the user has closed
+// the modal. ModalForm destroys the form on close, so core's
+// dependencyManager gets a null form and throws "Cannot read properties of
+// null (reading 'get')" (lib/form/form.js initElementsByName). Any form with
+// a rule does this, the date selector's enddate[enabled] rule included.
+// Load 'mform' with the page and skip the init for a form that is no longer
+// in the document: nothing is left to initialise. Forms still on the page
+// initialise exactly as before. Registered before any modal opens, so YUI
+// runs this callback ahead of every queued form init.
+require_once($CFG->libdir . '/formslib.php');
+$PAGE->requires->js_init_code("
+    var coreinit = M.form.initFormDependencies;
+    if (coreinit && !coreinit.skipsRemovedForms) {
+        M.form.initFormDependencies = function(Y, formid, dependencies) {
+            if (!document.getElementById(formid)) {
+                return false;
+            }
+            return coreinit.call(this, Y, formid, dependencies);
+        };
+        M.form.initFormDependencies.skipsRemovedForms = true;
+    }
+", false, moodleform::get_js_module());
+
 echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_sentientia_courses/manage', $data);
 echo $OUTPUT->footer();

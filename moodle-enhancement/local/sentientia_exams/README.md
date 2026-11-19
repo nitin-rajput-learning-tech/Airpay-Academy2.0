@@ -16,8 +16,11 @@ mastery score). Replacement for BizLMS `local_onlineexams`.
 - Exam-detail view with sub-tabs (Overview / Attempts / Roster / Analytics).
 - Create / edit / delete exam metadata on top of an underlying Moodle quiz.
 - Native enrol UI mirroring `sentientia_courses` Phase F.5.
-- Integration with `local_sentientia_proctoring` via the `:enrol` cap +
-  proctoring toggle on the create-exam form.
+- No proctoring integration (corrected 2026-11-19): the create-exam form has no
+  proctoring toggle and this plugin never reads or writes the proctoring setting.
+  Proctoring is the quiz's own "Require proctoring" setting
+  (`quizaccess_sentientia_proctoring`), which must stay No until post-demo session 4
+  (see that plugin's README).
 
 ## Tables
 
@@ -44,12 +47,14 @@ gates it (no feature flag).
 
 `:view`, `:manage`, `:enrol`.
 
-## Phase 8.1 dependency
+## Proctoring (corrected 2026-11-19)
 
-The proctoring toggle on the create-exam form drives the `quiz_X_enabled`
-flag in `quizaccess_sentientia_proctoring`. Phase 9 N7 migrated that flag
-from `mdl_config_plugins` to a relational table — the integration
-remains transparent to this plugin.
+Earlier versions of this README said a proctoring toggle on the create-exam form
+drives the quiz's proctoring flag. No such toggle exists in this plugin. To harden
+an exam today, use the core quiz settings in
+`moodle-enhancement/docs/guides/ASSESSMENT-INTEGRITY-ADMIN-GUIDE.md`; the planned
+"Security level" choice on the create-exam form is post-demo item B3 (session 9,
+flag `sentientia.assessment.seb_preset.enabled`).
 
 ## Privacy / GDPR
 

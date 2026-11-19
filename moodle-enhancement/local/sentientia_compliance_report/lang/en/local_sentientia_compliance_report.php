@@ -167,3 +167,10 @@ $string['scorecard_show_empty'] = 'Show {$a} departments with no assignments';
 $string['scorecard_show_empty_one'] = 'Show 1 department with no assignments';
 $string['scorecard_hide_empty'] = 'Hide departments with no assignments';
 $string['matrix_showing'] = 'Showing {$a->from}–{$a->to} of {$a->total} employees';
+
+// A1 / D4 (post-demo session 1, 2026-11-20): a course that does not apply to a
+// person (another tenant's course, or a cohort they are not in), and a tracked
+// row restricted to a cohort, as the Configure tab names it.
+$string['status_not_applicable'] = 'Not applicable';
+$string['entity_with_cohort'] = '{$a->entity}, cohort: {$a->cohort}';
+$string['cohort_deleted'] = 'deleted cohort (id {$a})';

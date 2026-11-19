@@ -1,21 +1,22 @@
 # Course Author — screenshot manifest
 
 Capture target for [`../../course-author-guide.md`](../../course-author-guide.md).
-PNG, against `http://localhost:8080/moodle/` on local XAMPP. Desktop **1440×900**;
+PNG, against `http://localhost:8080/` on local XAMPP. Desktop **1440×900**;
 mobile **590**.
 
-**Capture account:** `asif.ansari@airpay.co.in` (Airpay tenant, `/1/79/197/200`,
-33 courses owned). Password (local only): `AcademyAudit2026!`
+**Capture account:** an Airpay-tenant trainer test account with `editingteacher` on a few
+courses (shot 07 needs an L&D admin account for Manage Courses). Names, e-mail addresses and
+passwords are not kept here; no screenshot may show a real person's data.
 
 | # | File | URL | Viewport |
 |---|------|-----|----------|
 | 01 | `01-dashboard.png` | `/my/dashboard.php` | 1440 |
 | 02 | `02-login.png` | `/login/index.php` | 1440 |
-| 03 | `03-dashboard-asif.png` | `/my/dashboard.php` | 1440 |
+| 03 | `03-dashboard.png` | `/my/` | 1440 |
 | 04 | `04-myteaching-list.png` | `/local/airpay_catalog/mycourses.php` (Teaching tab) | 1440 |
 | 05 | `05-course-view.png` | `/course/view.php?id=<owned>` (edit OFF) | 1440 |
 | 06 | `06-course-edit-mode.png` | `/course/view.php?id=<owned>` (edit ON) | 1440 |
-| 07 | `07-create-course-form.png` | `/course/edit.php` (new) | 1440 |
+| 07 | `07-create-course-form.png` | `/local/sentientia_courses/index.php` → New Course | 1440 |
 | 08 | `08-activity-picker.png` | course → +Add activity | 1440 |
 | 09 | `09-quiz-edit.png` | quiz → Edit quiz | 1440 |
 | 10 | `10-quiz-attempt-preview.png` | quiz → Preview → Attempt | 1440 |
@@ -34,12 +35,12 @@ mobile **590**.
 | 23 | `23-aiquiz-generate.png` | `/local/sentientia_aiquiz/generate.php` | 1440 |
 | 24 | `24-aiquiz-review.png` | `/local/sentientia_aiquiz/review.php?draftid=<id>` | 1440 |
 | 25 | `25-aiquiz-push.png` | review → Finalise + push | 1440 |
-| 26 | `26-audience-editor.png` | `/local/airpay_courses/audience.php?courseid=<id>` | 1440 |
+| 26 | `26-enrolment-methods.png` | course → Participants → Enrolment methods | 1440 |
 | 27 | `27-completion-settings.png` | course → Completion tracking | 1440 |
-| 28 | `28-deadline-config.png` | course → completion_days field | 1440 |
+| 28 | `28-deadline-config.png` | Manage Courses → Edit → Completion deadline (days from enrolment) | 1440 |
 | 29 | `29-grader-report.png` | `/grade/report/grader/index.php?id=<courseid>` | 1440 |
 | 30 | `30-grader-mobile.png` | grader report | 590 |
-| 31 | `31-hindi-audit.png` | `/local/airpay_courses/hindi_audit.php?courseid=<id>` | 1440 |
+| 31 | `31-hindi-checklist.png` | course page with the language set to Hindi (there is no audit page) | 1440 |
 | 32 | `32-certificate-issued.png` | course → certificate | 1440 |
 | 33 | `33-publish-checklist.png` | course settings → visibility | 1440 |
 | 34 | `34-course-backup.png` | course → Backup | 1440 |

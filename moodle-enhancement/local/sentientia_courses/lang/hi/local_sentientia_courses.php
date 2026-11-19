@@ -181,6 +181,10 @@ $string['featured_widget_heading'] = 'आपके लिए चुने गए
 $string['featured_widget_browseall'] = 'सभी कोर्स ब्राउज़ करें';
 $string['featured_widget_enrol'] = 'नामांकन करें';
 $string['featured_widget_preview'] = 'पूर्वावलोकन';
+// Post-demo plan 2.4 (2026-11-19): Manage Courses की पंक्ति-कार्रवाइयाँ, sentientia.courses.advanced_actions.enabled के पीछे
+// (classes/external/list_courses.php; डिफ़ॉल्ट OFF)।
+$string['action_opencourse'] = 'कोर्स खोलें';
+$string['action_advancedsettings'] = 'उन्नत सेटिंग्स';
 
 // Privacy metadata (classes/privacy/provider.php, added 2026-09-22).
 // Replaced a null_provider that wrongly asserted this plugin held no

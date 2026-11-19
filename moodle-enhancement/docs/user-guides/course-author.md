@@ -1,33 +1,33 @@
 # Course Author user guide — Sentientia LMS / Airpay Academy
 
 **Audience:** Course Author (can create + edit + publish their assigned courses across one or more tenants).
-**Status:** v1 draft (2026-05-24).
+**Status:** v1 draft (2026-05-24), superseded by [`course-author-guide.md`](course-author-guide.md).
+Course fields corrected 2026-11-19 (post-demo plan 2.4): §1, §3, §5 and §8 used to list fields and pages that
+do not exist. The full, current field list is in `course-author-guide.md` §5.
 **Cross-references:** `tenant-admin.md`, `learner.md`, `site-admin.md`.
 
 ---
 
 ## 1. Creating a course
 
-`/course/edit.php?category=<your-category>` opens the standard Moodle
-course-edit form with Sentientia additions:
+Two routes:
 
-### Required fields
+- **Manage Courses** (`/local/sentientia_courses/index.php` → **New Course**), for
+  holders of `local/sentientia_courses:create` (L&D and tenant admins). The pop-up
+  has: course full name*, short name*, ID number, category*, organisation (tenant),
+  description, course format, number of sections (new courses only), visible to
+  learners, start date, end date (optional) and **Completion deadline (days from
+  enrolment)**. * = required.
+- **Moodle's course form** (`/course/edit.php?category=<your-category>`), for
+  holders of `moodle/course:create` in that category. It is the standard Moodle
+  form; Sentientia adds no fields to it.
 
-- **Full name** — shown in catalogue + breadcrumb.
-- **Short name** — unique identifier; used in URLs + reports.
-- **Category** — pick your tenant's category tree.
-- **Course visibility** — start as "Hidden" until you've completed
-  Sections 2-7 below; only flip to "Visible" before publishing.
-- **Course start date** — affects "My Courses" sort + analytics windowing.
-- **Course end date** — drives `local_airpay_courses` deadline-reminder cron.
+Start with the course hidden until you have completed Sections 2-7 below.
 
-### Sentientia-specific fields
-
-- **Cohort filter** — restrict enrolment to specific cohorts.
-- **Target audience** — designations, roles, departments. Combine with
-  cohort for fine-grained access.
-- **Completion days** — `local_airpay_courses` deadline cron uses this
-  to send reminders N/3, 2N/3, and N days after enrolment.
+There is **no** cohort filter, target audience, mandatory-training or Hindi
+parity field on either form (earlier versions of this page said so). The
+course end date does not drive reminders: the Completion deadline (days) does,
+counted from the enrolment date (§5).
 
 ---
 
@@ -65,11 +65,12 @@ without manually enrolling each one.
 the cohort + role (usually "Student"). Every current + future cohort
 member is auto-enrolled.
 
-### Target audience editor
+### Target audience editor (does not exist)
 
-`/local/airpay_courses/audience.php?courseid=<id>` — pick designations,
-departments, manager hierarchy. The "Bulk-enrol" button then enrols
-everyone matching the criteria. Useful for ad-hoc one-time pushes.
+There is no course audience editor (`/local/airpay_courses/audience.php` was
+never built; a course audience model is planned, post-demo plan A3). Today use
+cohort sync, the Enrol users icon or **Mass enrol** on Manage Courses, or a
+learning path's audience enrolment (it enrols people in every course on the path).
 
 ---
 
@@ -91,16 +92,17 @@ mean).
 
 ## 5. Deadline reminders
 
-The `local_airpay_courses` plugin includes two crons:
+The `local_sentientia_courses` plugin includes two scheduled tasks, both **off
+by default** (a Site Admin turns them on):
 
-| Cron | Frequency | Recipients | Trigger |
-|------|-----------|------------|---------|
-| Learner reminder | daily | Learner | N/3 days, 2N/3 days, N days from enrolment where N = course completion days |
-| Manager escalation | daily | Manager (line-manager from HRMS sync) | When learner crosses deadline without completion |
+| Task | Default time | Recipients | Trigger |
+|------|--------------|------------|---------|
+| Deadline reminder | 09:00 daily | Learner | 7, 3 and 1 days before the deadline |
+| Overdue escalation | 09:30 daily | The learner's supervisor (`open_supervisorid`) | 1, 7 and 14 days after the deadline |
 
-You don't have to configure these — they fire automatically if the
-course has `completion days` set + the learner has a manager populated
-in their profile.
+The deadline is the enrolment date plus the course's Completion deadline
+(days from enrolment). A course set to 0 has no deadline. See
+`course-author-guide.md` §14.
 
 ---
 
@@ -141,11 +143,11 @@ If your tenant has Hindi users (anyone with `lang=hi` in their profile):
 - [ ] SCORM content has Hindi audio + slide track (if applicable)
 - [ ] PDFs/resources have Hindi versions linked
 - [ ] Quiz/evaluation questions have Hindi versions
-- [ ] Manager-escalation email template translated (look in
-      `local_airpay_courses/lang/hi/`)
+- [ ] Nothing to do for the deadline reminder and supervisor escalation messages:
+      their Hindi text ships with the platform (`local_sentientia_courses/lang/hi/`)
 
-`/local/airpay_courses/hindi_audit.php?courseid=<id>` — automated audit
-that flags missing translations.
+There is no automated Hindi audit page (`/local/airpay_courses/hindi_audit.php`
+was specified but never built); use the checklist above.
 
 ---
 
@@ -158,3 +160,4 @@ that flags missing translations.
 | Version | Date | Author | Notes |
 |---------|------|--------|-------|
 | v1 draft | 2026-05-24 | Claude (autonomous night-run) | Initial scaffold |
+| v1 draft, corrected | 2026-11-19 | Post-demo plan 2.4 (session 1) | Removed fields and pages that do not exist (§1, §3, §5, §8) |

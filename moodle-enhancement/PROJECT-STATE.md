@@ -1,5 +1,6 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-11-19 16:00 (**Post-demo: Nitin decided D1-D32 (plan 6a); 5 quick wins + certificate verify-on-arrival (D32) DEPLOYED TO UAT 15:15 (`fe94e7c97`); D32 extras (noindex, escaping, ADR-041 accepted) committed, not deployed; mobile = Flutter recommended pending spike. See the 2026-11-19 16:00 entry.**)
+**Updated:** 2026-11-20 ~05:15 (**Post-demo sessions 0 + 1 built, reviewed, deployed to local XAMPP and partly verified; NOT committed, NOT on UAT; PHPUnit NOT finished (the local re-init is cut off by the 06:00 shutdown). Session 1b confirmed: no course certificate is issued on completion; issuer spec amended, waits for Q9 / Q9-d. Proctoring B1/B2 code committed in `76e8ec572`, flags OFF, unverified, not on production or UAT. See the 2026-11-20 entry.**)
+**Before that, 2026-11-19 16:00** (**Post-demo: Nitin decided D1-D32 (plan 6a); 5 quick wins + certificate verify-on-arrival (D32) DEPLOYED TO UAT 15:15 (`fe94e7c97`); D32 extras (noindex, escaping, ADR-041 accepted) committed, not deployed; mobile = Flutter recommended pending spike. See the 2026-11-19 16:00 entry.**)
 **Before that, 2026-11-19 09:20** (**Walk fixes A+B+C DEPLOYED TO UAT at 09:06-09:12 on Nitin's go (`b757187a9` code, docs `53b249a16`, `production` fast-forwarded); all checks green; PHPUnit not run. See the 2026-11-19 09:20 entry.**)
 **Before that, 2026-11-19 08:30** (**Walk fixes Phase A+B (`56d822061`) and Phase C built and verified locally, NOT on UAT yet; V23 reverted; PHPUnit not run. See the 2026-11-19 entry.**)
 **Before that, 2026-11-18 12:35** (**Midday: three demo fixes on UAT (`bc2227c20`, theme 2026111800 + certificate redesign); see the 2026-11-18 midday entry.** Earlier, ~01:00: **C-suite demo MOVED UP to Wednesday 18 November, morning; everything developed so far goes to UAT first thing (Nitin, over his VPN, per `docs/cutover/UAT-DEPLOY-RUNBOOK-2026-11-18.md`). Committed tonight: the fresh-install fixes (`cdd4fc310`) and the compliance_report security + exclusions fix (`0706fdadf`, 2026111702). New C-suite deck: what Academy 2.0 adds over today's airpay.academy, no operational detail. See the 2026-11-17/18 entry.**)
@@ -11,6 +12,73 @@
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
 
 ---
+
+## 2026-11-20 ~05:15 - Post-demo sessions 0 + 1 (overnight), the 1b check, and the B1/B2 commit (Opus 5.5)
+
+- **Evidence and full results:** `docs/visual-evidence/2026-11-19/session-01/README.md`. It covers each group's
+  changes, review verdict and PASS / FAIL / BLOCKED per step, plus the repair, the open items and 15 decisions
+  for Nitin.
+- **Built and reviewed** (plan 2.4 quick wins, A1, G1, B0, C6 interim, E1/E2, D4):
+  - compliance_report 1.0.11: tenant/share/cohort guard, no auto-enrol end date, D4 pin CLI.
+  - emails 1.4.2: rule editor takes registry templates only; the learning-path e-mail links to My courses.
+  - courses 1.15.0: numsections on create only; Open course / Advanced settings behind the new default-OFF flag
+    `sentientia.courses.advanced_actions.enabled`; course author guide corrected.
+  - evaluation 1.17.6: the response context is checked on the server; invitation links carry it.
+  - learningpath 1.9.4: dialog titles, escaped names, a lock on imported rows, "#" from 1.
+  - analytics 1.2.8-beta: YTD compared with the same span last year; hourly cache TTL. skillsai 0.1.5-alpha:
+    the nightly task covers every user.
+  - theme 1.0.73-beta: Programs link for L&D admins.
+  - Docs: proctoring READMEs, assessment-integrity guide, external-trainer runbook, mobile scaffold without the
+    live host, push docs.
+  - All plugins are at 2026111901, theme 2026111902, in both trees.
+  - Every group reviewed PASS. The must-fixes were in compliance (`--clear-enddates` now follows the IC
+    cohort), docs (3 items) and the re-vendor script (repo-side guards); all are fixed.
+- **Gates PASS** (01:50-02:35): `php -l` on 8.2 and 8.4, drift (0 new), lang parity, upgrade-step versions,
+  path boundary, SITEID, layout regions, core-mods, and the pre-commit hook on a temp index.
+- **Local deploy:** XAMPP, 03:06-03:12, upgrade exit 0. It also brought XAMPP up to HEAD's D32 /
+  noindex files. Proctoring was skipped because it was still being edited: XAMPP holds an interim
+  2026112002 / 2026112001, behind HEAD.
+- **Verification:** read-only Playwright lanes A and B, 1440 + 390, masked.
+  - PASS: G-NAV (all 6 checks), e-mail template pre-select, numsections, the flag-OFF rows, the YTD trend
+    (SQL cross-check), cache TTLs, the evaluation refusal page, LP dialogs (en + hi), the e-mail preview, the
+    logged-out verify page, and the compliance dry run.
+  - BLOCKED (writes not allowed): compliance `--execute` and the after-views, e-mail saves, the course
+    save and flag ON, the evaluation accept path and E2 link, LP numbering and the lock (no local data).
+  - One FAIL, repaired. A console TypeError on Manage Courses (New Course > Cancel > Edit). It was not caused
+    by tonight's change: core starts a modal form's rules late, after the modal has removed the form. Fixed
+    with a guard in `local/sentientia_courses/index.php` (no version bump, no core edit); 5 re-runs show 0
+    errors. A core fix is Nitin's call.
+- **Session 1b (course certificates): confirmed gap.**
+  - No certificate is issued on course completion: local, UAT and HEAD. BizLMS issued about 320 a month.
+  - The issuer spec is amended after review. Issues keyed by `courseid` are hard-deleted by `tool_certificate`
+    on course delete and restore-with-delete. The cycle start must ignore recompletion dry runs. The lock must
+    be released on every path.
+  - It waits for Q9 (flag) and the new Q9-d (do certificates survive course delete). Recommended: no flag,
+    and option (b), a certmap table. Do not run the planned Stage B `courseid = moduleid` backfill.
+- **Session 0 finding, tool_certificate:** the re-vendor 4.5.7 -> 5.0.12 is packaged and verified in
+  `D:/Claude Local/kit-scratch/1119/s01/revendor/`, but not applied. It is 156 file writes, and pre-commit
+  CHECK 2 needs a hook change. UAT's 5.0.12 lacks the image guard (D-7, D-8).
+- **Correction to the 16:00 entry:** the D32 extras (`a47b3d2e5`, theme 2026111901 noindex + escaping) did
+  reach UAT at 16:19 (`af6e65c0e`).
+- **Proctoring B1 + B2 + ADR-036..040, 042, 043 drafts: committed `76e8ec572` (04:15)**, by a different session.
+  - Flags `sentientia.proctoring.enabled` and `sentientia.assessment.secure_mode.enabled` are default OFF.
+  - **Unverified:** no PHPUnit, no browser.
+  - **Not on UAT or production.**
+  - The proctoring READMEs in the working tree describe B1 at 2026112000. HEAD is 2026112003 / 2026112002 with
+    B2. Update them in that verification session.
+- **PHPUnit: NOT finished.** No test from session 0+1 or B1/B2 has run. A re-init of the local test DB was still
+  running at 04:30 and is cut off by the 06:00 shutdown; restart it first next session.
+- **Not committed.** The commit path list and message are in `D:/Claude Local/kit-scratch/1119/s01/`
+  (`commit-paths.txt`, `commit-msg.txt`). Two analytics screenshots stay out (department-of-one rates).
+- **Next:**
+  1. Commit session 0+1.
+  2. Run the PHPUnit init and the test list in the evidence README.
+  3. Run the write-path checks locally.
+  4. UAT deploy on Nitin's go: upgrade needed, then the D4 pin script, dry run then `--execute` (D-1).
+  5. Nitin answers Q9 / Q9-d, then build session 1b.
+  6. Decide the re-vendor and CHECK 2 route (D-7).
+  7. B1/B2 verification: redeploy proctoring locally, PHPUnit, browser, README update.
+  8. Session 2 (survey quick wins; E1/E2 are already done here).
 
 ## 2026-11-19 16:00 - Post-demo feedback: decisions, quick wins on UAT, plans (Opus 5.5)
 

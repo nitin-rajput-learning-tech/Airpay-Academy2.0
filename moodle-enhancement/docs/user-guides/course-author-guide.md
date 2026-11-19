@@ -1,11 +1,18 @@
 # Course Author / SME User Guide
 
 **Persona:** Course Author / Subject-Matter Expert (SME)
-**Platform:** Sentientia LMS / Airpay Academy — Theme `airpayux` v1.0.37-beta
+**Platform:** Sentientia LMS / Airpay Academy — Theme `sentientia` (the former `airpayux`)
 **Audience:** Trainers, SMEs, and content owners building + maintaining courses they teach
-**Status:** v1.0 (2026-05-25) — supersedes the v1-draft skeleton at `course-author.md`
-**Test account referenced:** `asif.ansari@airpay.co.in` — Airpay tenant id=1, open_path `/1/79/197/200`, 33 courses owned. Local password (XAMPP only): `AcademyAudit2026!`
-**Local URL:** `http://localhost:8080/moodle/`
+**Status:** v1.1 (2026-11-19) — course fields corrected (see the box below); supersedes the v1-draft skeleton at `course-author.md`
+**Test account:** any Airpay-tenant trainer account with `editingteacher` on a few courses. Names, e-mail addresses and passwords are not kept in this guide.
+**Local URL:** `http://localhost:8080/` (the local site has no `/moodle` path)
+
+> **Corrected 2026-11-19 (post-demo plan 2.4).** Earlier versions listed course fields that do not exist
+> (cohort filter, target audience, mandatory training flag, Hindi parity flag, a certificate field in course
+> settings) and an audience editor page that was never built. §5 now lists the fields the course forms really
+> have, and §7.1, §9.1, §12, §14, §16, §17 and §18 were corrected to match. Sections not named here (for example
+> §3.1, §7.2-§7.3, §20 and older `local_airpay_*` names) predate the 2026 renames and were not re-checked in
+> this pass.
 
 > **Sibling guides:** [`learner-guide.md`](learner-guide.md) · [`tenant-admin-guide.md`](tenant-admin-guide.md) · [`compliance-officer-guide.md`](compliance-officer-guide.md) · [`site-admin.md`](site-admin.md)
 
@@ -55,10 +62,10 @@ Practically:
 - Inside each course you teach, the **gear menu** (`⋮` or "More") gives you
   edit / activities / grades.
 
-If you teach 33 courses (as Asif does), navigation reality is:
+If you teach many courses, navigation reality is:
 1. **Dashboard** → Continue learning + your own L&D progress
-2. **Catalog → My Courses (Teaching tab)** → 33 courses sorted by recency
-3. **Gradebook overview** → quick grade across all 33
+2. **Catalog → My Courses (Teaching tab)** → your courses sorted by recency
+3. **Gradebook overview** → quick grade across all of them
 
 Capabilities you carry (typical Course Author / SME):
 - `moodle/course:manageactivities` — add / edit / delete activities
@@ -74,22 +81,22 @@ Capabilities you do **not** carry:
 - `moodle/site:config`, `moodle/category:manage`, `moodle/user:create`
 - Site-admin or Tenant-admin scopes — escalate to those personas.
 
-📸 **Screenshot 01:** `screenshots/course-author/01-dashboard.png` — asif.ansari's
-landing page (Learner shape, with "Continue Learning" populated by his own
-training requirements).
+📸 **Screenshot 01:** `screenshots/course-author/01-dashboard.png` — a course
+author's landing page (Learner shape, with "Continue Learning" populated by
+their own training requirements).
 
 ---
 
 ## 2. First login + landing experience <a id="2-first-login"></a>
 
-1. Browse to `http://localhost:8080/moodle/login/index.php`.
-2. Enter `asif.ansari@airpay.co.in` / `AcademyAudit2026!`.
+1. Browse to `http://localhost:8080/login/index.php`.
+2. Enter your course-author account's username and password.
 3. Click **Sign in**.
 
 📸 **Screenshot 02:** `screenshots/course-author/02-login.png`
 
 You land on `/my/dashboard.php`. The dashboard is the **Learner shape**:
-- Welcome header — "Welcome back, Asif"
+- Welcome header — "Welcome back, <your first name>"
 - Continue Learning card (any in-progress training YOU are taking)
 - Deadlines + upcoming activities tile
 - Skill rating progress
@@ -97,11 +104,11 @@ You land on `/my/dashboard.php`. The dashboard is the **Learner shape**:
 - Calendar widget
 - Achievements / badges strip
 
-Because you have `editingteacher` on 33 courses, you also see (a) an extra
+Because you have `editingteacher` on your courses, you also see (a) an extra
 **"Courses I am teaching"** band on `/grade/report/overview/index.php` and
 (b) per-course gear menus.
 
-📸 **Screenshot 03:** `screenshots/course-author/03-dashboard-asif.png`
+📸 **Screenshot 03:** `screenshots/course-author/03-dashboard.png`
 
 ---
 
@@ -172,36 +179,64 @@ section and the drag handles next to each activity.
 
 ## 5. Creating a new course <a id="5-create-course"></a>
 
-`/course/management.php` → pick your category → "Create new course".
+There are two ways to create a course. Which one you have depends on your role.
 
-You CAN create courses inside categories where you have `moodle/course:create`.
-On Airpay Academy customer-zero, Course Authors typically have this on their
-team-specific category tree (e.g. `/Airpay/Operations/Risk and Compliance/`).
-If you do not see "Create new course", escalate to your Tenant Admin to
-extend your category scope.
+**A. Manage Courses (L&D and tenant admins).** `/local/sentientia_courses/index.php` →
+**New Course** opens a pop-up. It needs `local/sentientia_courses:create`, which
+manager-type roles hold; a tenant admin creates courses inside their own tenant only.
+Most Course Authors (trainers) do not hold it: ask your Tenant Admin to create the
+course and enrol you as a teacher.
 
-### Required fields
+**B. Moodle's course form.** `/course/management.php` → pick a category → **Create new
+course** (`/course/edit.php?category=<id>`). It needs `moodle/course:create` in that
+category. This is the standard Moodle form; Sentientia adds no fields to it.
 
-| Field            | Notes                                                              |
-|------------------|--------------------------------------------------------------------|
-| Full name        | Shown in catalogue + breadcrumb. Use [mlang] tags if bilingual.    |
-| Short name       | Unique identifier. Used in URLs + reports.                         |
-| Category         | Pick the tree node where this course belongs.                      |
-| Course visibility| Start as "Hidden" until §18 publishing checklist passes.           |
-| Course start date| Drives "My Courses" sort + analytics window.                       |
-| Course end date  | Drives `local_airpay_courses` deadline-reminder cron.              |
+### Fields in the Manage Courses pop-up
 
-### Sentientia-specific fields (added by `local_airpay_courses`)
+This is the complete list (sections: Basic Information, Category & Organisation,
+Description, Format & Visibility). * = required.
 
-| Field                | Notes                                                              |
-|----------------------|--------------------------------------------------------------------|
-| Cohort filter        | Restrict enrolment to specific cohorts.                            |
-| Target audience      | Designations / departments / roles.                                |
-| Completion days (N)  | Reminder cron sends at N/3, 2N/3, N days after enrolment.          |
-| Mandatory training   | Flag — if ticked, course shows in Compliance dashboard.            |
-| Hindi parity         | Flag — if ticked, `hindi_audit.php` enforces 100% before publish. |
+| Field | Notes |
+|-------|-------|
+| Course full name * | Shown in catalogue + breadcrumb. Use multi-language tags if bilingual. |
+| Course short name * | Unique across the site. Used in URLs + reports. |
+| Course ID number | Optional reference code. |
+| Course category * | Moodle course category. A tenant admin is offered only categories that hold their tenant's courses, plus empty ones. |
+| Organisation (tenant) | The org node the course belongs to, which sets its tenant. For a tenant admin, "No specific organisation" files a new course at the tenant's root; on an edit it leaves the organisation as it was. |
+| Course description | Summary shown in the catalogue. |
+| Course format | Topics, Weekly, Single activity or Social. |
+| Number of sections | **New courses only** (default 5). Add or remove sections later in the course's Edit mode. Since 2026-11-19 the edit pop-up no longer shows it: saving an edit never changed the sections. |
+| Visible to learners | Start with "No" until the §18 checklist passes. |
+| Start date | Moodle's course start date. |
+| End date | Optional. Not used by deadline reminders. |
+| Completion deadline (days from enrolment) | `0` = no deadline. Drives deadline reminders and supervisor escalation (§14). |
 
-📸 **Screenshot 07:** `screenshots/course-author/07-create-course-form.png`
+To change a course later, use the pencil icon on its Manage Courses row: the same
+pop-up, without "Number of sections".
+
+Everything else (completion tracking, course image, appearance, files, groups) is
+in Moodle's own course settings: **Settings** inside the course, or
+`/course/edit.php?id=<courseid>`. It needs `moodle/course:update` in the course.
+When a Site Admin turns on the flag `sentientia.courses.advanced_actions.enabled`
+(default OFF), each Manage Courses row also shows **Open course** and
+**Advanced settings** icons that lead to the course page and to these settings.
+
+### Fields earlier versions of this guide listed, which do not exist
+
+| Listed as | What exists instead |
+|-----------|---------------------|
+| Cohort filter | The Cohort sync enrolment method (§12). |
+| Target audience (designations, departments, roles) | No course-level audience yet (a course audience model is planned: post-demo plan A3). See §12 for the ways to enrol people today. |
+| Mandatory training flag | A Site Admin marks a course mandatory in Compliance Report → Configure (`/local/sentientia_compliance_report/index.php?tab=config`), with its own deadline in days. |
+| Hindi parity flag | No such flag and no automated audit page. Use the manual checklist in §16. |
+| "Course end date drives the reminder cron" | Reminders count from the enrolment date plus the Completion deadline (days) (§14). |
+| Course completion certificate (Course settings → Completion) | No certificate field on either form (§17.2). |
+
+Courses imported from BizLMS also keep their course type, level, skill and
+certificate template, but no form shows or changes these yet (post-demo plan A2).
+
+📸 **Screenshot 07:** `screenshots/course-author/07-create-course-form.png` —
+Manage Courses → New Course pop-up.
 
 ---
 
@@ -268,12 +303,19 @@ same activity picker, scrollable below the standard Moodle types.
 
 ### 7.1 Evaluation
 
-`Add activity → Evaluation` → pick a template from the library (or start blank)
-→ configure target audience + auto-expire window + Hindi parity flag.
+Evaluations are not in the course's activity picker: they are set up on the
+Evaluations page (`/local/sentientia_evaluation/index.php`, plugin
+`local_sentientia_evaluation`). Its form has a name, description, Kirkpatrick
+level, trigger (event + days after), anonymous responses, open and close dates,
+multiple submissions, notify-admin-on-response, tenant and status. (Earlier
+versions of this guide listed a target audience, an auto-expire window and a
+Hindi parity flag on it; the form has none of these.)
 
-Templates seed common patterns (5-question post-training feedback, 10-question
-training-effectiveness, etc.). You can save your own template via
-`/local/airpay_evaluation/template_save.php`.
+To reuse a set of questions, open the evaluation's Questions page and press
+**Export template** (it downloads the questions as a file), then on the
+Evaluations page press **Import template** to create a new evaluation from that
+file. (Earlier versions of this guide named a `template_save.php` page and a
+seeded template library; neither is on these pages.)
 
 📸 **Screenshot 12:** `screenshots/course-author/12-evaluation-edit.png`
 
@@ -342,9 +384,13 @@ masteryscore = 70                    ← Airpay default
 all files in manifest exist in ZIP   ← MUST
 ```
 
-The validator runs server-side in `/local/airpay_courses/upload_scorm.php`
-BEFORE the file lands in your course's draft area. If it fails, you see a
-list of which gate broke and the upload is rejected.
+These gates are checked by the SENTIENTIA pipeline's packager
+(`scripts/agents/agent5_scorm_packager.py`, `validate_zip()`) before it writes
+the ZIP. There is no Sentientia upload page that checks them (earlier versions
+of this guide named `/local/airpay_courses/upload_scorm.php`, which was never
+built; corrected 2026-11-19). For a ZIP from any other tool, check the gates
+yourself: when you add the SCORM activity, Moodle's own SCORM module refuses a
+package without `imsmanifest.xml`, but it does not check the other gates.
 
 📸 **Screenshot 16:** `screenshots/course-author/16-scorm-upload.png`
 
@@ -499,16 +545,25 @@ Phase G.0 ships 4-layer cost defence:
 
 ## 12. Audience targeting + cohort filtering <a id="12-audience"></a>
 
-Same three patterns as the Tenant Admin guide §10:
-1. **Cohort sync** via `Course → Users → Enrolment methods`
-2. **Audience editor** via `/local/airpay_courses/audience.php?courseid=<id>`
-3. **Self-enrol + capability gate** for self-driven catalogues
+There is no course-level audience editor today. (Earlier versions of this guide
+pointed to `/local/airpay_courses/audience.php`, which was never built; a course
+audience model is planned, post-demo plan A3.) The ways to get learners into a
+course are:
+
+1. **Cohort sync** — `Course → Participants → Enrolment methods → Add method →
+   Cohort sync`. Every current and future member of the cohort is enrolled.
+2. **Enrol users** — the person-plus icon on the course's Manage Courses row
+   (admins holding `local/sentientia_courses:enrol`), for one-off enrolments.
+3. **Mass enrol** — Manage Courses → **Mass enrol** (CSV upload).
+4. **Learning paths** — enrolling people in a learning path (one by one, or by
+   audience: designation, region, location, employment type or cohort) enrols
+   them in every course on the path.
 
 If your tenant does not have the cohort you need, request your Tenant Admin
 to create it (Site Admin scope for cohort definitions). You attach to your
 course once the cohort exists.
 
-📸 **Screenshot 26:** `screenshots/course-author/26-audience-editor.png`
+📸 **Screenshot 26:** `screenshots/course-author/26-enrolment-methods.png`
 
 ---
 
@@ -541,24 +596,29 @@ frustrate learners who want to bookmark + return.
 
 ## 14. Deadline reminders + manager escalation <a id="14-deadlines"></a>
 
-Two crons in `local_airpay_courses`:
+Two scheduled tasks in `local_sentientia_courses`. Both are **off by default**: a
+Site Admin turns them on in the plugin settings (`reminder_enabled`,
+`overdue_enabled`) and under Site administration → Server → Scheduled tasks.
 
-| Cron                          | When            | Recipients   | Trigger condition                                         |
-|-------------------------------|-----------------|--------------|-----------------------------------------------------------|
-| Learner reminder              | daily 03:30 IST | Learner      | N/3, 2N/3, N days after enrolment (N = completion_days)   |
-| Manager escalation            | daily 04:00 IST | Line manager | Learner crossed deadline without completion               |
+| Task | Default time (server) | Recipient | When |
+|------|-----------------------|-----------|------|
+| Deadline reminder (`course_reminder`) | 09:00 daily | Learner | 7, 3 and 1 days before the deadline (setting `reminder_days_before`) |
+| Overdue escalation (`course_overdue`) | 09:30 daily | The learner's supervisor (`open_supervisorid`) | 1, 7 and 14 days after the deadline (setting `overdue_days_after`) |
 
-Triple-fan-out per recipient: email + push (PWA) + WhatsApp (if opt-in).
-Push and WhatsApp gated by:
+The deadline is the enrolment date plus the course's **Completion deadline (days
+from enrolment)** (§5). A course set to `0` has no deadline and gets neither
+message; a learner with no supervisor on file gets no escalation.
+
+Each message is a Moodle notification. Push (PWA) and WhatsApp copies are sent
+only when their flags are on (all default OFF):
 - `sentientia.pwa.push.reminders` / `.overdue` (PWA)
 - `engagement.whatsapp.reminders` / `.overdue` (WhatsApp)
 
-Default OFF on customer-zero today; Site Admin flips ON post-rollout.
+The only thing you set is the course's Completion deadline (days), on the
+Manage Courses pop-up.
 
-You do not configure the crons — they fire automatically if the course has
-`completion_days` set + the learner has a manager populated in their profile.
-
-📸 **Screenshot 28:** `screenshots/course-author/28-deadline-config.png`
+📸 **Screenshot 28:** `screenshots/course-author/28-deadline-config.png` —
+Manage Courses → Edit → Completion deadline (days from enrolment).
 
 ---
 
@@ -589,15 +649,13 @@ convention as Sentientia analytics.
 
 ## 16. Hindi content readiness checklist <a id="16-hindi-readiness"></a>
 
-If your tenant has Hindi users (anyone with `lang=hi` in profile), your course
-must pass the Hindi audit before publishing.
+If your tenant has Hindi users (anyone with `lang=hi` in profile), check your
+course against the list below before publishing.
 
-Run `/local/airpay_courses/hindi_audit.php?courseid=<id>` (Note: as of this
-release the script exists in spec only — chip-#H1772 noted it as missing
-from production, with a documented manual-diff fallback. Once the chip ships,
-the URL becomes live).
+There is no automated Hindi audit page and no "Hindi parity" course flag.
+(`/local/airpay_courses/hindi_audit.php` was specified but never built.)
 
-Manual checklist meanwhile:
+Manual checklist:
 
 - [ ] Course full name has `{mlang}` block for `en` + `hi`
 - [ ] Course summary likewise
@@ -605,10 +663,11 @@ Manual checklist meanwhile:
 - [ ] SCORM content has Hindi audio + slide track (or a Hindi sibling SCORM)
 - [ ] PDFs/resources have Hindi versions linked
 - [ ] Quiz/evaluation question stems + options translated
-- [ ] Manager-escalation email subject + body translated
+- [ ] Nothing to do for the deadline reminder and supervisor escalation messages: their Hindi text ships with the platform (`local_sentientia_courses/lang/hi/`)
 - [ ] Welcome email tokens translated (Tenant Admin handles `welcome-1-hi.md`)
 
-📸 **Screenshot 31:** `screenshots/course-author/31-hindi-audit.png`
+📸 **Screenshot 31:** `screenshots/course-author/31-hindi-checklist.png` — the
+course page switched to Hindi, showing translated names.
 
 ---
 
@@ -625,17 +684,24 @@ Tenant Admin; you typically do not author templates directly.
 
 ### 17.2 Wire the template to your course
 
-`Course settings → Completion → Course completion certificate` → pick a
-template → save. On course completion, the certificate is auto-issued.
+Neither course form has a certificate field today, and automatic issue of a
+course's certificate on completion is not confirmed on this platform yet.
+(BizLMS did it; courses imported from it keep their template id. Post-demo plan
+session 1b checks this and restores it if missing.) Until then a certificate manager issues
+certificates from the template: **Manage certificate templates** → the
+template → **Issued certificates** → **Issue certificates**.
 
 ### 17.3 Verification
 
-Every issued certificate has a unique verification ID. Anyone — including
-external HR / partner orgs — can verify at:
+Every issued certificate has a unique verification code. Anyone, including
+external HR / partner orgs, can verify it at:
 
 ```
-/admin/tool/certificate/verify.php?code=<id>
+/admin/tool/certificate/index.php?code=<code>
 ```
+
+The QR code on the certificate and the **Verify** buttons open this page
+with the code filled in, and the result shows straight away.
 
 📸 **Screenshot 32:** `screenshots/course-author/32-certificate-issued.png`
 
@@ -646,10 +712,10 @@ external HR / partner orgs — can verify at:
 Checklist before flipping a course from Hidden to Visible:
 
 - [ ] All activities have completion conditions configured
-- [ ] Audience filter set (cohort / designation / etc.)
-- [ ] Completion days (N) set if you want deadline reminders
-- [ ] Mandatory training flag set if statutory (Airpay only)
-- [ ] Hindi audit passed (Airpay tenant only)
+- [ ] Enrolment set up (cohort sync, Enrol users, Mass enrol, or a learning path; §12)
+- [ ] Completion deadline (days from enrolment) set if you want deadline reminders (§14)
+- [ ] If statutory: a Site Admin has added it in Compliance Report → Configure
+- [ ] Hindi checklist (§16) done, where the tenant has Hindi users
 - [ ] At least one full smoke-test as a Learner role (use "Switch role to" → "Student")
 - [ ] Backup taken (§19)
 
@@ -801,9 +867,9 @@ php ..\admin\cli\purge_caches.php
 "C:\Program Files\Google\Chrome\Application\chrome.exe" `
     --user-data-dir="C:\tmp\chrome-airpay-capture-author" `
     --window-size=1440,900 `
-    http://localhost:8080/moodle/login/index.php
+    http://localhost:8080/login/index.php
 
-# 3. Sign in as asif.ansari@airpay.co.in / AcademyAudit2026!
+# 3. Sign in as a course-author test account (credentials are not kept in this guide).
 
 # 4. Walk the URL sequence from §3 → §19 of this guide.
 
@@ -841,7 +907,7 @@ Total captures: ~35 desktop + 2 mobile + 1 dark-mode = ~38 PNG.
 - `state-cards/local_sentientia_aiquiz-state.md` — AI quiz pipeline
 - `state-cards/local_airpay_evaluation-state.md` — Evaluation activity
 - `state-cards/local_airpay_exams-state.md` — Exam activity
-- `state-cards/local_airpay_courses-state.md` — Reminder + escalation crons
+- `state-cards/sentientia_courses-state.md` — Manage Courses, reminder + escalation tasks
 - `docs/adr/ADR-004-realtime-mechanism-for-sentientia-live.md` — SSE choice
 - `docs/adr/ADR-012-ai-quiz-generation.md` — Anthropic Claude integration + cost defence
 - `docs/qa/NVDA-VERIFICATION-PROCEDURE.md` — Live a11y rubric
@@ -854,3 +920,4 @@ Total captures: ~35 desktop + 2 mobile + 1 dark-mode = ~38 PNG.
 | Version | Date       | Author                       | Notes                                                  |
 |---------|------------|------------------------------|--------------------------------------------------------|
 | v1.0    | 2026-05-25 | Wave D3 P3 testing-and-docs chip | Full ≥20-page guide; supersedes v1-draft scaffold |
+| v1.1    | 2026-11-19 | Post-demo plan 2.4 (session 1) | §5 lists the real course fields; removed non-existent fields and pages (§5, §7.1, §9.1, §12, §16, §17, §18); §14 reminders match the code; test-account personal data removed |

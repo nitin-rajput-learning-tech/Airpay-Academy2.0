@@ -22,6 +22,12 @@ class compliance_engine {
     const STATUS_NOT_STARTED  = 'not_started';
     const STATUS_NOT_ENROLLED = 'not_enrolled';
     const STATUS_EXEMPTED     = 'exempted';
+    /**
+     * Matrix display only, never stored: the course does not apply to this
+     * person (another tenant's course, or a cohort they are not in). A1,
+     * 2026-11-20.
+     */
+    const STATUS_NOT_APPLICABLE = 'not_applicable';
 
     /**
      * Area of the report's KPI cache.
@@ -64,14 +70,24 @@ class compliance_engine {
      * Rebuild the entire compliance snapshot table.
      * Called by cron every hour.
      *
-     * @return array {total: int, completed: int, overdue: int, auto_enrolled: int, emails_sent: int}
+     * Who a tracked course applies to (A1, 2026-11-20; see row_applies()):
+     * the row's tenant pin, the course's own tenant (course.open_path) unless
+     * the course is shared to the learner's tenant, and the row's cohort.
+     * Until 2026-11-20 only the pin was checked, so a course tracked for "all
+     * tenants" (costcenterid 0) auto-enrolled and mailed every Public and ZEEA
+     * user into Airpay's courses. A snapshot row for a (user, course) pair the
+     * course no longer applies to is removed, so the reports stop counting it;
+     * the user's enrolment is left alone (never unenrol on a rule change, D3).
+     *
+     * @return array {total: int, completed: int, overdue: int, auto_enrolled: int,
+     *                emails_sent: int, out_of_scope: int, pruned: int}
      */
     public static function rebuild_snapshot(): array {
         global $DB;
 
         $now = time();
         $stats = ['total' => 0, 'completed' => 0, 'overdue' => 0,
-                  'auto_enrolled' => 0, 'emails_sent' => 0];
+                  'auto_enrolled' => 0, 'emails_sent' => 0, 'out_of_scope' => 0, 'pruned' => 0];
 
         // Get active mandatory courses.
         $mandatory = $DB->get_records('local_compliance_courses', ['is_active' => 1], 'sort_order');
@@ -79,6 +95,15 @@ class compliance_engine {
             self::purge_kpi_cache();
             return $stats;
         }
+
+        // Who each course may reach (owner tenant, shares, cohorts): read
+        // once per rebuild, not once per user.
+        $audiences = self::course_audiences($mandatory);
+        $cohortmembers = self::cohort_members($mandatory);
+        // courseid => [userid => true]: pairs processed this run, and pairs
+        // a row did not apply to (pruned from the snapshot at the end).
+        $inscope = [];
+        $outofscope = [];
 
         // Get all active employees.
         $users = $DB->get_records_select('user',
@@ -110,10 +135,19 @@ class compliance_engine {
             $dept_path = $user->open_path ?? '';
 
             foreach ($mandatory as $mc) {
-                // Check tenant scope: 0 = all tenants, else specific costcenter.
-                if ($mc->costcenterid > 0 && $mc->costcenterid != $costcenterid) {
-                    continue; // This course doesn't apply to this tenant.
+                $courseid = (int) $mc->courseid;
+                $userid = (int) $user->id;
+                // Tenant pin, course owner / share, cohort (A1, see row_applies()).
+                if (!self::row_applies($mc, $costcenterid, $userid, $audiences, $cohortmembers)) {
+                    $outofscope[$courseid][$userid] = true;
+                    continue;
                 }
+                // A course listed for several entities (one row per costcenterid)
+                // is processed once per user, under the first row by sort_order.
+                if (isset($inscope[$courseid][$userid])) {
+                    continue;
+                }
+                $inscope[$courseid][$userid] = true;
 
                 $stats['total']++;
                 $key = $user->id . '_' . $mc->courseid;
@@ -141,7 +175,7 @@ class compliance_engine {
                     // NOT ENROLLED — auto-enrol if enabled.
                     $auto_enrol = get_config('local_sentientia_compliance_report', 'auto_enrol');
                     if ($auto_enrol) {
-                        $enrolled = self::auto_enrol($user->id, $mc->courseid, $mc->deadline_days);
+                        $enrolled = self::auto_enrol($user->id, $mc->courseid);
                         if ($enrolled) {
                             $stats['auto_enrolled']++;
                             // Set as not_started (just enrolled).
@@ -217,8 +251,164 @@ class compliance_engine {
             }
         }
 
+        // Snapshot rows for pairs no row applies to any more (a Public or
+        // ZEEA user on an Airpay course, a non-member on a cohort course, a
+        // user whose course was pinned to another tenant). Active users only:
+        // suspended and deleted users are not walked, and their rows stay as
+        // they were. The enrolment itself is never touched here.
+        foreach ($outofscope as $courseid => $userids) {
+            $stale = array_diff_key($userids, $inscope[$courseid] ?? []);
+            if (!$stale) {
+                continue;
+            }
+            $stats['out_of_scope'] += count($stale);
+            $existing = array_map('intval', $DB->get_fieldset_select('local_compliance_snapshot',
+                'userid', 'courseid = :cid', ['cid' => $courseid]));
+            $todelete = array_values(array_intersect($existing, array_keys($stale)));
+            foreach (array_chunk($todelete, 500) as $chunk) {
+                [$insql, $inparams] = $DB->get_in_or_equal($chunk, SQL_PARAMS_NAMED, 'stale');
+                $DB->delete_records_select('local_compliance_snapshot',
+                    "courseid = :cid AND userid {$insql}", ['cid' => $courseid] + $inparams);
+                $stats['pruned'] += count($chunk);
+            }
+        }
+
         self::purge_kpi_cache();
         return $stats;
+    }
+
+    // ════════════════════════════════════════════════════
+    // AUDIENCE OF A TRACKED COURSE (A1, 2026-11-20)
+    // ════════════════════════════════════════════════════
+
+    /**
+     * Who each tracked course may reach, keyed by course id.
+     *
+     * 'tenant' is the course's own tenant, the root of course.open_path (0
+     * for a legacy course with no open_path, or where the column is absent);
+     * 'sharedto' holds the tenants it is actively shared to through
+     * local_sentientia_courses (Sprint C sharing, the share requests' result).
+     * The same two facts decide the catalogue
+     * (sharing_manager::build_catalog_filter_sql()) and a tenant admin's
+     * enrolment scope (course_manager::course_in_enrol_scope()).
+     *
+     * @param \stdClass[] $rows local_compliance_courses records
+     * @return array courseid => ['tenant' => int, 'sharedto' => [tenantid => true]]
+     */
+    public static function course_audiences(array $rows): array {
+        global $DB;
+        $courseids = array_values(array_unique(array_map(fn($mc) => (int) $mc->courseid, $rows)));
+        if (!$courseids) {
+            return [];
+        }
+
+        $paths = [];
+        if (array_key_exists('open_path', $DB->get_columns('course'))) {
+            [$insql, $inparams] = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED, 'audc');
+            $paths = $DB->get_records_select_menu('course', "id {$insql}", $inparams, '', 'id, open_path');
+        }
+
+        $shares = [];
+        if ($DB->get_manager()->table_exists('local_sentientia_courses_tenant_share')) {
+            [$insql, $inparams] = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED, 'auds');
+            // 'active' is sharing_manager::STATUS_ACTIVE; a withdrawn share
+            // keeps its row for history and reaches nobody.
+            $rs = $DB->get_recordset_select('local_sentientia_courses_tenant_share',
+                "courseid {$insql} AND status = :audstatus", $inparams + ['audstatus' => 'active'],
+                '', 'id, courseid, tenant_id');
+            foreach ($rs as $share) {
+                if ((int) $share->tenant_id > 0) {
+                    $shares[(int) $share->courseid][(int) $share->tenant_id] = true;
+                }
+            }
+            $rs->close();
+        }
+
+        $out = [];
+        foreach ($courseids as $courseid) {
+            $out[$courseid] = [
+                'tenant'   => self::tenant_id_from_path((string) ($paths[$courseid] ?? '')),
+                'sharedto' => $shares[$courseid] ?? [],
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * Members of every cohort a tracked row is restricted to.
+     *
+     * A cohort that no longer exists has no members, so its row applies to
+     * nobody (fail closed) rather than to everyone.
+     *
+     * @param \stdClass[] $rows local_compliance_courses records
+     * @return array cohortid => [userid => true]
+     */
+    public static function cohort_members(array $rows): array {
+        global $DB;
+        $out = [];
+        foreach ($rows as $mc) {
+            $cohortid = (int) ($mc->cohortid ?? 0);
+            if ($cohortid <= 0 || isset($out[$cohortid])) {
+                continue;
+            }
+            $members = $DB->get_fieldset_select('cohort_members', 'userid', 'cohortid = :cohortid',
+                ['cohortid' => $cohortid]);
+            $out[$cohortid] = array_fill_keys(array_map('intval', $members), true);
+        }
+        return $out;
+    }
+
+    /**
+     * May a tenant's people be assigned this course?
+     *
+     * Yes when the course is the tenant's own, is shared to it, or is a legacy
+     * course with no owner (no open_path: the platform lists those to every
+     * tenant, and the existing compliance rows on them keep working). A user
+     * with no tenant (0) reaches legacy courses only.
+     *
+     * @param int $courseid
+     * @param int $tenantid the learner's tenant root (0 = none)
+     * @param array $audiences from course_audiences()
+     * @return bool
+     */
+    public static function course_reaches_tenant(int $courseid, int $tenantid, array $audiences): bool {
+        $owner = (int) ($audiences[$courseid]['tenant'] ?? 0);
+        if ($owner <= 0 || $owner === $tenantid) {
+            return true;
+        }
+        return $tenantid > 0 && !empty($audiences[$courseid]['sharedto'][$tenantid]);
+    }
+
+    /**
+     * Does one tracked row apply to one user? All three must hold:
+     *   1. the row's tenant pin (costcenterid 0 = any tenant) is the user's tenant;
+     *   2. the course reaches the user's tenant (course_reaches_tenant());
+     *   3. the row's cohort, when it has one, holds the user.
+     *
+     * A row pinned to a tenant that the course neither belongs to nor is
+     * shared to applies to nobody: share the course to that tenant first.
+     *
+     * @param \stdClass $mc local_compliance_courses record
+     * @param int $usertenant the user's tenant root (0 = none)
+     * @param int $userid
+     * @param array $audiences from course_audiences()
+     * @param array $cohortmembers from cohort_members()
+     * @return bool
+     */
+    public static function row_applies(\stdClass $mc, int $usertenant, int $userid,
+            array $audiences, array $cohortmembers): bool {
+        $pin = (int) $mc->costcenterid;
+        if ($pin > 0 && $pin !== $usertenant) {
+            return false;
+        }
+        if (!self::course_reaches_tenant((int) $mc->courseid, $usertenant, $audiences)) {
+            return false;
+        }
+        $cohortid = (int) ($mc->cohortid ?? 0);
+        if ($cohortid > 0 && empty($cohortmembers[$cohortid][$userid])) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -257,8 +447,16 @@ class compliance_engine {
 
     /**
      * Auto-enrol a user in a mandatory course.
+     *
+     * The enrolment has no end date (A1 / D4, 2026-11-20). It used to end at
+     * the compliance deadline, so a learner who was overdue - the people the
+     * escalation mails chase - lost access to the very course they were told
+     * to finish. The deadline lives in the snapshot (enrol date + deadline
+     * days) and drives the reminders; it does not close the course.
+     * cli/pin_compliance_courses.php --execute --clear-enddates removes the
+     * end dates the old code set.
      */
-    private static function auto_enrol(int $userid, int $courseid, int $deadline_days): bool {
+    private static function auto_enrol(int $userid, int $courseid): bool {
         global $DB;
 
         $enrolplugin = enrol_get_plugin('manual');
@@ -278,8 +476,8 @@ class compliance_engine {
         $now = time();
 
         try {
-            $enrolplugin->enrol_user($instance, $userid, $roleid, $now,
-                $now + ($deadline_days * 86400));
+            // timeend 0: no end date (see above).
+            $enrolplugin->enrol_user($instance, $userid, $roleid, $now, 0);
             return true;
         } catch (\Exception $e) {
             debugging('Compliance auto-enrol failed: ' . $e->getMessage());
@@ -481,6 +679,12 @@ class compliance_engine {
         // org path, 'department_name' is what the page shows and
         // 'department_name_plain' what the export writes (V11).
         $deptnames = self::department_names(array_map(fn($u) => (string) ($u->open_path ?? ''), $users));
+        // A missing snapshot row means "Not Enrolled" only where the course
+        // applies to the person; otherwise it is "Not applicable" (A1,
+        // 2026-11-20: a cohort course such as POSH for IC Members, or a
+        // course shown to a site admin across tenants).
+        $audiences = self::course_audiences($courses);
+        $cohortmembers = self::cohort_members($courses);
 
         $rows = [];
         foreach ($users as $user) {
@@ -510,7 +714,14 @@ class compliance_engine {
 
                 // $snap is false when no compliance_snapshot row for this user+course;
                 // accessing its properties produces PHP warnings (F5 from deploy rehearsal).
-                $status   = $snap ? $snap->status : 'not_enrolled';
+                if ($snap) {
+                    $status = $snap->status;
+                } else if (self::row_applies($mc, self::tenant_id_from_path((string) ($user->open_path ?? '')),
+                        (int) $user->id, $audiences, $cohortmembers)) {
+                    $status = self::STATUS_NOT_ENROLLED;
+                } else {
+                    $status = self::STATUS_NOT_APPLICABLE;
+                }
                 $progress = $snap ? ($snap->progress_percent ?? 0) : 0;
                 $overdue  = $snap ? ($snap->days_overdue ?? 0) : 0;
                 $deadline = ($snap && !empty($snap->deadline_date))
@@ -527,7 +738,8 @@ class compliance_engine {
                     'deadline'   => $deadline,
                 ];
 
-                if ($status !== self::STATUS_COMPLETED && $status !== self::STATUS_EXEMPTED) {
+                if ($status !== self::STATUS_COMPLETED && $status !== self::STATUS_EXEMPTED
+                        && $status !== self::STATUS_NOT_APPLICABLE) {
                     $row['all_completed'] = false;
                 }
             }
@@ -867,7 +1079,8 @@ class compliance_engine {
 
     /** Status label for display (localised via status_* lang strings). */
     public static function status_label(string $status): string {
-        $known = ['completed', 'in_progress', 'overdue', 'not_started', 'not_enrolled', 'exempted'];
+        $known = ['completed', 'in_progress', 'overdue', 'not_started', 'not_enrolled', 'exempted',
+            'not_applicable'];
         if (in_array($status, $known, true)) {
             return get_string('status_' . $status, 'local_sentientia_compliance_report');
         }
@@ -960,8 +1173,12 @@ class compliance_engine {
 
     /**
      * Active mandatory courses visible inside an org scope: global courses
-     * (costcenterid = 0) plus the ones pinned to the scope's tenant root.
-     * An empty scope (site admin) sees every active course.
+     * (costcenterid = 0) plus the ones pinned to the scope's tenant root,
+     * of those only the courses that reach the tenant (its own, shared to
+     * it, or legacy with no owner: course_reaches_tenant(), A1 2026-11-20;
+     * an Airpay course tracked for "all tenants" was a column of "Not
+     * Enrolled" in the Public and ZEEA reports). An empty scope (site
+     * admin) sees every active course.
      *
      * @return array records from local_compliance_courses, ordered by sort_order
      */
@@ -971,9 +1188,12 @@ class compliance_engine {
         if ($tenantid <= 0) {
             return $DB->get_records('local_compliance_courses', ['is_active' => 1], 'sort_order');
         }
-        return $DB->get_records_select('local_compliance_courses',
+        $rows = $DB->get_records_select('local_compliance_courses',
             'is_active = 1 AND (costcenterid = 0 OR costcenterid = :cc)',
             ['cc' => $tenantid], 'sort_order');
+        $audiences = self::course_audiences($rows);
+        return array_filter($rows,
+            fn($mc) => self::course_reaches_tenant((int) $mc->courseid, $tenantid, $audiences));
     }
 
     /**
@@ -1020,6 +1240,7 @@ class compliance_engine {
             'not_started'  => 'danger',
             'not_enrolled' => 'dark',
             'exempted'     => 'secondary',
+            'not_applicable' => 'light',
         ];
         return $classes[$status] ?? 'secondary';
     }
@@ -1186,7 +1407,12 @@ class compliance_engine {
     /**
      * Get all managed compliance courses (active + inactive).
      *
-     * @return array [{id, courseid, coursename, deadline_days, costcenterid, entity_name, is_active}]
+     * entity_name is HTML-safe (the template prints it raw). A row restricted
+     * to a cohort (cohortid, 2026-11-20: set by cli/pin_compliance_courses.php,
+     * no edit form yet) names the cohort after the entity, so the Configure
+     * tab shows that the course does not reach everyone in the entity.
+     *
+     * @return array [{id, courseid, coursename, deadline_days, costcenterid, cohortid, entity_name, is_active}]
      */
     public static function get_managed_courses(): array {
         global $DB;
@@ -1198,13 +1424,25 @@ class compliance_engine {
                 $entityname = \local_sentientia_org\org_manager::get_name((int)$c->costcenterid)
                     ?: get_string('unknown_entity', 'local_sentientia_compliance_report');
             }
+            $entityhtml = format_string($entityname);
+            $cohortid = (int) ($c->cohortid ?? 0);
+            if ($cohortid > 0) {
+                $cohortname = $DB->get_field('cohort', 'name', ['id' => $cohortid]);
+                $entityhtml = get_string('entity_with_cohort', 'local_sentientia_compliance_report', (object) [
+                    'entity' => $entityhtml,
+                    'cohort' => ($cohortname !== false)
+                        ? format_string($cohortname)
+                        : get_string('cohort_deleted', 'local_sentientia_compliance_report', $cohortid),
+                ]);
+            }
             $result[] = [
                 'id'            => $c->id,
                 'courseid'      => $c->courseid,
                 'coursename'    => format_string($c->coursename),
                 'deadline_days' => $c->deadline_days,
                 'costcenterid'  => $c->costcenterid,
-                'entity_name'   => format_string($entityname),
+                'cohortid'      => $cohortid,
+                'entity_name'   => $entityhtml,
                 'is_active'     => (bool)$c->is_active,
             ];
         }

@@ -118,7 +118,7 @@ class roi_calculator {
         $cfg = self::load_assumptions();
 
         // v2 (2026-11-19): numbers only. The assumptions are part of the key so
-        // a changed setting shows at once instead of after the 10-minute TTL.
+        // a changed setting shows at once instead of after the hour-long TTL (db/caches.php).
         $cache    = \cache::make('local_sentientia_analytics', 'roi');
         $cachekey = 'roi_v2_' . md5($range . '|' . ($orgpath ?: 'all') . '|' . json_encode($cfg));
 

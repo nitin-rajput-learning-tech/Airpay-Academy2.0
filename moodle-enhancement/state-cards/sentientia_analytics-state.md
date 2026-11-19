@@ -1,10 +1,36 @@
 # State Card — `local_airpay_analytics`
 
 **Component:** `local_sentientia_analytics` (was `local_airpay_analytics`)
-**Version:** `2026111900` / `1.2.7-beta` (working tree, uncommitted, not deployed)
+**Version:** `2026111901` / `1.2.8-beta` (working tree, uncommitted; on local XAMPP since 2026-11-20 03:12; not on UAT)
 **Maturity:** `MATURITY_BETA`
 **Status:** Built; not live (Sentientia is not live yet: local and UAT only). L&D analytics dashboards.
-**Last refreshed:** 2026-11-19 (QW-ROI: Training ROI card + skill-gap counts)
+**Last refreshed:** 2026-11-20 (session 0+1 wrap-up; before it 2026-11-19, post-demo plan 2.4: YTD comparison + pre-warmed cache TTL)
+
+---
+
+## 2026-11-19 — post-demo plan 2.4, Analytics quick wins (2026111901 / 1.2.8-beta)
+
+**2026-11-20 ~05:15, session 0+1 wrap-up:** deployed to local XAMPP (upgrade 03:06-03:12, exit 0). Review PASS. Lane B: cache TTLs PASS (3900 for predictive_atrisk / predictive_skillgap / roi, 300 for the rest); YTD trend PASS (Completions -70%, Certificates -69%, matching a read-only SQL count of 1 Jan 2025 to the same date and time in 2025); 7d/30d/90d load clean. PHPUnit NOT finished: no test written in session 0+1 has run (the local test-DB re-init was still running at 04:30 and is cut off by the 06:00 shutdown). Not committed, not on UAT. Plan 3.2 still says "cached for 5 to 10 minutes" (now hourly for at-risk, skill gap and ROI). Evidence: `docs/visual-evidence/2026-11-19/session-01/README.md` (G-ANALYTICS; its screenshots are kept out of the commit because they show department-of-one rates).
+
+- **YTD comparison:** `analytics_manager::get_range_dates()` compared YTD (1 Jan to now) with the WHOLE of last
+  year (1 Jan to 31 Dec), not the previous 365 days. In November that set 10.5 months against 12, in February
+  about 7 weeks against 12 months, so every YTD card's trend read as a fall with flat activity. It now compares
+  with the same span last year: 1 Jan last year to the same date and time last year (29 Feb ends on 28 Feb).
+  Server timezone, as before. The method is public with an optional `$now` (tests). KPI cache key `kpis_v3_`.
+  7d / 30d / 90d unchanged. ROI uses only the current window, so it is unchanged.
+- **Cache lifetime:** `predictive_atrisk`, `predictive_skillgap` and `roi` had a 600 s TTL while the hourly task
+  `refresh_predictive_cache` (5 past each hour) purges and rebuilds them, so the pre-warm served 10 minutes an
+  hour and the next viewer paid for a cold computation. TTL now 3900 s (one hour + 5 minutes of slack for a late
+  cron). `kpis`, `funnel`, `course_effectiveness` and `compliance_heatmap` stay at 300 s: nothing pre-warms them,
+  and the heatmap reads the compliance snapshot, whose task rebuilds row by row for several minutes from the top
+  of each hour, so a longer entry could hold a half-rebuilt snapshot for an hour. `db/caches.php` is changed in
+  the ME tree only: the top tree's copy has no predictive/ROI definitions (baselined drift, `CONTENT
+  sentientia_analytics/db/caches.php`).
+- Files: `classes/analytics_manager.php`, `version.php`, `tests/analytics_manager_test.php` (both trees);
+  `db/caches.php`, `classes/roi_calculator.php` (comment), `tests/predictive_engine_test.php` (ME only, baselined).
+- Tests (not run in this stage): YTD windows (19 Nov, 29 Feb, 28 Feb, 1 Jan midnight), rolling ranges, YTD KPI
+  "previous" end to end, pre-warmed TTLs against the hourly task schedule.
+- Pending: local deploy + upgrade (the bump loads the new TTLs), PHPUnit run, browser check.
 
 ---
 

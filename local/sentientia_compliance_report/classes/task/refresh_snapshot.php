@@ -13,6 +13,8 @@ class refresh_snapshot extends \core\task\scheduled_task {
         $stats = \local_sentientia_compliance_report\compliance_engine::rebuild_snapshot();
         mtrace("Compliance snapshot: {$stats['total']} items, {$stats['completed']} completed, " .
                "{$stats['overdue']} overdue, {$stats['auto_enrolled']} auto-enrolled, " .
-               "{$stats['emails_sent']} emails sent");
+               "{$stats['emails_sent']} emails sent, " .
+               "{$stats['out_of_scope']} out of scope (tenant / share / cohort), " .
+               "{$stats['pruned']} stale snapshot rows removed");
     }
 }

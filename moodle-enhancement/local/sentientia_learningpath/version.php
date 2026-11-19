@@ -28,13 +28,20 @@ $plugin->component = 'local_sentientia_learningpath';
 // 2026111800 (2026-11-18, surface walk V19): list_paths returns the path name as plain text (no "&amp;" in the
 // table) and a statuslabel_class per row, so the status badge is green or grey; the status pills are
 // All / Active / Archived (the "Completed" pill filtered on a status a path never has). No schema change.
-$plugin->version   = 2026111800;  // V19 learning paths table: plain names, status badge class, status pills. Was: 2026110300;  // user search matches a full name ("Rahul Sharma"), 2026-11-03. Was: 2026100701;  // ADR-032 IDN-04: copies_files marker (on top of 2026093001: learningplan importer + schema + learner page, flag OFF)
+// 2026111901 (2026-11-19, post-demo plan 2.4, learning paths quick wins): the remove-course and unenrol-user dialogs
+// name their own action (title, button, success notice; they said "Add Courses" / "Enrol Users" and "Delete"); an
+// imported BizLMS course row shows a lock that explains why it stays, and unassign_course throws its own
+// imported_course_protected message; the "#" column is the course's place counted from 1 (list_path_courses gains
+// position + imported, additive); every path_actions dialog escapes the path, course or user name it shows (the
+// names were put into the dialog's HTML raw). 11 strings en + hi. The learner enrolment e-mail link (local_sentientia_emails) is
+// fixed in that plugin. No schema change.
+$plugin->version   = 2026111901;  // Plan 2.4 learning paths quick wins. Was: 2026111800;  // V19 learning paths table: plain names, status badge class, status pills. Was: 2026110300;  // user search matches a full name ("Rahul Sharma"), 2026-11-03. Was: 2026100701;  // ADR-032 IDN-04: copies_files marker (on top of 2026093001: learningplan importer + schema + learner page, flag OFF)
 // 2026092502: :view revoked from learner roles without the student archetype.
 // 2026092501: adaptive log scores keep 2 decimals.
 // 2026092500: ADR-031: every pathid/userid/courseid tenant-checked; :view student default revoked.
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.9.3';  // 1.9.3: V19 plain names, status badge class, status pills. 1.9.2: full-name user search.  // ADR-032 IDN-04 copies_files marker (1.9.0: ADR-032 learningplan import; 1.8.3: learner-role :view revoke; 1.8.2: adaptive log score precision; 1.8.1: ADR-031 tenant scope; 1.8.0: +P0.2 Adaptive Learning Journeys)
+$plugin->release   = '1.9.4';  // 1.9.4: plan 2.4 dialog titles, imported course rows, "#" from 1. 1.9.3: V19 plain names, status badge class, status pills. 1.9.2: full-name user search.  // ADR-032 IDN-04 copies_files marker (1.9.0: ADR-032 learningplan import; 1.8.3: learner-role :view revoke; 1.8.2: adaptive log score precision; 1.8.1: ADR-031 tenant scope; 1.8.0: +P0.2 Adaptive Learning Journeys)
 $plugin->dependencies = [
     'local_sentientia_org'      => 2026041600,
     'local_sentientia_platform' => 2026100701,  // tenant::is_cross_tenant / scope_path; bizlms import framework (ADR-032); the copies_files marker (IDN-04)

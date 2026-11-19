@@ -205,6 +205,10 @@ $string['featured_widget_heading'] = 'Featured for you';
 $string['featured_widget_browseall'] = 'Browse all courses';
 $string['featured_widget_enrol'] = 'Enrol';
 $string['featured_widget_preview'] = 'Preview';
+// Post-demo plan 2.4 (2026-11-19): Manage Courses row actions behind sentientia.courses.advanced_actions.enabled
+// (classes/external/list_courses.php; default OFF).
+$string['action_opencourse'] = 'Open course';
+$string['action_advancedsettings'] = 'Advanced settings';
 
 // Privacy metadata (classes/privacy/provider.php, added 2026-09-22).
 // Replaced a null_provider that wrongly asserted this plugin held no

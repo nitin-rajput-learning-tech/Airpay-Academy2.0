@@ -217,3 +217,9 @@ is fixed, no surface is added), no schema change, no new lang string.
 - **Visual evidence owed** (CLAUDE.md section 5): the analytics tab of an exam with a repeat-attempt learner, desktop and 590 px.
   Not captured in this session (no browser access to the UAT build).
 
+
+## 2026-11-20 - README correction only (no state change; version stays 2026100701)
+
+- The README no longer claims a proctoring toggle on the create-exam form: none exists, and this plugin never reads or
+  writes the proctoring setting. Proctoring is the quiz's own setting (`quizaccess_sentientia_proctoring`). The planned
+  "Security level" choice is post-demo item B3 (flag `sentientia.assessment.seb_preset.enabled`). No code changed.

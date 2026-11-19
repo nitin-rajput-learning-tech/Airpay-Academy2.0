@@ -2,7 +2,8 @@
 //
 // Two init paths:
 //   - init()       — for the index/list page (Add Path, Edit Path, Status, Delete)
-//   - initView(id) — for the detail page (Add Courses, Remove Course, Enrol Users, Unenrol User)
+//   - initView(id) — for the detail page (Add Courses, Remove Course, Enrol Users, Unenrol User,
+//                    and why an imported BizLMS course row cannot be removed)
 //
 // @module     local_sentientia_learningpath/path_actions
 // @copyright  2026 Airpay Payment Services
@@ -12,6 +13,12 @@ import ModalForm from 'core_form/modalform';
 import {get_string as getString} from 'core/str';
 import Notification from 'core/notification';
 import Ajax from 'core/ajax';
+
+// Path, course and user names come from data-name attributes as plain text; every dialog body below is HTML, so
+// escape them (2026-11-19, plan 2.4: a name with "<" or "&" broke or injected into the dialog).
+const escapeHtml = (text) => String(text).replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+}[c]));
 
 // ════════════════════════════════════════════════════════════════════
 // Path-level actions (index page)
@@ -39,7 +46,7 @@ const confirmStatus = async (pathid, name, makeActive, returnFocus) => {
     const msgKey = makeActive ? 'confirmactivate' : 'confirmarchive';
     const [title, message, success] = await Promise.all([
         getString(titleKey, 'local_sentientia_learningpath'),
-        getString(msgKey, 'local_sentientia_learningpath', name),
+        getString(msgKey, 'local_sentientia_learningpath', escapeHtml(name)),
         getString('pathstatuschanged', 'local_sentientia_learningpath'),
     ]);
     Notification.confirm(title, message, title, null, () => {
@@ -57,7 +64,7 @@ const confirmStatus = async (pathid, name, makeActive, returnFocus) => {
 const confirmDelete = async (pathid, name, returnFocus) => {
     const [title, message, label, success] = await Promise.all([
         getString('deletepath', 'local_sentientia_learningpath'),
-        getString('confirmdelete', 'local_sentientia_learningpath', name),
+        getString('confirmdelete', 'local_sentientia_learningpath', escapeHtml(name)),
         getString('delete', 'core'),
         getString('pathdeleted', 'local_sentientia_learningpath'),
     ]);
@@ -158,18 +165,21 @@ const openBulkEnrolAudienceForm = async (pathid, returnFocus) => {
     modalForm.show();
 };
 
+// 2026-11-19 (plan 2.4): the two dialogs below were titled "Add Courses" and "Enrol Users", their button said
+// "Delete" and their success notices were hard-coded English. Each now names its own action (en + hi strings).
 const confirmUnassignCourse = async (pathid, courseid, name, returnFocus) => {
-    const [title, message, label] = await Promise.all([
-        getString('add_courses', 'local_sentientia_learningpath'),
-        getString('confirm_unassign_course', 'local_sentientia_learningpath', name),
-        getString('delete', 'core'),
+    const [title, message, label, success] = await Promise.all([
+        getString('unassign_course_title', 'local_sentientia_learningpath'),
+        getString('confirm_unassign_course', 'local_sentientia_learningpath', escapeHtml(name)),
+        getString('unassign_course_button', 'local_sentientia_learningpath'),
+        getString('course_unassigned', 'local_sentientia_learningpath'),
     ]);
     Notification.deleteCancelPromise(title, message, label, returnFocus).then(() => {
         Ajax.call([{methodname: 'local_sentientia_learningpath_unassign_course',
                     args: {pathid: pathid, courseid: courseid}}])[0]
             .then(() => {
                 Notification.addNotification({
-                    message: 'Course removed from path.',
+                    message: success,
                     type: 'success'
                 });
                 refreshTable();
@@ -179,18 +189,29 @@ const confirmUnassignCourse = async (pathid, courseid, name, returnFocus) => {
     }, () => null);
 };
 
+// An imported BizLMS course row cannot be removed (ADR-032); its lock button says why (2026-11-19, plan 2.4).
+const explainImportedCourse = async (name) => {
+    const [title, message, close] = await Promise.all([
+        getString('imported_course_title', 'local_sentientia_learningpath'),
+        getString('imported_course_explain', 'local_sentientia_learningpath', escapeHtml(name)),
+        getString('closebuttontitle', 'core'),
+    ]);
+    return Notification.alert(title, message, close);
+};
+
 const confirmUnenrolUser = async (pathid, userid, name, returnFocus) => {
-    const [title, message, label] = await Promise.all([
-        getString('enrol_users', 'local_sentientia_learningpath'),
-        getString('confirm_unenrol_user', 'local_sentientia_learningpath', name),
-        getString('delete', 'core'),
+    const [title, message, label, success] = await Promise.all([
+        getString('unenrol_user_title', 'local_sentientia_learningpath'),
+        getString('confirm_unenrol_user', 'local_sentientia_learningpath', escapeHtml(name)),
+        getString('unenrol_user_button', 'local_sentientia_learningpath'),
+        getString('user_unenrolled', 'local_sentientia_learningpath'),
     ]);
     Notification.deleteCancelPromise(title, message, label, returnFocus).then(() => {
         Ajax.call([{methodname: 'local_sentientia_learningpath_unenrol_user',
                     args: {pathid: pathid, userid: userid}}])[0]
             .then((result) => {
                 Notification.addNotification({
-                    message: 'User unenrolled.',
+                    message: success,
                     type: 'success'
                 });
                 // LRN-10: an enrolment the BizLMS import converted leaves course enrolments behind; the server
@@ -250,6 +271,10 @@ const handleViewClick = (pathid) => (event) => {
         case 'unassign-course':
             event.preventDefault();
             confirmUnassignCourse(pathid, courseid, name, trigger);
+            break;
+        case 'imported-course-info':
+            event.preventDefault();
+            explainImportedCourse(name).catch(Notification.exception);
             break;
         case 'unenrol-user':
             event.preventDefault();

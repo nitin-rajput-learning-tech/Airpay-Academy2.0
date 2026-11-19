@@ -2,16 +2,18 @@
 # scripts/sync-pwa.sh — Sync PWA assets from Moodle into www/ (LOCAL BUNDLE MODE ONLY)
 #
 # In REMOTE URL mode (the production default), this script is NOT needed.
-# The native app loads everything from https://www.airpay.academy directly.
+# The native app loads everything from server.url in capacitor.config.ts directly
+# (a placeholder since 2026-11-19; it named the live BizLMS site).
 #
 # USAGE: bash scripts/sync-pwa.sh [--moodle-url <url>]
+# The local XAMPP wwwroot is http://localhost:8080, with no /moodle path (corrected 2026-11-19).
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 WWW_DIR="$PROJECT_DIR/www"
-MOODLE_LOCAL_URL="${MOODLE_LOCAL_URL:-http://localhost:8080/moodle}"
+MOODLE_LOCAL_URL="${MOODLE_LOCAL_URL:-http://localhost:8080}"
 
 while [[ $# -gt 0 ]]; do
   case $1 in

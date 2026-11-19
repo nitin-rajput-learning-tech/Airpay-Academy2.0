@@ -91,12 +91,20 @@ class edit_course extends \core_form\dynamic_form {
         $mform->addElement('select', 'format', get_string('courseformat', 'local_sentientia_courses'), $formats);
         $mform->setDefault('format', 'topics');
 
-        $mform->addElement('text', 'numsections', get_string('numsections', 'local_sentientia_courses'),
-            ['size' => 5]);
-        $mform->setType('numsections', PARAM_INT);
-        $mform->setDefault('numsections', 5);
-        $mform->disabledIf('numsections', 'format', 'eq', 'singleactivity');
-        $mform->disabledIf('numsections', 'format', 'eq', 'social');
+        // Post-demo quick win (2026-11-19, plan 2.4): "Number of sections" is
+        // offered on create only. course_manager::create() passes it to
+        // create_course(), which builds that many sections; update() never
+        // read it (sections are added and removed in the course's Edit mode),
+        // so on edit the field showed 5 whatever the course had and saving
+        // ignored it.
+        if ($iscreate) {
+            $mform->addElement('text', 'numsections', get_string('numsections', 'local_sentientia_courses'),
+                ['size' => 5]);
+            $mform->setType('numsections', PARAM_INT);
+            $mform->setDefault('numsections', 5);
+            $mform->disabledIf('numsections', 'format', 'eq', 'singleactivity');
+            $mform->disabledIf('numsections', 'format', 'eq', 'social');
+        }
 
         $mform->addElement('selectyesno', 'visible', get_string('visibility', 'local_sentientia_courses'));
         $mform->setDefault('visible', 1);

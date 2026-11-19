@@ -5,6 +5,23 @@
 **ADR:** ADR-005 (Path B/C decision), ADR-003 (Web Push crypto)  
 **Status:** Scaffold — no actual binary has been built yet. This guide covers the full path to store submission.
 
+> **Superseded, do not build (corrected 2026-11-19).** ADR-040 (`moodle-enhancement/docs/adr/ADR-040-native-mobile-app.md`)
+> replaces this Capacitor 5 scaffold: the app is rebuilt in Flutter or Kotlin Multiplatform, chosen by spike, and
+> push goes through a new Moodle message output on FCM HTTP v1 (ADR-040 D4). Three corrections to this guide:
+>
+> 1. **No live address.** The scaffold pointed at `https://www.airpay.academy`, the **live BizLMS** site
+>    (Moodle 4.1.2), which Sentientia replaces only at cutover. `capacitor.config.ts`, `.env.example`,
+>    `src/deep-link-handler.ts` and `www/index.html` now hold the placeholder `https://sentientia-site.invalid`
+>    (the reserved `.invalid` domain never resolves), and the domain examples below read `<sentientia-site>` (or `sentientia-site.invalid` inside code blocks).
+> 2. **No FCM server key.** §5.1 said to store an "FCM server key" from the Firebase console. Server keys belonged
+>    to the legacy FCM HTTP API, which Google shut down in 2024. FCM HTTP v1 authenticates with a Firebase
+>    service-account key that mints short-lived OAuth 2.0 tokens; the key stays on the Moodle server, out of the
+>    app, the repository and the database (ADR-040 D4).
+> 3. **Native tokens are refused today.** `local_sentientia_pwa_save_subscription` accepts only browser Web Push
+>    subscriptions (an allow-listed push-service endpoint plus `p256dh` and `auth` keys), so the
+>    `sentientia-native://` registration in `src/push-bridge.ts` (§5.3) is rejected. ADR-040 D4 registers app
+>    devices in core `user_devices` instead and does not extend `save_subscription`.
+
 ---
 
 ## 1. Prerequisites
@@ -61,12 +78,13 @@ Capacitor) except for the template files checked into this scaffold
 
 ### Remote URL Mode (production default)
 
-**How it works:** The native app shell loads `https://www.airpay.academy`
+**How it works:** The native app shell loads the Sentientia site
 directly into a native WebView. Capacitor injects its JS bridge into the
 remote page, making native plugins (push notifications, status bar, splash
 screen) available to the Moodle page JS.
 
-**Configuration:** `capacitor.config.ts` has `server.url: 'https://www.airpay.academy'`.
+**Configuration:** `capacitor.config.ts` has `server.url: 'https://sentientia-site.invalid'`, a placeholder
+(corrected 2026-11-19: it was `https://www.airpay.academy`, the live BizLMS site). Never point it at live BizLMS.
 
 **Advantages:**
 - App updates deploy instantly with Moodle — no App Store resubmission
@@ -116,7 +134,7 @@ would load, but in a native WebView with Capacitor plugins injected.
 |-----------|------------------------|
 | `manifest.php` | Not used directly — the native app has its own app icon + splash configured in Xcode/Android Studio. The manifest is used by the PWA install flow (browser context) not by the native wrapper. |
 | `sw.php` | The service worker runs inside the native WebView. Cache behaviour, offline fallback (`offline.html`), and network strategies are all active. |
-| `local_sentientia_pwa_save_subscription` WS | Used by `push-bridge.ts` to register native FCM/APNs tokens with Moodle. The endpoint currently accepts VAPID Web Push subscriptions; a small backend extension is needed to also accept native tokens (see §Push Notification Setup). |
+| `local_sentientia_pwa_save_subscription` WS | `push-bridge.ts` posts native FCM/APNs tokens here, and the service **refuses them**: it accepts only browser Web Push subscriptions (an allow-listed push-service host plus `p256dh` and `auth` keys). Corrected 2026-11-19 (this row called the gap "a small backend extension"). ADR-040 D4 does not extend it: app devices register in core `user_devices` and a new message output sends through FCM HTTP v1. |
 | `notification_bridge.php` | The existing cron-triggered push sending logic. For native tokens, the bridge needs to call FCM HTTP v1 / APNs HTTP/2 instead of the VAPID Web Push endpoint. |
 | VAPID crypto stack (ADR-003) | Used as-is for web-browser push subscriptions. Native token delivery bypasses VAPID (FCM/APNs handle encryption end-to-end). |
 | `offline.html` | Bundled into the native WebView as a fallback. The service worker's `catch` handler serves this when the network is unavailable. |
@@ -140,7 +158,8 @@ android/app/google-services.json
 This file is gitignored. Each developer and the CI/CD system must have their own copy.
 For CI/CD: store the file content as a GitHub Actions secret and write it during the build.
 
-**Step 3: FCM → VAPID bridge (backend)**
+**Step 3: FCM → VAPID bridge (backend)** *(superseded 2026-11-19 by ADR-040 D4: a Moodle message output on FCM
+HTTP v1 reading core `user_devices`; the plan below is kept for history only)*
 The `local_sentientia_pwa` backend currently sends push via the VAPID Web Push
 endpoint (RFC-8291). For native Android tokens, the backend needs to call the
 FCM HTTP v1 API instead. Required changes:
@@ -151,9 +170,13 @@ FCM HTTP v1 API instead. Required changes:
   - `web_push` → existing VAPID path (unchanged)
   - `fcm_native` → FCM HTTP v1 API (`POST https://fcm.googleapis.com/v1/projects/{project}/messages:send`)
   - `apns_native` → APNs HTTP/2 (`POST https://api.push.apple.com/3/device/{token}`)
-- The FCM server key (from Firebase Console → Project Settings → Cloud Messaging)
+- ~~The FCM server key (from Firebase Console → Project Settings → Cloud Messaging)
   must be stored in Moodle's plugin config (not in code). Access with:
-  `get_config('local_sentientia_pwa', 'fcm_server_key')`
+  `get_config('local_sentientia_pwa', 'fcm_server_key')`~~
+  **Wrong (corrected 2026-11-19):** server keys belong to the legacy FCM HTTP API, which Google shut down in
+  2024; the v1 endpoint above does not accept them. FCM HTTP v1 needs a Firebase **service-account key**, used on
+  the server to mint short-lived OAuth 2.0 access tokens (`Authorization: Bearer ...`). That key stays on the Moodle
+  server, out of the app, the repository and the database (ADR-040 D4).
 
 **Step 4: Test push on Android emulator**
 ```bash
@@ -189,6 +212,9 @@ Store credentials via Moodle admin settings (never in code).
 
 ### 5.3 How native tokens integrate with `save_subscription`
 
+*Superseded 2026-11-19 (ADR-040 D4): none of the changes below were made, so today the service refuses the
+native registration; the replacement registers app devices with `core_user_add_user_device` instead.*
+
 `src/push-bridge.ts` posts the FCM/APNs token to the existing
 `local_sentientia_pwa_save_subscription` Moodle WS endpoint using a sentinel
 endpoint URL: `sentientia-native://push/{platform}/{token}`.
@@ -209,10 +235,10 @@ scheme — but ONLY for this specific prefix, not arbitrary custom schemes.
 
 ### 6.1 iOS — Universal Links
 
-Universal Links allow `https://www.airpay.academy/...` URLs to open in the app.
+Universal Links allow `https://<sentientia-site>/...` URLs to open in the app.
 
 **Step 1: AASA file**
-Host at `https://www.airpay.academy/.well-known/apple-app-site-association`:
+Host at `https://<sentientia-site>/.well-known/apple-app-site-association`:
 ```json
 {
   "applinks": {
@@ -232,20 +258,20 @@ Replace `XXXXXXXXXX` with your Apple Team ID.
 
 **Step 2: Entitlement**
 In Xcode: Target → Signing & Capabilities → + Capability → Associated Domains
-Add: `applinks:www.airpay.academy`
+Add: `applinks:<sentientia-site>`
 
 This writes to `ios/App/App/App.entitlements`:
 ```xml
 <key>com.apple.developer.associated-domains</key>
 <array>
-  <string>applinks:www.airpay.academy</string>
+  <string>applinks:sentientia-site.invalid</string>
 </array>
 ```
 
 ### 6.2 Android — App Links
 
 **Step 1: assetlinks.json**
-Host at `https://www.airpay.academy/.well-known/assetlinks.json`:
+Host at `https://<sentientia-site>/.well-known/assetlinks.json`:
 ```json
 [{
   "relation": ["delegate_permission/common.handle_all_urls"],
@@ -265,7 +291,7 @@ Get the fingerprint: `keytool -list -v -keystore sentientia-release.jks -alias s
   <category android:name="android.intent.category.DEFAULT" />
   <category android:name="android.intent.category.BROWSABLE" />
   <data android:scheme="https"
-        android:host="www.airpay.academy"
+        android:host="sentientia-site.invalid"
         android:pathPrefix="/course/view.php" />
 </intent-filter>
 ```

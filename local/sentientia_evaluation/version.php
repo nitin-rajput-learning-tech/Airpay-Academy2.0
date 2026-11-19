@@ -46,10 +46,15 @@ $plugin->component = 'local_sentientia_evaluation';
 // gap-integration already had when the branch merged): evaluationmode column if missing + the idempotent SE->SP back-fill.
 // 2026111800 (2026-11-18, Phase C V25) - an assigned user can no longer answer an anonymous form twice: has_user_responded()
 // reads the user's assignment row ('responded') for anonymous forms, and submit_response() checks it. No schema change.
-$plugin->version   = 2026111800;  // V25: anonymous form answered once per assigned user (was: eval-followups + 5.3 compat FX-20 round 1; EV-18; EV-17 repeat step)
+// 2026111901 (2026-11-19, post-demo plan 2.4 + surveys scope E1/E2) - a response's course, program and classroom ids are
+// checked on the server (evaluation_manager::clean_response_context(): the user was invited for that item or took part
+// in it, otherwise error_responsecontext, on respond.php and on submit), and trigger-queue invitations link to
+// respond.php with the course, program or classroom they are for (respond_url(), invitation_context()). New string
+// error_responsecontext (en + hi). No schema change, no upgrade step; the platform dependency is unchanged.
+$plugin->version   = 2026111901;  // E1 + E2: response context checked on the server; invitations carry it (was: V25)
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.17.5';  // 1.17.5: anonymous form answered once per assigned user (V25). 1.17.4: EV-17 repeat step for sites that skipped 2026100701/02. 1.17.3: my_evaluations page title and date labels. 1.17.2: merged with gap-integration (5.3 compat FX-20). 1.17.1: +EV-17 back-fill, review fixes. 1.17.0: +EV-17 evaluationmode. 1.16.0: ADR-032 BizLMS evaluation import. 1.15.3: ADR-031 tenant scope
+$plugin->release   = '1.17.6';  // 1.17.6: response context checked on the server, invitations carry it (E1, E2). 1.17.5: anonymous form answered once per assigned user (V25). 1.17.4: EV-17 repeat step for sites that skipped 2026100701/02. 1.17.3: my_evaluations page title and date labels. 1.17.2: merged with gap-integration (5.3 compat FX-20). 1.17.1: +EV-17 back-fill, review fixes. 1.17.0: +EV-17 evaluationmode. 1.16.0: ADR-032 BizLMS evaluation import. 1.15.3: ADR-031 tenant scope
 $plugin->dependencies = [
     'local_sentientia_platform' => 2026101500,  // ADR-032 classes/bizlms with step::target_children(), the EV-26 sequence floor and row-bounded acceptances; customer::of_tenant(); ADR-031 tenant::is_cross_tenant() / scope_path()
 ];

@@ -1,10 +1,57 @@
 ﻿# State Card â€” `local_airpay_compliance_report`
 
 **Component:** `local_airpay_compliance_report`
-**Version:** `2026111801` / `1.0.10`
+**Version:** `2026111901` / `1.0.11`
 **Maturity:** `MATURITY_STABLE`
 **Status:** Not live: Sentientia LMS is not in production yet (live airpay.academy is still BizLMS). Compliance training audit + escalation.
-**Last refreshed:** 2026-11-17 (export grant keyed on the org-admin shortname, not role id 9; see the last section)
+**Last refreshed:** 2026-11-20 ~05:15 (session 0+1 wrap-up; A1 / D4 tenant + share + cohort guard, no enrolment end date, D4 data-fix CLI; see the first section)
+
+---
+
+## 2026-11-20 - A1 / D4: who a tracked course reaches (2026111901 / 1.0.11; working tree only, not deployed, PHPUnit not run)
+
+**2026-11-20 ~05:15, session 0+1 wrap-up:** on local XAMPP since 03:12 (upgrade exit 0; `cohortid` column present). Review: PASS WITH ONE FIX, fixed: `--clear-enddates` now follows the IC cohort (the planned cohort id is passed into `plan()`; people outside the cohort are counted as "not in the course's cohort" and keep their end dates; a new or empty cohort clears nobody; 3 more tests in `compliance_pinning_test`). Lane A: dry run PASS (5 groups, 16 end dates to clear, 113 outside, nothing written); `--execute`, the refresh and the after-views BLOCKED (writes). PHPUnit NOT finished: no test written in session 0+1 has run (the local test-DB re-init was still running at 04:30 and is cut off by the 06:00 shutdown). Not committed, not on UAT. Running the script with `--execute` on UAT is decision D-1 in `docs/visual-evidence/2026-11-19/session-01/README.md`.
+
+Post-demo plan session 1, item A1, decision D4.
+
+**Defect.** The five Airpay compliance rows (POSH 2025, Infosec, AML, Phishing, POSH for IC Members) are
+tracked for "all tenants" (`costcenterid` 0). `rebuild_snapshot()` checked only that pin, so the hourly task
+auto-enrolled, mailed and counted every Public (/77) and ZEEA (/177) user in Airpay's (/1) courses, and
+everyone in the IC-members-only course. Auto-enrolments ended at the deadline (`timeend = start + deadline
+days`), so overdue learners lost access to the course they were being chased to finish. On the local copy
+of the production data the task ran once (2026-04-10): 113 of the 129 deadline end dates on these courses
+belong to people outside tenant 1 (109 Public users and 4 accounts with no tenant) enrolled by this defect.
+
+**Code fix** (`compliance_engine`): `row_applies()` = tenant pin AND `course_reaches_tenant()` (the
+course's own tenant from `course.open_path`, a tenant it is actively shared to in
+`local_sentientia_courses_tenant_share`, or a legacy course with no `open_path`) AND the row's cohort
+(new column `cohortid`, 0 = none; a deleted cohort reaches nobody). The refresh skips pairs that do not
+apply and prunes their snapshot rows (active users only; enrolments are never removed). A course listed
+twice is processed once per user. `get_active_courses_for_scope()` drops courses that do not reach the
+tenant; the matrix shows "Not applicable" (en + hi) for a missing row that does not apply, which does not
+break "all completed". The Configure tab names a row's cohort. `auto_enrol()` enrols with `timeend` 0.
+
+**Schema:** `local_compliance_courses.cohortid` (int, default 0), upgrade step 2026111901, additive only.
+
+**Data fix** (`cli/pin_compliance_courses.php` + `classes/local/compliance_pinning.php`, dry run by
+default): finds the five courses by full name / short name / id number (never by id), pins each active row
+to the course's own tenant (or `--tenant=N`), merges into an existing tenant row when one exists, creates
+the IC cohort `compliance_posh_ic_members` (empty) only with `--execute` and restricts the IC row to it, and
+with `--execute --clear-enddates` clears deadline-based end dates for people the course reaches only
+(outsiders keep the ended enrolment that keeps them out; suspended ones are counted, not reactivated).
+Ambiguous or missing groups are reported and left alone (exit 1). Read-only dry run against the local
+copy found all five courses (ids 383, 161, 41, 256, 400, all `/1`) and 16 end dates to clear.
+
+**Tests:** `tests/tenant_guard_test.php` (Public and ZEEA users not auto-enrolled into a `/1` course with
+`costcenterid` 0; shares, withdrawn shares, legacy courses, pins, cohorts, pruning, no end date, report
+columns, `row_applies()` truth table) and `tests/compliance_pinning_test.php` (classify, dry run writes
+nothing, execute + idempotence, merge, ambiguity, tenant resolution, cohort reuse, end dates incl.
+outsiders and suspended). Not run yet (no PHPUnit in this stage).
+
+**Open:** L&D fills the IC cohort; there is no edit field for `cohortid` (the audience model A3/A4 replaces
+it). Whether to remove the cross-tenant enrolments the defect created is Nitin's call (not done; D3).
+`db/install.php` still seeds the four rows by hard-coded course id with `costcenterid` 0 (safe now: the
+guard limits them to the course's own tenant).
 
 ---
 

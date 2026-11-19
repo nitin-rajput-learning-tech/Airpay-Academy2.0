@@ -1,7 +1,7 @@
 # Airpay Payment Services — Customer-Zero Configuration
 
 > **Customer ID:** 1 (`\local_airpay_core\customer::AIRPAY`)
-> **Status:** Production (live.airpay.academy)
+> **Status:** Customer zero; Sentientia is NOT in production yet. Live airpay.academy is still BizLMS (Moodle 4.1.2) until the cutover; Sentientia runs on local and UAT only. (Corrected 2026-11-19: this line said "Production (live.airpay.academy)".)
 > **Onboarded:** Inception (Sentientia LMS Day-0 — 2026-05-20)
 > **Last reviewed:** 2026-05-20 (Session 2)
 
@@ -107,8 +107,8 @@ External services Airpay has connected:
 |---|---|---|---|
 | **Airpay Payments Gateway** | ✅ Connected | `local_airpay_cart` settings | Endpoint: `https://payments.airpay.co.in/pay/index.php` |
 | **WhatsApp Business API** | ⏳ Partial | `local_airpay_whatsapp` settings | Templates pre-approved; full deepening in Stream F |
-| **AWS Rekognition** (proctoring identity) | ✅ Connected | `local_airpay_proctoring` settings | Match threshold 85% |
-| **AWS S3** (proctoring recordings) | ✅ Connected | `local_airpay_proctoring` settings | 90-day retention |
+| **AWS Rekognition** (proctoring identity) | ⚪ Not connected | `local_sentientia_proctoring` settings | Corrected 2026-11-19 (said "Connected"): no AWS configuration exists on the local site (checked 19 Nov: `provider` = `mock`, no keys) and none is recorded for UAT. Proctoring is not usable end to end until post-demo session 4 (B1) |
+| **AWS S3** (proctoring recordings) | ⚪ Not connected | `local_sentientia_proctoring` settings | Corrected 2026-11-19 (said "Connected"): nothing records or uploads today; webcam record-and-review is post-demo B4 (India region, 30/90-day retention, decision D10) |
 | **ElevenLabs** | ⚪ Not connected | `.env` `ELEVENLABS_API_KEY` | Pending budget approval (Tier 1 #5 Hindi content pipeline) |
 | **Gamma** (slide generation) | ⚪ Not connected | `.env` `GAMMA_API_KEY` | SENTIENTIA Agent 3 |
 | **Anthropic Claude API** | ⚪ Not connected | `.env` `ANTHROPIC_API_KEY` | Pending budget approval (Tier 1 #4 AI quiz gen + Tier 1 #5 translation) |

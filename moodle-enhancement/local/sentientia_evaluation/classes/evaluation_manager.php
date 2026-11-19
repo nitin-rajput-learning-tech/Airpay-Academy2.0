@@ -1152,7 +1152,158 @@ class evaluation_manager {
     }
 
     /**
+     * E1 (2026-11-19): the learning context a response may name, keyed by the response column, and the trigger event
+     * whose invitation names an item of that kind (assignment source_id, trigger-queue itemid).
+     */
+    public const RESPONSE_CONTEXT_TRIGGERS = [
+        'courseid'    => 'course_completion',
+        'programid'   => 'program_completion',
+        'classroomid' => 'classroom_end',
+    ];
+
+    /**
+     * E1 (2026-11-19, surveys scope): clean the course, program and classroom ids a response names, and refuse any
+     * the user is not tied to.
+     *
+     * The ids come from the browser (respond.php's URL, then the submit web service). Until 2026-11-19 they were
+     * stored as sent, so a learner could file feedback against any course, program or classroom by editing them, and
+     * the analysis and CSV export counted it there. An id is now kept only when the user is tied to that item by
+     *   - an invitation to THIS evaluation that names it: an assignment row (trigger_event + source_id, any status)
+     *     or a pending or fired trigger-queue row (trigger_event + itemid); or
+     *   - taking part in it: enrolled in the course (active or not) or completed it; on the classroom's roster
+     *     (local_sentientia_classroom_users); a member of the program (local_sentientia_programs_users).
+     * A manual or audience assignment (source_id 0) names no item, so it ties the user to none. Nobody is exempt:
+     * feedback is the respondent's own, so a manager is held to the same rule.
+     *
+     * Keys other than RESPONSE_CONTEXT_TRIGGERS are dropped. A missing, 0, negative or non-numeric id means "no
+     * context" and comes back as null (the JS sends 0 for none; it used to be stored as 0, which every reader
+     * already treats as none).
+     *
+     * @param int   $evaluationid
+     * @param int   $userid the real respondent (never the 0 an anonymous response is stored with)
+     * @param array $context as sent: ['courseid' => ..., 'programid' => ..., 'classroomid' => ...]
+     * @return array{courseid: ?int, programid: ?int, classroomid: ?int}
+     * @throws \moodle_exception error_responsecontext when an id is not tied to the user
+     */
+    public static function clean_response_context(int $evaluationid, int $userid, array $context): array {
+        $clean = [];
+        foreach (self::RESPONSE_CONTEXT_TRIGGERS as $field => $triggerevent) {
+            $raw = $context[$field] ?? null;
+            $id = (is_int($raw) || (is_string($raw) && ctype_digit($raw))) ? (int) $raw : 0;
+            if ($id <= 0) {
+                $clean[$field] = null;
+                continue;
+            }
+            if ($userid <= 0
+                    || !(self::invited_to_item($evaluationid, $userid, $triggerevent, $id)
+                        || self::took_part_in_item($field, $userid, $id))) {
+                throw new \moodle_exception('error_responsecontext', 'local_sentientia_evaluation');
+            }
+            $clean[$field] = $id;
+        }
+        return $clean;
+    }
+
+    /**
+     * E1: was the user invited to give feedback on this evaluation for this item? An assignment row (any status: the
+     * user was invited, whether they answered or the deadline passed) or a trigger-queue row that is pending or fired
+     * (a skipped or cancelled one sent no invitation).
+     *
+     * @param int    $evaluationid
+     * @param int    $userid
+     * @param string $triggerevent a RESPONSE_CONTEXT_TRIGGERS value
+     * @param int    $itemid
+     * @return bool
+     */
+    private static function invited_to_item(int $evaluationid, int $userid, string $triggerevent, int $itemid): bool {
+        global $DB;
+        if ($DB->record_exists(self::ASSIGN_TABLE, ['evaluationid' => $evaluationid, 'userid' => $userid,
+                'trigger_event' => $triggerevent, 'source_id' => $itemid])) {
+            return true;
+        }
+        return $DB->record_exists_select(self::TRIGGERS_TABLE,
+            'evaluationid = :eid AND userid = :uid AND itemid = :itemid AND trigger_event = :ev
+                AND (status = :pending OR status = :fired)',
+            ['eid' => $evaluationid, 'uid' => $userid, 'itemid' => $itemid, 'ev' => $triggerevent,
+                'pending' => evaluation_engine::STATUS_PENDING, 'fired' => evaluation_engine::STATUS_FIRED]);
+    }
+
+    /**
+     * E1: did the user take part in this course, program or classroom?
+     *
+     * Course: any enrolment (active or not: feedback often comes after the course ends) or a completion; never the
+     * site course. Classroom and program: a row on the roster; when the plugin is not installed nobody took part.
+     *
+     * @param string $field a RESPONSE_CONTEXT_TRIGGERS key
+     * @param int    $userid
+     * @param int    $itemid
+     * @return bool
+     */
+    private static function took_part_in_item(string $field, int $userid, int $itemid): bool {
+        global $DB;
+        $dbman = $DB->get_manager();
+        switch ($field) {
+            case 'courseid':
+                if ($itemid === (int) SITEID || !$DB->record_exists('course', ['id' => $itemid])) {
+                    return false;
+                }
+                if (is_enrolled(\context_course::instance($itemid), $userid, '', false)) {
+                    return true;
+                }
+                return $DB->record_exists_select('course_completions',
+                    'userid = :uid AND course = :cid AND timecompleted > 0', ['uid' => $userid, 'cid' => $itemid]);
+            case 'classroomid':
+                return $dbman->table_exists('local_sentientia_classroom_users')
+                    && $DB->record_exists('local_sentientia_classroom_users',
+                        ['classroomid' => $itemid, 'userid' => $userid]);
+            case 'programid':
+                return $dbman->table_exists('local_sentientia_programs_users')
+                    && $DB->record_exists('local_sentientia_programs_users',
+                        ['programid' => $itemid, 'userid' => $userid]);
+        }
+        return false;
+    }
+
+    /**
+     * E2 (2026-11-19): the context an invitation names. A course completion invites feedback on that course, a
+     * program completion on that program, the end of a classroom on that classroom; a manual or audience assignment
+     * (or an item id of 0) names none.
+     *
+     * @param string $triggerevent a TRIGGER_EVENTS key
+     * @param int    $itemid the trigger-queue itemid / assignment source_id
+     * @return array<string, int> e.g. ['classroomid' => 12], or []
+     */
+    public static function invitation_context(string $triggerevent, int $itemid): array {
+        $field = array_search($triggerevent, self::RESPONSE_CONTEXT_TRIGGERS, true);
+        return ($field === false || $itemid <= 0) ? [] : [$field => $itemid];
+    }
+
+    /**
+     * E2 (2026-11-19): the respond page for an evaluation, carrying the course, program or classroom the response
+     * will be about. The invitation used to carry the evaluation id only, so every response it led to was stored
+     * with no context. Only positive ids of the RESPONSE_CONTEXT_TRIGGERS keys go into the URL; the page and the
+     * submission still check them (clean_response_context()).
+     *
+     * @param int   $evaluationid
+     * @param array $context ['courseid' => ..., 'programid' => ..., 'classroomid' => ...]; null or 0 = none
+     * @return \moodle_url
+     */
+    public static function respond_url(int $evaluationid, array $context = []): \moodle_url {
+        $params = ['id' => $evaluationid];
+        foreach (array_keys(self::RESPONSE_CONTEXT_TRIGGERS) as $field) {
+            $id = (int) ($context[$field] ?? 0);
+            if ($id > 0) {
+                $params[$field] = $id;
+            }
+        }
+        return new \moodle_url('/local/sentientia_evaluation/respond.php', $params);
+    }
+
+    /**
      * Submit a response. Validates each answer against its question type.
+     *
+     * $context names the course, program or classroom the response is about; clean_response_context() keeps only
+     * the ids the user is tied to and refuses the submission otherwise (E1, 2026-11-19).
      */
     public static function submit_response(int $evaluationid, int $userid,
                                             array $answers, array $context = []): int {
@@ -1191,6 +1342,10 @@ class evaluation_manager {
             }
         }
 
+        // E1 (2026-11-19): the course, program and classroom ids come from the browser. Keep only those the user is
+        // tied to (invited for, or took part in); any other refuses the whole submission, before anything is stored.
+        $context = self::clean_response_context($evaluationid, $userid, $context);
+
         $questions = self::get_questions($evaluationid);
         if (empty($questions)) {
             throw new \moodle_exception('evaluationhasnoquestions', 'local_sentientia_evaluation');
@@ -1222,9 +1377,9 @@ class evaluation_manager {
         $record = (object) [
             'evaluationid'  => $evaluationid,
             'userid'        => $stored_userid,
-            'courseid'      => isset($context['courseid'])    ? (int) $context['courseid']    : null,
-            'programid'     => isset($context['programid'])   ? (int) $context['programid']   : null,
-            'classroomid'   => isset($context['classroomid']) ? (int) $context['classroomid'] : null,
+            'courseid'      => $context['courseid'],
+            'programid'     => $context['programid'],
+            'classroomid'   => $context['classroomid'],
             'response_data' => json_encode($cleaned),
             'timesubmitted' => time(),
         ];

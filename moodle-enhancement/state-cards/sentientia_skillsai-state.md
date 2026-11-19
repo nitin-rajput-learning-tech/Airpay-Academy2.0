@@ -2,7 +2,7 @@
 
 **Plugin:** Skills Intelligence (AI) — Gap P0.1 (highest-leverage competitive gap)
 **Source:** `moodle-enhancement/docs/competitive/GAP-ANALYSIS-INVINCE-LXP-2026-06-16.md` §6 P0.1
-**Version:** 2026111600 / 0.1.4-alpha (MATURITY_ALPHA; 2026-11-16, see the last section. Built as 2026061600 / 0.1.0-alpha)
+**Version:** 2026111901 / 0.1.5-alpha (MATURITY_ALPHA; 2026-11-19, see the last section. Built as 2026061600 / 0.1.0-alpha)
 **Branch:** `claude/gap-skillsai`
 **Status:** MVP complete. All feature flags DEFAULT OFF. No live API calls made during build (zero spend).
 
@@ -293,3 +293,25 @@ real-fresh-install test (see its card). Written, not run (shared PHPUnit DB busy
 only an administrator who cleared BOTH caps looks the same as the gap, and gets them back as ALLOW.
 
 Both trees, byte-identical. NOT deployed; PHPUnit needs a re-init for the version bump.
+
+---
+
+## 2026-11-19 — nightly gap-feed task covers every user (2026111901 / 0.1.5-alpha)
+
+**2026-11-20 ~05:15, session 0+1 wrap-up:** deployed to local XAMPP (upgrade 03:06-03:12). Review PASS (plus a stray CR byte in this card, fixed). The task itself was not run (flag `sentientia.skillsai.gap_engine` stays OFF; no `--execute` in the read-only lanes). PHPUnit NOT finished: no test written in session 0+1 has run (the local test-DB re-init was still running at 04:30 and is cut off by the 06:00 shutdown). Not committed, not on UAT. Evidence: `docs/visual-evidence/2026-11-19/session-01/README.md` (G-ANALYTICS).
+
+Post-demo plan 2.4 (Analytics). `task\rebuild_gap_feed` read the first `BATCH_SIZE` (500) matching users by id
+and stopped, every night. Its docblock said the next run would pick up where it left off, but nothing stored a
+cursor, so from the 501st user with a mapped designation on nobody's gap feed was rebuilt.
+
+- New `rebuild_gap_feed::rebuild_all(array $designations, int $batchsize = BATCH_SIZE)`: keyset batches on user
+  id (`id > :lastid ORDER BY id`, 500 per query) until a query returns fewer than a batch; returns
+  `{processed, batches, failed}`. One user's failure is logged (user id + message) and skipped; each user's
+  rebuild is its own transaction, so a failed user keeps the previous feed.
+- `execute()` unchanged otherwise: no-op while `sentientia.skillsai.gap_engine` is OFF (the default), when no
+  designation has requirements, or when `user.open_designation` is absent.
+- Not changed: users who leave a mapped designation (or are suspended) keep their old gap rows; the task only
+  rebuilds current matches (as before).
+- Files (both trees, byte-identical): `classes/task/rebuild_gap_feed.php`, `version.php`,
+  `tests/rebuild_gap_feed_task_test.php` (new: 5 users in batches of 2, exact multiple of the batch size, empty
+  designations, execute with flag ON and OFF). PHPUnit not run in this stage.

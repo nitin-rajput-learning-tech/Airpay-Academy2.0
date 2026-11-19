@@ -3,6 +3,23 @@
 **Phase 6 F.7 of ENTERPRISE-GRADE-PLAN.** Enables push notifications to
 the Moodle mobile app for `airpay_*` events.
 
+> **Status (corrected 2026-11-19): historical, not the plan.** This page describes push to the official
+> Moodle app through Moodle's AirNotifier. Sentientia's own app pushes through a new Moodle message output
+> on FCM HTTP v1 (ADR-040 D4), and the official Moodle app service is switched off 60 days after our app is
+> generally available (decision D30). "Production" below means the live BizLMS site (Moodle 4.1.2): the
+> 11 May 2026 settings in section 1 were read there, and nothing on this page may be changed there (live
+> BizLMS is never patched; Sentientia replaces it at cutover). Facts on this page that were wrong:
+> - **2a:** there is no `moodle.net/airnotifier` sign-up. A registered site gets the key with **Request access
+>   key** on the Mobile message output settings, or from an account on the Moodle Apps Portal
+>   (`https://apps.moodle.com`), as the core `message_airnotifier` settings say.
+> - **3:** message-provider defaults use `MESSAGE_PERMITTED` (8) + `MESSAGE_DEFAULT_ENABLED` (1). There is no
+>   logged-in / logged-off split since Moodle 4.0, and the value 16 means nothing.
+> - **4 and 5:** there is no per-user `mobilenotifications` flag and no per-user quiet hours; learners choose
+>   per notification type and per output in their notification preferences.
+> - **6:** the tokens live in `theme/sentientia/scss/moodle/_tokens.scss`; `theme/airpayux` is retired, and the
+>   teal `#0f7a73` was retired by the Brand Book 2026-06 (accent is `#1985DD`).
+> - **8:** the free-tier figure was never checked; see the Moodle Apps Portal for current plans.
+
 ---
 
 ## 1. Current state (verified 2026-05-11 on production DB)

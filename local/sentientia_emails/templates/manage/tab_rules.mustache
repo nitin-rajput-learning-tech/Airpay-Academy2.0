@@ -1,8 +1,11 @@
 {{!
     Rules tab — CRUD for notification rules.
     Context: tabdata {rules [each with can_modify], rule_count}, sesskey, manage_url, tenant_id,
-             show_form, has_editrule, editrule, editrule_readonly, template_options,
+             show_form, has_editrule, editrule, editrule_readonly,
+             template_options [category, templates [key, label, selected]],
              rule_scope_options [id, name, selected], is_crosstenant
+    G1 (2026-11-19): template_options is the template registry the save accepts, with the edited
+    rule's template selected (manage_controller::rule_template_options()).
     ADR-031: a scoped caller gets their own tenant as the only scope, and no
     toggle, edit or delete on a rule they may not change (global rules).
     A read-only rule (editrule_readonly) renders every field inside a disabled
@@ -94,7 +97,7 @@
                     {{#template_options}}
                     <optgroup label="{{category}}">
                         {{#templates}}
-                        <option value="{{key}}">{{label}}</option>
+                        <option value="{{key}}"{{#selected}} selected{{/selected}}>{{label}}</option>
                         {{/templates}}
                     </optgroup>
                     {{/template_options}}

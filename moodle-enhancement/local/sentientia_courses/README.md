@@ -58,6 +58,15 @@ lives in `local_sentientia_catalog`.
 | `/local/sentientia_courses/manage_requests.php` | Airpay siteadmin | Sprint D: pending-requests inbox |
 | `/local/sentientia_courses/my_requests.php` | non-Airpay manager | Sprint D: my-requests outbox |
 
+## Feature flags (`db/feature_flags.php`)
+
+| Flag | Default | What it gates |
+|------|---------|---------------|
+| `sentientia.courses.advanced_actions.enabled` | OFF | Manage Courses row actions **Open course** (`/course/view.php`) and **Advanced settings** (core `/course/edit.php`; only with `moodle/course:update` in the course, and not on a legacy no-`open_path` course for a tenant-scoped viewer). Post-demo plan 2.4, 2026-11-19. |
+
+Edit pop-up note (2026-11-19): "Number of sections" is on the create form only;
+`course_manager::update()` never read it.
+
 ## CLI tools
 
 | Command | Purpose |

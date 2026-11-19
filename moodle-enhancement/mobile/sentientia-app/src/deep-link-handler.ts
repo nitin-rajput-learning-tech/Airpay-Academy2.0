@@ -17,13 +17,18 @@
  *   sentientia://profile                       → User profile
  *
  * HTTPS Universal Links (iOS) / App Links (Android):
- *   https://www.airpay.academy/** → handled in-app
+ *   https://<sentientia-site>/** → handled in-app
  *
  * CONFIGURATION REQUIRED (outside this file)
  * ──────────────────────────────────────────
- * iOS Universal Links: AASA file at https://www.airpay.academy/.well-known/apple-app-site-association
- * Android App Links: assetlinks.json at https://www.airpay.academy/.well-known/assetlinks.json
+ * iOS Universal Links: AASA file at https://<sentientia-site>/.well-known/apple-app-site-association
+ * Android App Links: assetlinks.json at https://<sentientia-site>/.well-known/assetlinks.json
  * See BUILD.md §6 for full setup instructions.
+ *
+ * Corrected 2026-11-19: the site address was that of the LIVE BizLMS site
+ * (Moodle 4.1.2), which Sentientia replaces only at cutover. MOODLE_BASE_URL and the App Link
+ * pattern below now hold a placeholder on the reserved .invalid domain (RFC 6761). Change both
+ * together. The scaffold is superseded by ADR-040 and is not to be built.
  *
  * @module sentientia-app/deep-link-handler
  */
@@ -31,7 +36,7 @@
 import { App, URLOpenListenerEvent } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 
-const MOODLE_BASE_URL = 'https://www.airpay.academy';
+const MOODLE_BASE_URL = 'https://sentientia-site.invalid';
 const APP_SCHEME = 'sentientia';
 
 interface Route {
@@ -61,8 +66,9 @@ const ROUTES: Route[] = [
     buildUrl: () => `${MOODLE_BASE_URL}/user/profile.php`,
   },
   {
-    // HTTPS App Link / Universal Link — pass through as-is
-    pattern: new RegExp(`^https://www\\.airpay\\.academy/`),
+    // HTTPS App Link / Universal Link — pass through as-is. The trailing .*$ makes m[0] the
+    // whole link (without it m[0] was only the site prefix, so every link opened the home page).
+    pattern: new RegExp(`^https://sentientia-site\\.invalid/.*$`),
     buildUrl: (m) => m[0],
   },
 ];

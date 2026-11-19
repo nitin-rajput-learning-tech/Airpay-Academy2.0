@@ -88,36 +88,85 @@ class list_path_courses extends external_api {
 
         $rows = [];
         if ($total > 0) {
+            // A row the BizLMS import created cannot be removed (ADR-032, path_manager::unassign_course()). Its row
+            // shows a lock that says why instead of the remove action, which only ever ended in an error
+            // (2026-11-19, plan 2.4).
+            [$nativesql, $nativeparams] = \local_sentientia_platform\bizlms\provenance::not_imported_sql(
+                'lpc', 'local_sentientia_learningpath_courses', 'lpi');
             $records = $DB->get_records_sql(
                 "SELECT lpc.id AS rowid, lpc.courseid, lpc.sortorder, lpc.mandatory, lpc.timecreated,
-                        c.fullname, c.shortname, c.visible
+                        c.fullname, c.shortname, c.visible,
+                        CASE WHEN $nativesql THEN 0 ELSE 1 END AS imported
                    FROM {local_sentientia_learningpath_courses} lpc
                    JOIN {course} c ON c.id = lpc.courseid
                   WHERE $wheresql
                ORDER BY $orderby",
-                $sqlparams, $params['page'] * $params['perpage'], $params['perpage']);
+                array_merge($sqlparams, $nativeparams), $params['page'] * $params['perpage'], $params['perpage']);
+
+            $positions = self::positions($params['pathid']);
+            $strremove = s(get_string('remove_from_path', 'local_sentientia_learningpath'));
+            $strlocked = s(get_string('imported_course_locked', 'local_sentientia_learningpath'));
 
             foreach ($records as $r) {
+                $imported = (bool) (int) $r->imported;
+                if ($imported) {
+                    $actions = '<button type="button" class="btn btn-sm btn-link p-1 text-muted" '
+                        . 'data-action="imported-course-info" '
+                        . 'data-courseid="' . (int) $r->courseid . '" '
+                        . 'data-name="' . s($r->fullname) . '" '
+                        . 'title="' . $strlocked . '" aria-label="' . $strlocked . '">'
+                        . '<i class="fa fa-lock" aria-hidden="true"></i></button>';
+                } else {
+                    $actions = '<a href="#" class="btn btn-sm btn-link p-1 text-danger" '
+                        . 'data-action="unassign-course" '
+                        . 'data-courseid="' . (int) $r->courseid . '" '
+                        . 'data-name="' . s($r->fullname) . '" '
+                        . 'title="' . $strremove . '" aria-label="' . $strremove . '">'
+                        . '<i class="fa fa-times" aria-hidden="true"></i></a>';
+                }
                 $rows[] = [
                     'id'          => (int) $r->courseid,
                     'name'        => format_string($r->fullname),
                     'shortname'   => format_string($r->shortname),
                     'sortorder'   => (int) $r->sortorder,
+                    'position'    => $positions[(int) $r->rowid] ?? 0,
+                    'imported'    => $imported,
                     'mandatory'   => (int) $r->mandatory ? 'Mandatory' : 'Optional',
                     'mandatorycss' => (int) $r->mandatory ? 'badge-primary' : 'badge-secondary',
                     'visible'     => (int) $r->visible ? 'Visible' : 'Hidden',
                     'visiblecss'  => (int) $r->visible ? 'badge-success' : 'badge-warning',
                     'added'       => $r->timecreated ? userdate($r->timecreated, '%d %b %Y') : '—',
-                    'actions'     => '<a href="#" class="btn btn-sm btn-link p-1 text-danger" '
-                        . 'data-action="unassign-course" '
-                        . 'data-courseid="' . (int) $r->courseid . '" '
-                        . 'data-name="' . s($r->fullname) . '" '
-                        . 'title="Remove from path"><i class="fa fa-times"></i></a>',
+                    'actions'     => $actions,
                 ];
             }
         }
 
         return ['total' => $total, 'rows' => $rows, 'page' => $params['page'], 'perpage' => $params['perpage']];
+    }
+
+    /**
+     * Each course row's place on the path, counted from 1.
+     *
+     * The "#" column showed the stored sortorder, which starts at 0 and keeps the gaps a removal leaves
+     * (2026-11-19, plan 2.4). The place is the row's rank in path order (sortorder, then id) among the rows the
+     * table lists, so it stays the same whatever the table is sorted or searched by.
+     *
+     * @param int $pathid
+     * @return array<int, int> Row id => place (1, 2, 3...).
+     */
+    public static function positions(int $pathid): array {
+        global $DB;
+        $rowids = $DB->get_fieldset_sql(
+            "SELECT lpc.id
+               FROM {local_sentientia_learningpath_courses} lpc
+               JOIN {course} c ON c.id = lpc.courseid
+              WHERE lpc.pathid = :pid
+           ORDER BY lpc.sortorder ASC, lpc.id ASC", ['pid' => $pathid]);
+        $positions = [];
+        foreach (array_values($rowids) as $index => $rowid) {
+            $positions[(int) $rowid] = $index + 1;
+        }
+        return $positions;
     }
 
     public static function execute_returns(): external_single_structure {
@@ -128,7 +177,9 @@ class list_path_courses extends external_api {
                     'id'           => new external_value(PARAM_INT,  'Course ID'),
                     'name'         => new external_value(PARAM_TEXT, 'Full course name'),
                     'shortname'    => new external_value(PARAM_TEXT, 'Course shortname'),
-                    'sortorder'    => new external_value(PARAM_INT,  'Position in path'),
+                    'sortorder'    => new external_value(PARAM_INT,  'Stored sort order (from 0; may have gaps)'),
+                    'position'     => new external_value(PARAM_INT,  'Place on the path, counted from 1'),
+                    'imported'     => new external_value(PARAM_BOOL, 'True if the BizLMS import created the row (it cannot be removed)'),
                     'mandatory'    => new external_value(PARAM_TEXT, 'Mandatory|Optional'),
                     'mandatorycss' => new external_value(PARAM_TEXT, 'Bootstrap badge class'),
                     'visible'      => new external_value(PARAM_TEXT, 'Visible|Hidden'),

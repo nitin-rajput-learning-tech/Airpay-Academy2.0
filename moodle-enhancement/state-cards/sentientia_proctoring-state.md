@@ -3,16 +3,19 @@
 **Component:** `local_airpay_proctoring`
 **Version:** `2026111200` / `1.0.6`  (decision A5 audit events, 2026-11-12; the previous version was `2026110300` / `1.0.5`, the 2026-11-03 full-name user search, which has no dated section here; see the dated sections below)
 **Maturity:** `MATURITY_STABLE`
-**Status:** Live on airpay.academy. Engine for `quizaccess_airpay_proctoring`.
-**Last refreshed:** 2026-11-12 (decision A5: session_flagged + review_submitted events)
+**Status:** NOT usable end to end and NOT live anywhere (corrected 2026-11-19; this line said "Live on airpay.academy", which was never true: live airpay.academy is still BizLMS and Sentientia is not in production). Do not set "Require proctoring" on any quiz until post-demo session 4 (B1). Engine for `quizaccess_airpay_proctoring`.
+**Last refreshed:** 2026-11-19 (stale claims corrected; see the dated section at the end)
+**2026-11-20:** B1/B2 code is committed in `76e8ec572` (flags `sentientia.proctoring.enabled` and `sentientia.assessment.secure_mode.enabled` OFF), not yet verified (no PHPUnit, no browser), not on UAT. The header and the 2026-11-19 section describe the plugin before that commit.
 
 ---
 
 ## Mission
 
 Online proctoring engine — identity verification, in-attempt event
-capture (focus loss, multiple faces, audio anomalies), recording chunk
-storage in S3, AI analysis post-attempt, and a human reviewer queue.
+capture, a rule-based risk score and a human reviewer queue. (Corrected
+2026-11-19: earlier text here also listed multiple-face and audio-anomaly
+detection, recording chunk storage in S3 and AI analysis. None of those
+exist; see the 2026-11-19 section.)
 
 Wired to `mod_quiz` via the companion access-rule plugin
 `quizaccess_airpay_proctoring`. Both must be installed together.
@@ -168,3 +171,29 @@ existed, so no flag and no verdict ever reached the audit trail. Nitin approved 
 
 Open: `flag_session` still writes `timemodified` when the session is already flagged (no event, no status change);
 `submit_review()` does not check that the session is flagged before accepting a verdict (unchanged behaviour).
+
+## 2026-11-19 - Stale claims corrected (post-demo plan 2.4, docs only, no version change)
+
+The plugin README, the access-rule README, the exams README and this card described features that do not
+exist and said proctoring was live on airpay.academy. Corrected against the code:
+
+- **Not live anywhere.** Sentientia is not in production. The local site has `provider` = `mock`, no AWS keys, 0 proctored
+  quizzes and 0 sessions (read-only check, 2026-11-19); no AWS set-up is recorded for UAT.
+- **Learners are locked out.** `quizaccess_sentientia_proctoring::prevent_new_attempt()` hides the start button
+  until a session is `recording`, and the consent modal is loaded only from `setup_attempt_page()`, which core
+  runs on attempt / summary / review / pre-flight pages, never on the quiz page.
+- **Monitoring runs on the first attempt page only** and only logs (`tab_switch`, `window_blur`,
+  `fullscreen_exit`, `clipboard_paste`, `face_lost` = no webcam picture). Nothing is blocked.
+- **No recording, no S3 upload, no presigned URLs**: `proctor.js` opens the webcam and screen streams but never
+  records them. `upload_chunk` and the recordings table are unused.
+- **No AI analysis**: `risk_analyzer` is a fixed weighted count of events. `multiple_faces` and `mic_noise` have
+  weights but nothing produces them.
+- **No finalize on submission**: `proctor.stop()` is never called and there is no attempt-submitted observer.
+- **The exams plugin has no proctoring toggle** (its README said it had one).
+
+Interim guidance for admins: `docs/guides/ASSESSMENT-INTEGRITY-ADMIN-GUIDE.md` (core quiz settings only).
+The rebuild is post-demo section B: B1 session 4 (`sentientia.proctoring.enabled`), B2 session 7, B3 session 9,
+B4 session 15, B5 session 17, ADR-038.
+
+The three open items above that assume recording or AI ("S3 chunk-replay tool", "Live face-detection feedback ...
+today: post-attempt AI only", "Inline AI verdict") are superseded by B2 and B4.

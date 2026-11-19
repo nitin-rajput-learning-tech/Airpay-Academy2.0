@@ -3,7 +3,8 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_analytics';
 // P1.2 (2026-06-16) — Predictive Analytics + Training ROI surfaces.
-$plugin->version   = 2026111900;  // 11-19 QW-ROI: Training ROI card prints its figures (index.php flattened keys the template never read), honest empty states, ROI assumptions settings page (settings.php), every label in en+hi; skill gap counts every category per path, '' scope covers every tenant, no N-squared tags
+$plugin->version   = 2026111901;  // 11-19 post-demo plan 2.4 (Analytics): YTD KPI cards compare with the same span last year (1 Jan to the same date and time), not the whole of last year; KPI cache key v3; the at-risk, skill-gap and ROI caches the hourly task pre-warms live 3900 s (were 600 s, so the pre-warm served 10 minutes an hour). No schema change; the bump loads the new cache TTLs.
+// 2026111900: 11-19 QW-ROI: Training ROI card prints its figures (index.php flattened keys the template never read), honest empty states, ROI assumptions settings page (settings.php), every label in en+hi; skill gap counts every category per path, '' scope covers every tenant, no N-squared tags
 // 2026111801: 11-18 Phase C (V12): funnel Certified = certificate AND a completion (never above Completed); funnel cache key v3
 // 2026111801 also carries Phase C addendum (2026-11-19): PB-3 skill-gap team and skill names are formatted once and escaped once (no literal "&amp;"); PB-4 the department heatmap users label sizes to its text, so the Hindi label is no longer cut.
 // 2026111800: 11-18 walk: department compliance read from the compliance scorecard; range pills work; strings en+hi; no "&amp;"
@@ -15,7 +16,7 @@ $plugin->version   = 2026111900;  // 11-19 QW-ROI: Training ROI card prints its 
 // 2026061600:
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.2.7-beta';  // 1.2.7: Training ROI card renders its figures + ROI settings; skill-gap counts fixed (QW-ROI)
+$plugin->release   = '1.2.8-beta';  // 1.2.8: YTD compared with the same span last year; pre-warmed caches outlive the hourly refresh. 1.2.7: Training ROI card renders its figures + ROI settings; skill-gap counts fixed (QW-ROI)
 $plugin->dependencies = [
     // tenant::is_cross_tenant() and tenant::path_descendant_filter().
     'local_sentientia_platform' => ANY_VERSION,

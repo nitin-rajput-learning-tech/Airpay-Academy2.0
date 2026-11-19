@@ -42,8 +42,10 @@ $can_enrol = is_siteadmin()
 
 // Datatable column descriptors. Match the keys returned by list_path_courses /
 // list_path_users so the shared component can render directly.
+// "#" is the course's place on the path counted from 1 (list_path_courses::positions()); it sorts by the stored
+// order. Until 2026-11-19 it showed the stored sortorder, which starts at 0 (plan 2.4).
 $courses_columns = [
-    ['key' => 'sortorder',  'label' => '#',          'sortable' => true],
+    ['key' => 'position',   'label' => '#',          'sortable' => true,  'sortkey' => 'sortorder'],
     ['key' => 'name',       'label' => 'Course',     'sortable' => true,  'sortkey' => 'fullname'],
     ['key' => 'shortname',  'label' => 'Shortname',  'sortable' => false],
     ['key' => 'mandatory',  'label' => 'Required',   'sortable' => true,  'format' => 'badge'],

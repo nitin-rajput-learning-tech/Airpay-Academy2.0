@@ -246,6 +246,35 @@ class manage_controller {
     }
 
     /**
+     * Options for the rule form's "Email Template" select: the template registry, grouped by category.
+     *
+     * G1 (2026-11-19): the same registry the save accepts (rule_manager::rule_template_key()), and the
+     * rule's own template pre-selected. The form used to pre-select nothing, so re-saving a rule to
+     * change, say, its priority quietly stored "None (plain text)" over its template. A stored key in
+     * the legacy spelling ("_" for "/") selects its registry key; a stored key that is not in the
+     * registry selects nothing (the save would refuse it).
+     *
+     * @param string $storedkey template_key of the rule being edited; '' for a new rule
+     * @return array [{category, templates: [{key, label, selected}]}]
+     */
+    public static function rule_template_options(string $storedkey = ''): array {
+        $selected = rule_manager::rule_template_key($storedkey) ?? '';
+        $options = [];
+        foreach (email_renderer::get_template_list() as $cat) {
+            $templates = [];
+            foreach ($cat['templates'] as $tpl) {
+                $templates[] = [
+                    'key'      => $tpl['key'],
+                    'label'    => $tpl['label'],
+                    'selected' => ($selected !== '' && $tpl['key'] === $selected),
+                ];
+            }
+            $options[] = ['category' => $cat['category'], 'templates' => $templates];
+        }
+        return $options;
+    }
+
+    /**
      * The display name of a tenant root, from the org/tenant registry.
      *
      * White-label: the name is the tenant's own org record (path '/N' in

@@ -43,6 +43,11 @@ if ($action && confirm_sesskey()) {
                 'Rule ' . ($enabled ? 'enabled' : 'disabled'), null, \core\output\notification::NOTIFY_SUCCESS);
             break;
         case 'saverule':
+            // G1 (2026-11-19): the template key is checked against the template registry below
+            // (rule_manager::rule_template_key(), exact match only), so only whitespace is trimmed
+            // here: a cleaning PARAM type could turn a crafted value into '' ("None") and save it
+            // quietly instead of refusing it. It was PARAM_RAW, stored unchecked.
+            $requestedtemplate = optional_param('template_key', '', PARAM_RAW_TRIMMED);
             $ruledata = (object)[
                 'rule_name'     => required_param('rule_name', PARAM_TEXT),
                 'rule_type'     => required_param('rule_type', PARAM_ALPHANUMEXT),
@@ -50,7 +55,7 @@ if ($action && confirm_sesskey()) {
                 'trigger_days'  => optional_param('trigger_days', 0, PARAM_INT),
                 'channel'       => required_param('channel', PARAM_RAW),
                 'audience'      => required_param('audience', PARAM_ALPHA),
-                'template_key'  => optional_param('template_key', '', PARAM_RAW),
+                'template_key'  => $requestedtemplate,
                 'tenant_id'     => optional_param('rule_tenant', 0, PARAM_INT),
                 'enabled'       => optional_param('rule_enabled', 1, PARAM_INT),
                 'priority'      => optional_param('priority', 50, PARAM_INT),
@@ -67,6 +72,15 @@ if ($action && confirm_sesskey()) {
             // so global (0) or another tenant from them is refused here -
             // no longer quietly rewritten to their own tenant.
             \local_sentientia_emails\tenant_scope::require_can_write_tenant((int) $ruledata->tenant_id);
+            // G1: only "None" or a template from the registry (the form's select offers nothing
+            // else). Anything else goes back to the form with a message; save_rule() refuses it too.
+            if (\local_sentientia_emails\rule_manager::rule_template_key($requestedtemplate) === null) {
+                $formparams = ['tab' => 'rules', 'tenant' => $tenantid];
+                $formparams += $editid > 0 ? ['edit' => $editid] : ['new' => 1];
+                redirect(new moodle_url('/local/sentientia_emails/manage.php', $formparams),
+                    get_string('template_unknown', 'local_sentientia_emails'), null,
+                    \core\output\notification::NOTIFY_ERROR);
+            }
             \local_sentientia_emails\rule_manager::save_rule($ruledata);
             $msg = $editid ? 'Rule updated.' : 'Rule created.';
             redirect(new moodle_url('/local/sentientia_emails/manage.php', ['tab' => 'rules', 'tenant' => $tenantid]),
@@ -203,10 +217,10 @@ $pagecontext = [
     'rule_scope_options' => \local_sentientia_emails\manage_controller::rule_scope_options(
         $tenantid, $editrule ? (int) $editrule->tenant_id : null),
     'show_form'    => ($tab === 'rules' && (optional_param('new', 0, PARAM_INT) || $editruleid > 0)),
-    // Available templates for the rule form dropdown.
-    'template_options' => array_map(function($cat) {
-        return ['category' => $cat['category'], 'templates' => $cat['templates']];
-    }, \local_sentientia_emails\email_renderer::get_template_list()),
+    // Available templates for the rule form dropdown: the template registry, with the edited
+    // rule's template pre-selected (G1, 2026-11-19: it pre-selected nothing, so an edit saved "None").
+    'template_options' => \local_sentientia_emails\manage_controller::rule_template_options(
+        $editrule ? (string) ($editrule->template_key ?? '') : ''),
 ];
 
 echo $OUTPUT->header();

@@ -241,7 +241,7 @@ final class analytics_manager_test extends \advanced_testcase {
 
         $kpis = analytics_manager::get_kpis('90d', '/1');
         $this->assertSame(get_string('kpi_active_users', 'local_sentientia_analytics'), $kpis[0]['label']);
-        $cached = \cache::make('local_sentientia_analytics', 'kpis')->get('kpis_v2_' . md5('90d|/1'));
+        $cached = \cache::make('local_sentientia_analytics', 'kpis')->get('kpis_v3_' . md5('90d|/1'));
         $this->assertSame('kpi_active_users', $cached[0][0], 'the cache holds the string id, not the label');
 
         $funnel = analytics_manager::get_funnel('/1');
@@ -360,5 +360,100 @@ final class analytics_manager_test extends \advanced_testcase {
         $this->assertSame(1, (int) $bystage['certified']['count'],
             'a certificate holder with no completion is not counted as certified');
         $this->assertLessThanOrEqual((int) $bystage['completed']['count'], (int) $bystage['certified']['count']);
+    }
+
+    /**
+     * A moment in the server timezone, as a timestamp.
+     *
+     * @param string $local 'Y-m-d H:i:s' in the server timezone
+     * @return int
+     */
+    private static function server_time(string $local): int {
+        return (new \DateTimeImmutable($local, \core_date::get_server_timezone_object()))->getTimestamp();
+    }
+
+    /**
+     * Post-demo plan 2.4: YTD is compared with the same span last year
+     * (1 January to the same date and time), not with the whole of last year.
+     */
+    public function test_ytd_previous_window_is_the_same_span_last_year(): void {
+        $this->resetAfterTest();
+        $now = self::server_time('2026-11-19 15:30:00');
+
+        [$curstart, $curend, $prevstart, $prevend] = analytics_manager::get_range_dates('ytd', $now);
+
+        $this->assertSame(self::server_time('2026-01-01 00:00:00'), $curstart);
+        $this->assertSame($now, $curend);
+        $this->assertSame(self::server_time('2025-01-01 00:00:00'), $prevstart);
+        $this->assertSame(self::server_time('2025-11-19 15:30:00'), $prevend,
+            'the comparison ends at the same date and time last year, not on 1 January');
+        $this->assertLessThan(self::server_time('2026-01-01 00:00:00'), $prevend);
+    }
+
+    /**
+     * 29 February has no date last year: the comparison ends on 28 February,
+     * same time of day. A day that exists in both years is kept as is.
+     */
+    public function test_ytd_previous_window_on_29_february_ends_on_28_february(): void {
+        $this->resetAfterTest();
+
+        [, , $prevstart, $prevend] = analytics_manager::get_range_dates('ytd', self::server_time('2028-02-29 10:00:00'));
+        $this->assertSame(self::server_time('2027-01-01 00:00:00'), $prevstart);
+        $this->assertSame(self::server_time('2027-02-28 10:00:00'), $prevend);
+
+        [, , , $prevend] = analytics_manager::get_range_dates('ytd', self::server_time('2029-02-28 08:15:00'));
+        $this->assertSame(self::server_time('2028-02-28 08:15:00'), $prevend);
+
+        [$curstart, , $prevstart, $prevend] = analytics_manager::get_range_dates('ytd', self::server_time('2027-01-01 00:00:00'));
+        $this->assertSame(self::server_time('2027-01-01 00:00:00'), $curstart, 'on 1 January at midnight the window is empty');
+        $this->assertSame($prevstart, $prevend, 'and so is the comparison window');
+    }
+
+    /**
+     * The rolling ranges are unchanged: N days up to now, compared with the N
+     * days before them; an unknown range reads as 30d.
+     */
+    public function test_rolling_ranges_compare_with_the_window_before(): void {
+        $this->resetAfterTest();
+        $now = self::server_time('2026-11-19 15:30:00');
+        foreach (['7d' => 7, '30d' => 30, '90d' => 90, 'bogus' => 30] as $range => $days) {
+            [$curstart, $curend, $prevstart, $prevend] = analytics_manager::get_range_dates($range, $now);
+            $this->assertSame($now - $days * DAYSECS, $curstart, $range);
+            $this->assertSame($now, $curend, $range);
+            $this->assertSame($curstart, $prevend, "$range: the windows meet");
+            $this->assertSame($curstart - $days * DAYSECS, $prevstart, $range);
+        }
+    }
+
+    /**
+     * End to end: the YTD Completions card's "previous" counts a completion
+     * inside last year's same span and leaves out one later last year (which
+     * the whole-year comparison used to count).
+     */
+    public function test_ytd_kpi_previous_counts_only_the_same_span_last_year(): void {
+        $this->resetAfterTest();
+        $this->ensure_bizlms_schema();
+
+        [$curstart, , $prevstart, $prevend] = analytics_manager::get_range_dates('ytd');
+        if ($prevend <= $prevstart) {
+            $this->markTestSkipped('Run at the first instant of the year: last year\'s span is empty.');
+        }
+        $inside = intdiv($prevstart + $prevend, 2);   // within 1 January .. same moment last year
+        $later  = intdiv($prevend + $curstart, 2);    // last year, after that moment
+
+        $course = $this->getDataGenerator()->create_course();
+        $u1 = $this->user_at_path('/1/2');
+        $u2 = $this->user_at_path('/1/2');
+        $this->insert_filled('course_completions', ['userid' => $u1->id, 'course' => $course->id,
+            'timeenrolled' => $inside, 'timestarted' => $inside, 'timecompleted' => $inside, 'reaggregate' => 0]);
+        $this->insert_filled('course_completions', ['userid' => $u2->id, 'course' => $course->id,
+            'timeenrolled' => $later, 'timestarted' => $later, 'timecompleted' => $later, 'reaggregate' => 0]);
+
+        \cache_helper::purge_by_definition('local_sentientia_analytics', 'kpis');
+        $kpis = analytics_manager::get_kpis('ytd', '/1');
+
+        $this->assertSame(get_string('kpi_completions', 'local_sentientia_analytics'), $kpis[2]['label']);
+        $this->assertSame(1, (int) $kpis[2]['previous'],
+            'only the completion inside last year\'s same span is compared (was 2: the whole year)');
     }
 }

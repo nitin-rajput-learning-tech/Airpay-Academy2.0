@@ -7,8 +7,9 @@
  *   - deep-link-handler.ts -- App Link / Universal Link / sentientia:// routing
  *
  * REMOTE URL MODE (production default)
- * In remote URL mode, Capacitor injects its JS bridge into the live Moodle
- * page loaded from https://www.airpay.academy. This compiled bundle can be
+ * In remote URL mode, Capacitor injects its JS bridge into the Moodle page
+ * loaded from server.url in capacitor.config.ts (a placeholder since 2026-11-19;
+ * it named the live BizLMS site). This compiled bundle can be
  * loaded by the Moodle theme via an AMD module from the airpayux theme,
  * or via a <script> tag injected by core_renderer.php when the native
  * Capacitor bridge is detected on the page:

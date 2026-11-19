@@ -597,6 +597,13 @@ aggregate only):
 
 ### 5.1 Track 1: LMS (revised)
 
+**Status, 20 Nov ~05:15** (details: `docs/visual-evidence/2026-11-19/session-01/README.md`, PROJECT-STATE 2026-11-20 entry):
+- **Session 0: partly done.** Quick wins, D32 and its extras are on UAT and XAMPP is up to date; PHPUnit has not run and the tool_certificate 5.0.12 re-vendor is packaged, not applied (D-7).
+- **Session 1: partly done.** Built, reviewed (E1/E2 from session 2 too), deployed to local XAMPP and read-only verified; not committed, not on UAT, PHPUnit not finished, write-path checks owed.
+- **Session 1b: partly done.** Gap confirmed (no course certificate on completion); the issuer spec is amended but not built, waiting for Q9 and the new Q9-d.
+- **Session 4 (B1): code committed `76e8ec572`, verification pending.**
+- **Session 7 (B2): code committed `76e8ec572`, verification pending.**
+
 | # | Session | Delivers | Days | Needs first |
 |---|---|---|---|---|
 | 0 | Land today's quick wins (**changed**) | Local deploy + upgrade, PHPUnit, screenshots, commit; **plus the D32 `tool_certificate` verify-on-arrival core-mod** (ADR-041); UAT on your go | 1.5 | XAMPP free (another workflow is deploying) |

@@ -9,13 +9,16 @@ import { CapacitorConfig } from '@capacitor/cli';
  *   npx cap open android   # or ios
  *
  * Never commit this file as capacitor.config.ts — it is a local-dev override.
- * The production config (capacitor.config.ts) points to https://www.airpay.academy.
+ * The production config (capacitor.config.ts) holds a placeholder on the reserved .invalid
+ * domain (corrected 2026-11-19: it pointed at the live BizLMS site).
+ * The whole scaffold is superseded by ADR-040; see the status note in capacitor.config.ts.
  *
- * LOCAL URLs:
- *   Android emulator:  http://10.0.2.2:8080/moodle
- *   iOS Simulator:     http://localhost:8080/moodle
- *   Physical Android:  http://<your-machine-LAN-IP>:8080/moodle
- *   Physical iOS:      http://<your-machine-LAN-IP>:8080/moodle
+ * LOCAL URLs (the local XAMPP wwwroot is http://localhost:8080, with no /moodle path;
+ * corrected 2026-11-19, these said .../moodle):
+ *   Android emulator:  http://10.0.2.2:8080
+ *   iOS Simulator:     http://localhost:8080
+ *   Physical Android:  http://<your-machine-LAN-IP>:8080
+ *   Physical iOS:      http://<your-machine-LAN-IP>:8080
  */
 const config: CapacitorConfig = {
   appId: 'academy.airpay.sentientia',
@@ -23,9 +26,9 @@ const config: CapacitorConfig = {
   webDir: 'www',
 
   server: {
-    url: 'http://10.0.2.2:8080/moodle',
-    // url: 'http://localhost:8080/moodle',          // iOS Simulator
-    // url: 'http://192.168.1.5:8080/moodle',        // Physical device (set your LAN IP)
+    url: 'http://10.0.2.2:8080',
+    // url: 'http://localhost:8080',          // iOS Simulator
+    // url: 'http://192.168.1.5:8080',        // Physical device (set your LAN IP)
     cleartext: true, // ONLY for local HTTP dev — never in production config
   },
 

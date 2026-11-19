@@ -685,7 +685,7 @@ class path_manager {
      * @param int $courseid
      * @return bool  True if removed; false if it wasn't on the path.
      * @throws \moodle_exception  If path doesn't exist, or the course row was imported from BizLMS
-     *                            (imported_history_protected).
+     *                            (imported_course_protected).
      */
     public static function unassign_course(int $pathid, int $courseid): bool {
         global $DB;
@@ -703,9 +703,10 @@ class path_manager {
         // ADR-032 (decision framework.protect_imported_history = block): a course row the BizLMS import
         // created carries the plan's mandatory flag, sort order, creator and created time. Deleting it
         // would lose them and leave the import map pointing at a row that no longer exists. Same rule
-        // as unenrol_user(); archive the path instead.
+        // as unenrol_user(); archive the path instead. 2026-11-19 (plan 2.4): its own message, which says why a
+        // course row stays (imported_history_protected talked about deleting the path and removing learners).
         if (\local_sentientia_platform\bizlms\provenance::is_imported(self::COURSES_TABLE, (int) $row->id)) {
-            throw new \moodle_exception('imported_history_protected', 'local_sentientia_learningpath');
+            throw new \moodle_exception('imported_course_protected', 'local_sentientia_learningpath');
         }
 
         $DB->delete_records(self::COURSES_TABLE,

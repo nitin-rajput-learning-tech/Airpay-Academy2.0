@@ -31,7 +31,8 @@ class analytics_manager {
         // language, and this is an application cache shared by every viewer.
         // (Until 2026-11-18 the labels were English literals.)
         $cache = \cache::make('local_sentientia_analytics', 'kpis');
-        $cachekey = 'kpis_v2_' . md5($range . '|' . ($orgpath ?: 'all'));
+        // v3 (2026-11-19): YTD's "previous" is the same span last year, not the whole year; v2 rows are stale.
+        $cachekey = 'kpis_v3_' . md5($range . '|' . ($orgpath ?: 'all'));
         $cached = $cache->get($cachekey);
         if ($cached !== false) {
             return self::kpi_cards($cached);
@@ -467,21 +468,59 @@ class analytics_manager {
     }
 
     /**
-     * Get date ranges for period comparison.
+     * The KPI window and the window it is compared with.
+     *
+     * 7d, 30d, 90d: the N days up to now, compared with the N days before them.
+     *
+     * ytd: 1 January to now, compared with the SAME SPAN last year, 1 January
+     * last year to the same date and time last year. Until 2026-11-19 (post-demo
+     * plan 2.4) the comparison window was the whole of last year, so in November
+     * ten and a half months were measured against twelve, and in February about
+     * seven weeks against a full year: every YTD card read as a fall even when
+     * activity was flat. 29 February has no date last year; the comparison then
+     * ends on 28 February at the same time of day.
+     *
+     * Calendar dates are taken in the server timezone, as the old
+     * date()/strtotime() code did (Moodle sets PHP's default timezone to it).
+     *
+     * @param string   $range 7d, 30d, 90d or ytd; anything else is read as 30d
+     * @param int|null $now   the moment taken as now; null = time() (tests pass one)
+     * @return int[] [current_start, current_end, previous_start, previous_end];
+     *               a window includes its start and excludes its end
      */
-    private static function get_range_dates(string $range): array {
-        $now = time();
+    public static function get_range_dates(string $range, ?int $now = null): array {
+        $now = $now ?? time();
         switch ($range) {
             case '7d':
                 return [$now - (7 * 86400), $now, $now - (14 * 86400), $now - (7 * 86400)];
             case '90d':
                 return [$now - (90 * 86400), $now, $now - (180 * 86400), $now - (90 * 86400)];
             case 'ytd':
-                $yearstart = strtotime(date('Y') . '-01-01');
-                $prevyearstart = strtotime((date('Y') - 1) . '-01-01');
-                return [$yearstart, $now, $prevyearstart, $yearstart];
+                return self::ytd_range_dates($now);
             default: // 30d
                 return [$now - (30 * 86400), $now, $now - (60 * 86400), $now - (30 * 86400)];
         }
+    }
+
+    /**
+     * YTD and the same span last year; see get_range_dates().
+     *
+     * @param int $now
+     * @return int[] [year start, now, last year's start, same moment last year]
+     */
+    private static function ytd_range_dates(int $now): array {
+        $nowdt = (new \DateTimeImmutable('@' . $now))->setTimezone(\core_date::get_server_timezone_object());
+        $year  = (int) $nowdt->format('Y');
+        $month = (int) $nowdt->format('n');
+        $day   = (int) $nowdt->format('j');
+
+        $yearstart     = $nowdt->setDate($year, 1, 1)->setTime(0, 0, 0);
+        $prevyearstart = $nowdt->setDate($year - 1, 1, 1)->setTime(0, 0, 0);
+        // Same month, day and time of day last year (setDate keeps the time).
+        // 't' = days in that month last year, so 29 February becomes 28 February.
+        $lastyeardays  = (int) $nowdt->setDate($year - 1, $month, 1)->format('t');
+        $sameinstant   = $nowdt->setDate($year - 1, $month, min($day, $lastyeardays));
+
+        return [$yearstart->getTimestamp(), $now, $prevyearstart->getTimestamp(), $sameinstant->getTimestamp()];
     }
 }

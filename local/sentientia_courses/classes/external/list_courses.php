@@ -19,6 +19,12 @@ use core_external\external_value;
  */
 class list_courses extends external_api {
 
+    /**
+     * Post-demo plan 2.4 (2026-11-19): the "Open course" and "Advanced settings" row actions.
+     * Registered default OFF in db/feature_flags.php.
+     */
+    public const FLAG_ADVANCED_ACTIONS = 'sentientia.courses.advanced_actions.enabled';
+
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
             'search'  => new external_value(PARAM_TEXT, 'Search term', VALUE_DEFAULT, ''),
@@ -57,6 +63,9 @@ class list_courses extends external_api {
         // share.php now refuses everyone else, so the icon would be a dead end.
         $can_share  = \local_sentientia_courses\sharing_manager::can_share()
             && \local_sentientia_platform\feature_flags::is_enabled('commerce.crossTenantShare.enabled');
+        // Post-demo plan 2.4 (2026-11-19): "Open course" + "Advanced settings" row actions, flag default OFF.
+        // With the flag OFF the query and the row HTML are as before.
+        $advancedactions = \local_sentientia_platform\feature_flags::is_enabled(self::FLAG_ADVANCED_ACTIONS);
 
         // Sort whitelist.
         $allowed_sort = ['fullname', 'shortname', 'timecreated', 'visible', 'category'];
@@ -172,18 +181,30 @@ class list_courses extends external_api {
                         '/' . $viewerroot, 'eu', 'open_path', 'lcenr')
                     : ['1=0', []];
             }
+            // Post-demo plan 2.4: the "Advanced settings" action checks
+            // moodle/course:update in each row's course context; preload those
+            // contexts with the page so the check costs no query per row.
+            $ctxselect = '';
+            $ctxjoin = '';
+            $ctxargs = [];
+            if ($advancedactions) {
+                $ctxselect = ', ' . \context_helper::get_preload_record_columns_sql('ctx');
+                $ctxjoin = 'LEFT JOIN {context} ctx ON (ctx.instanceid = c.id AND ctx.contextlevel = :lcctxlevel)';
+                $ctxargs = ['lcctxlevel' => CONTEXT_COURSE];
+            }
             $sql = "SELECT c.id, c.fullname, c.shortname, c.idnumber, c.category, c.visible,{$pathcol}
                            c.timecreated, cat.name AS catname,
                            (SELECT COUNT(DISTINCT ue.userid)
                               FROM {user_enrolments} ue
                               JOIN {enrol} e ON e.id = ue.enrolid
                               JOIN {user} eu ON eu.id = ue.userid
-                             WHERE e.courseid = c.id AND {$eusql}) AS enrolled_count
+                             WHERE e.courseid = c.id AND {$eusql}) AS enrolled_count{$ctxselect}
                       FROM {course} c
                  LEFT JOIN {course_categories} cat ON cat.id = c.category
+                 {$ctxjoin}
                      WHERE $wheresql
                   ORDER BY $orderby";
-            $records = $DB->get_records_sql($sql, $sqlparams + $euargs,
+            $records = $DB->get_records_sql($sql, $sqlparams + $euargs + $ctxargs,
                 $params['page'] * $params['perpage'], $params['perpage']);
         }
 
@@ -201,7 +222,22 @@ class list_courses extends external_api {
             $fullname_html = '<a href="' . s($courseurl) . '" class="text-reset fw-semibold text-decoration-none">'
                            . s($c->fullname) . '</a>';
 
+            if ($advancedactions) {
+                // Fills the context cache from the ctx* columns (and strips them off $c).
+                \context_helper::preload_from_record($c);
+            }
+
             $actions = [];
+            // Post-demo plan 2.4 (2026-11-19), flag default OFF: "Open course".
+            // Offered on every row, like the course-name link it mirrors;
+            // /course/view.php applies its own access checks.
+            if ($advancedactions) {
+                $label = get_string('action_opencourse', 'local_sentientia_courses');
+                $actions[] = '<a href="' . s($courseurl) . '" '
+                    . 'class="btn btn-sm btn-link text-muted p-1" data-action="open-course" '
+                    . 'title="' . s($label) . '" aria-label="' . s($label) . '">'
+                    . '<i class="fa fa-sign-in" aria-hidden="true"></i></a>';
+            }
             // Phase 3 B.2 (2026-05-11) — native enrolled-users page link.
             $enrolledurl = (new \moodle_url('/local/sentientia_courses/enrolledusers.php',
                 ['id' => (int) $c->id]))->out(false);
@@ -225,6 +261,21 @@ class list_courses extends external_api {
                 $actions[] = '<a href="#" class="btn btn-sm btn-link text-muted p-1" '
                     . 'data-action="edit-course" data-courseid="' . (int) $c->id . '" '
                     . 'data-name="' . s($c->fullname) . '" title="Edit"><i class="fa fa-pencil"></i></a>';
+            }
+            // Post-demo plan 2.4 (2026-11-19), flag default OFF: "Advanced
+            // settings" opens core's full course settings form, which itself
+            // requires moodle/course:update in the course. Not offered on a
+            // legacy course a scoped caller may not write ($canwritehere, as
+            // for the pencil).
+            if ($advancedactions && $canwritehere) {
+                if (has_capability('moodle/course:update', \context_course::instance((int) $c->id))) {
+                    $settingsurl = (new \moodle_url('/course/edit.php', ['id' => (int) $c->id]))->out(false);
+                    $label = get_string('action_advancedsettings', 'local_sentientia_courses');
+                    $actions[] = '<a href="' . s($settingsurl) . '" '
+                        . 'class="btn btn-sm btn-link text-muted p-1" data-action="course-advanced-settings" '
+                        . 'title="' . s($label) . '" aria-label="' . s($label) . '">'
+                        . '<i class="fa fa-cog" aria-hidden="true"></i></a>';
+                }
             }
             if ($can_visibility && $canwritehere) {
                 $verb = $c->visible ? 'hide' : 'show';

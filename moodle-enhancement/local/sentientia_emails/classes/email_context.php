@@ -149,7 +149,7 @@ class email_context {
             'enrollment/learning_path_enrolled' => array_merge($base, [
                 'subject'         => 'New Learning Path: HR Onboarding Courses',
                 'path_name'       => 'HR Onboarding Courses',
-                'path_url'        => $CFG->wwwroot . '/local/learningplan/lpathinfo.php?id=15',
+                'path_url'        => $CFG->wwwroot . '/my/courses.php',   // Where the real e-mail links (plan 2.4, 2026-11-19).
                 'course_count'    => 5,
                 'deadline_date'   => date('d F Y', strtotime('+14 days')),
                 'deadline_days'   => 14,

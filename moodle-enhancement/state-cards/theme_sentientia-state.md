@@ -1,10 +1,10 @@
 # State Card — `theme_airpayux`
 
 **Component:** `theme_airpayux`
-**Version:** `2026111901` / `1.0.72-beta` (was `2026111900` / `1.0.71-beta`)
+**Version:** `2026111902` / `1.0.73-beta` (working tree, uncommitted; on local XAMPP since 2026-11-20 03:12; not on UAT. Was `2026111901` / `1.0.72-beta`, committed)
 **Maturity:** `MATURITY_BETA`
-**Status:** Live theme on airpay.academy. Standalone fork (`$THEME->parents = []`).
-**Last refreshed:** 2026-09-08 (P3 i18n parity — dashboard body strings via get_string, en+hi 281/281 — integrated onto gap-integration; stale AMD bundles rebuilt the same day)
+**Status:** Not live: Sentientia is not in production (live airpay.academy is still BizLMS; corrected 2026-11-20, this line said "Live theme on airpay.academy"). Standalone fork (`$THEME->parents = []`).
+**Last refreshed:** 2026-11-20 (Programs link for L&D admins, see the first dated section). Before it: 2026-09-08 (P3 i18n parity — dashboard body strings via get_string, en+hi 281/281 — integrated onto gap-integration; stale AMD bundles rebuilt the same day)
 
 > **2026-06-16 Revised Brand Book — Phase 2 + brand-verify closure (theme
 > →2026061603, commit `357db7b7`):** Full landing+login brand-forward redesign
@@ -52,6 +52,14 @@
 > padding kept in a separate 2-id rule so the dark-mode bg override still
 > wins. The real split-screen login is excluded by the `:has()` guard
 > (verified untouched). Evidence: `docs/visual-evidence/2026-05-29/signup-*.png`.
+
+---
+
+## 2026-11-19/20 — Programs link for L&D admins (2026111902 / 1.0.73-beta; working tree, uncommitted; local XAMPP only)
+
+Post-demo plan 2.4 (Programs), session 1. `classes/sidebar_navigation.php`: the L&D admin branch of `get_nav_items()` adds **Programs** (label `nav_programs`, icon `fa-trophy`) right after Learning Paths. It is gated by the new private `can_view_programs()`: `get_capability_info('local/sentientia_programs:view')` and then `has_capability()` at system context, the same check as the Programs page, so the link shows exactly when the page opens (a customer without the plugin gets no debugging). New constant `PROGRAMS_PAGE`; the site-admin item uses it (same URL). No new strings, no flag (a link to an existing, unflagged page, like the other capability-only links). Manager and learner menus unchanged. Tests: `tests/nav_chrome_test.php`, 6 new (not run).
+
+**2026-11-20 ~05:15, session 0+1 wrap-up:** deployed to local XAMPP (upgrade 03:06-03:12; the deploy also brought XAMPP up to HEAD's noindex change, which XAMPP lacked; UAT has 2026111901 since 19 Nov 16:19). Review PASS. Lane B: all 6 checks PASS (L&D admin desktop + mobile drawer, Programs page opens with the item active, Hindi label, site admin has one item, learner and manager have none, a category-only compliance officer has none and the page refuses them). PHPUnit NOT finished: no test written in session 0+1 has run (the local test-DB re-init was still running at 04:30 and is cut off by the 06:00 shutdown). Not committed, not on UAT. On UAT the link shows only if the L&D admin's role is assigned at system level. Evidence: `docs/visual-evidence/2026-11-19/session-01/README.md` (G-NAV).
 
 ---
 

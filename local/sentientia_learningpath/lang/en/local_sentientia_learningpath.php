@@ -87,6 +87,19 @@ $string['confirm_unassign_course'] = 'Remove "{$a}" from this learning path? Use
 $string['confirm_unenrol_user'] = 'Unenrol {$a} from this learning path?';
 // LRN-10 (2026-10-07): shown after an imported BizLMS enrolment is removed from a path. {$a} is a list of course links.
 $string['unenrol_courses_remain'] = 'The learner is removed from the path, but the BizLMS import also enrolled them in these courses from this plan, and those enrolments are not removed: {$a}. Remove them from each course\'s participants page if the learner should lose access.';
+// Post-demo quick wins (2026-11-19, plan 2.4): the remove-course and unenrol-user dialogs said "Add Courses" /
+// "Enrol Users" in the title and "Delete" on the button; an imported BizLMS course row explains why it stays.
+$string['unassign_course_title'] = 'Remove course from learning path';
+$string['unassign_course_button'] = 'Remove';
+$string['course_unassigned'] = 'Course removed from the learning path.';
+$string['unenrol_user_title'] = 'Unenrol user from learning path';
+$string['unenrol_user_button'] = 'Unenrol';
+$string['user_unenrolled'] = 'User unenrolled from the learning path.';
+$string['remove_from_path'] = 'Remove from path';
+$string['imported_course_locked'] = 'Brought over from BizLMS: cannot be removed';
+$string['imported_course_title'] = 'Course kept as learning history';
+$string['imported_course_explain'] = '"{$a}" was brought over from BizLMS with this learning path. Learners\' records on this path refer to it, so it is kept as learning history and cannot be removed. You can still add courses to this path, or archive the path to stop using it.';
+$string['imported_course_protected'] = 'This course was brought over from BizLMS with the learning path. Learners\' records on this path refer to it, so it is kept as learning history and cannot be removed. You can still add courses to this path, or archive the path to stop using it.';
 
 // Empty states.
 $string['no_courses_assigned'] = 'No courses assigned yet. Click "Add Courses" to get started.';

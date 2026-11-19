@@ -2,7 +2,7 @@
 
 **Component:** `local_sentientia_evaluation` (was `local_airpay_evaluation`; the rename left the tables, strings and
 capabilities under the new name, and the old name appears nowhere in the code any more)
-**Version:** `2026111800` / `1.17.5`
+**Version:** `2026111901` / `1.17.6`
 `local_sentientia_evaluation.evaluationmode` (EV-17), and `importer::REQUIRES_VERSION` stays `2026100701`: it names the version
 that adds the column the importer writes, and the back-fill adds no schema. `2026093001` / `1.16.0` was the ADR-032
 evaluation importer.
@@ -11,11 +11,35 @@ Depends on `local_sentientia_platform` >= `2026100701` (the framework code the i
 **Status:** NOT live. All data on local and UAT is a test import of a production backup, and the importer has not run
 against real production. Replaces the BizLMS `local_evaluation` forms at cutover; `classes/bizlms/` brings their
 history over.
-**Last refreshed:** 2026-10-07 (the owner's delegated decisions EV-06, 16, 17, 20-NOTE, 36 and EV-TENANT built, plus
+**Last refreshed:** 2026-11-20 (session 0+1 wrap-up, see the first dated section). Before it: 2026-10-07 (the owner's delegated decisions EV-06, 16, 17, 20-NOTE, 36 and EV-TENANT built, plus
 three framework items, then the follow-ups of the data and safety reviews; see the last two sections, "2026-10-07 -
 evaluation decisions implemented" and "2026-10-07 - review follow-ups". Branch `claude/eval-followups`, PHPUnit NOT run
 there)
 
+
+## 2026-11-19 — E1 + E2: response context checked, invitations carry it (2026111901 / 1.17.6; working tree only, PHPUnit not run)
+
+**2026-11-20 ~05:15, session 0+1 wrap-up:** on local XAMPP since 03:12 (upgrade exit 0). Review PASS. Lane A: the refusal page PASS (classroom not on the roster, course not enrolled, site course), no-context form PASS, 390 PASS; acceptance with a valid context, the web-service refusal and the E2 invitation link BLOCKED (writes; no persona with both an enrolment and the respond capability). PHPUnit NOT finished: no test written in session 0+1 has run (the local test-DB re-init was still running at 04:30 and is cut off by the 06:00 shutdown). Not committed, not on UAT. Anonymity minimum group size: decision D-13 in `docs/visual-evidence/2026-11-19/session-01/README.md`.
+
+Post-demo plan 2.4 (Training / feedback) and surveys scope defects E1 and E2 (`docs/plans/2026-11-19-SURVEYS-SCOPE.md`).
+
+- **E1:** the course, program and classroom ids of a response came from the browser and were stored as sent, so a learner
+  could file feedback against any of them. `evaluation_manager::clean_response_context()` now keeps an id only when the
+  user was invited to THIS evaluation for that item (assignment `trigger_event` + `source_id`, any status; or a pending or
+  fired trigger-queue row) or took part in it (course: any enrolment or a completion, never the site course; classroom:
+  `local_sentientia_classroom_users`; program: `local_sentientia_programs_users`). Anything else throws
+  `error_responsecontext` (new string, en + hi) on `respond.php` (before the form is shown) and in `submit_response()`
+  (web service included), before anything is stored. Nobody is exempt, managers included. 0, missing or junk ids are
+  stored as null (were 0; every reader already treats both as none).
+- **E2:** trigger-queue invitations link to `respond.php` with `courseid`, `programid` or `classroomid` (`respond_url()`,
+  `invitation_context()`), so the responses they lead to are tied to the item. Invitation text is still English (E4, not
+  in this change).
+- No schema change, no upgrade step, no flag (a defect fix: no new screen; the context columns already show in analysis
+  filters, CSV and the response list).
+- Tests: `tests/response_context_test.php` (12 tests: refusal and acceptance per item type, invitations, skipped
+  triggers, anonymous forms, web service, the invitation link end to end).
+
+---
 
 ## 2026-11-19 — walk fixes (2026111800 / 1.17.5; local only, not on UAT; PHPUnit not run)
 

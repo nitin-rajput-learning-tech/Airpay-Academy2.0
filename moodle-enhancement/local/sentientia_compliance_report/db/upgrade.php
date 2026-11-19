@@ -2,6 +2,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 function xmldb_local_sentientia_compliance_report_upgrade(int $oldversion): bool {
+    global $DB;
 
     if ($oldversion < 2026052900) {
         // New capability local/sentientia_compliance_report:export. Grant it to the
@@ -28,6 +29,22 @@ function xmldb_local_sentientia_compliance_report_upgrade(int $oldversion): bool
     if ($oldversion < 2026111702) {
         \local_sentientia_compliance_report\permission::revoke_misdirected_export_grant();
         upgrade_plugin_savepoint(true, 2026111702, 'local', 'sentientia_compliance_report');
+    }
+
+    // 2026111901 - A1 / D4 (post-demo plan, 2026-11-20): a tracked course can
+    // be restricted to one cohort (POSH for IC Members to the IC cohort).
+    // Schema only, additive: every existing row gets 0 (no restriction), so
+    // nothing changes until cli/pin_compliance_courses.php --execute sets a
+    // cohort. The data fix itself is never an upgrade step.
+    if ($oldversion < 2026111901) {
+        $dbman = $DB->get_manager();
+        $table = new xmldb_table('local_compliance_courses');
+        $field = new xmldb_field('cohortid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0',
+            'costcenterid');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        upgrade_plugin_savepoint(true, 2026111901, 'local', 'sentientia_compliance_report');
     }
 
     return true;

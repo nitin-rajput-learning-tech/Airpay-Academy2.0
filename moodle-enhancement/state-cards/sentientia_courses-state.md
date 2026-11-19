@@ -1,12 +1,41 @@
 # State Card — local_airpay_courses
 **Component:** `local_airpay_courses`
-**Version:** `2026111800` / `1.14.3`
+**Version:** `2026111901` / `1.15.0` (working tree, uncommitted; on local XAMPP since 2026-11-20 03:12; not on UAT)
 **Status:** STABLE — admin + learner flows shipped + tested
 **Depends on:** local_airpay_org (Phase 1)
 **Purpose:** Airpay-owned course management, progress tracking, open_* field ownership, **cross-tenant sharing (Sprint C) + pull/request workflow (Sprint D)**
-**Last refreshed:** 2026-09-08 (UAT ZEEA findings #3/#4 — Manage Courses KPI tiles + category filter now tenant-scoped to the datatable's row set)
+**Last refreshed:** 2026-11-20 (session 0+1 wrap-up, see the first section; before it 2026-09-08, UAT ZEEA findings #3/#4)
 
 ---
+
+## 2026-11-19 — post-demo plan 2.4 quick wins, session 1 (2026111901 / 1.15.0; working tree only: not on XAMPP or UAT, PHPUnit not run)
+
+**2026-11-20 ~05:15, session 0+1 wrap-up:** deployed to local XAMPP (upgrade 03:06-03:12). Review PASS. Lane B: numsections on create only PASS, flag OFF rows unchanged PASS, guide section 5 PASS; flag ON and save BLOCKED (no flag flips, no writes). A console TypeError (New Course > Cancel > Edit) was found and **repaired in `index.php`** (both trees + XAMPP, no version bump): core runs a modal form's `M.form.initFormDependencies` from a deferred YUI callback, and after the modal is closed the form is gone; the page now wraps that function so a removed form is skipped. It was not caused by the numsections change (the edit form alone threw it too). Re-check: 0 errors in 5 runs. A core fix in `lib/form/form.js` is Nitin's call (D-14). PHPUnit NOT finished: no test written in session 0+1 has run (the local test-DB re-init was still running at 04:30 and is cut off by the 06:00 shutdown). Not committed, not on UAT.
+
+**Session 1b finding (2026-11-20):** a learner who completes a course gets NO certificate on Sentientia (local, UAT, HEAD); BizLMS issued about 320 a month. The amended issuer spec (owner plugin: this one; observer priority 200; certmap table under option b) and the open questions Q9 / Q9-b / Q9-c / Q9-d are in `docs/visual-evidence/2026-11-19/session-01/README.md`, section G-CERT-COMPLETION. Not built.
+
+- **Edit pop-up: "Number of sections" on create only.** `classes/form/edit_course.php` adds the field only when
+  `courseid = 0`. `course_manager::create()` passes it to `create_course()`; `update()` never read it, so on edit it
+  showed 5 whatever the course had and saving ignored it. No other field changed.
+- **New flag `sentientia.courses.advanced_actions.enabled`** (new `db/feature_flags.php`, default OFF): Manage Courses
+  rows get **Open course** (`/course/view.php`, every row) and **Advanced settings** (core `/course/edit.php`; only with
+  `moodle/course:update` in the course context and `$canwritehere`, the pencil's ADR-031 rule). Built in
+  `classes/external/list_courses.php` (`FLAG_ADVANCED_ACTIONS`); when ON the page query also preloads course contexts
+  (`context_helper`), when OFF the query and the row HTML are as before. Strings `action_opencourse`,
+  `action_advancedsettings` (en + hi). Plain links: no AMD change.
+- **Course author guide corrected:** `docs/user-guides/course-author-guide.md` (§5 real field list; §7.1, §9.1, §12,
+  §14, §16, §17, §18; test-account personal data removed), `course-author.md` (v1 draft) and the screenshot manifest.
+  Same stale pages (`audience.php`, `hindi_audit.php`) are still named in `tenant-admin.md` / `tenant-admin-guide.md`:
+  not touched here (follow-up).
+- **Tests (new, not yet run):** `tests/external/list_courses_advanced_actions_test.php`,
+  `tests/form/edit_course_numsections_test.php`. Resume pass (2026-11-19 night): the scoped-viewer helper now sets
+  `open_path` on the user object too (setUser() takes it as `$USER`, and the tenant scope reads `$USER->open_path`).
+- **Both trees:** every changed file is byte-identical except the two lang files, which were already in the drift
+  baseline (top tree has the white-label `{$a->sitename}` / "Sentientia:" strings, ME still "Airpay Academy" /
+  "Airpay:"). The two new strings were added to both copies at the same place; `check-tree-drift.php`: 0 new drift.
+  Reconciling that older drift is a separate decision (it changes the reminder e-mail signature on the served ME tree).
+- **Owed:** XAMPP deploy + upgrade, PHPUnit run, desktop + mobile screenshots with the flag OFF and ON
+  (`docs/visual-evidence/2026-11-19/`), flag flip only on Nitin's call.
 
 ## 2026-11-19 — walk fixes (2026111800 / 1.14.3; local only, not on UAT; PHPUnit not run)
 

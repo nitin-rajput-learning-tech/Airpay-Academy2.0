@@ -150,12 +150,14 @@ final class imported_history_test extends \advanced_testcase {
         }
         $this->imported('local_sentientia_learningpath_courses', $rows[(int) $imported->id]);
 
-        // The imported row carries the plan's mandatory flag, order, creator and created time: protected.
+        // The imported row carries the plan's mandatory flag, order, creator and created time: protected, with a
+        // message about the course row itself (2026-11-19, plan 2.4).
         try {
             path_manager::unassign_course($pathid, (int) $imported->id);
             $this->fail('an imported course row is history and is protected');
         } catch (\moodle_exception $e) {
-            $this->assertSame('imported_history_protected', $e->errorcode);
+            $this->assertSame('imported_course_protected', $e->errorcode);
+            $this->assertStringContainsString('BizLMS', $e->getMessage());
         }
         $this->assertTrue($DB->record_exists('local_sentientia_learningpath_courses', ['id' => $rows[(int) $imported->id]]));
 

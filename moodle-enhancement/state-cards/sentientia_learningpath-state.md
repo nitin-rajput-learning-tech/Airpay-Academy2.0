@@ -1,11 +1,23 @@
 # airpay_learningpath — STATE CARD
 
 **Component string:** `local_airpay_learningpath`
-**Current version:** `2026052001`  (release `1.7.1`, +P1 #46 Hindi top-up)
+**Current version:** `2026111901`  (release `1.9.4`, post-demo quick wins; working tree, uncommitted, on local XAMPP since 2026-11-20, not on UAT. The 2026052001 / 1.7.1 line that stood here was long stale; see the dated sections)
 **Maturity:** STABLE (in production)
-**Last touched:** 2026-05-20 (P1 #46 — Hindi top-up)
+**Last touched:** 2026-11-20 (session 0+1 wrap-up; see the first dated section)
 **Last refreshed:** 2026-05-24 (P1 state-card pass)
 **Owner:** Head of L&D
+
+---
+
+## 2026-11-20 — post-demo quick wins, plan 2.4 (2026111901 / 1.9.4; working tree only, not committed, not on UAT; PHPUnit not run)
+
+**2026-11-20 ~05:15, session 0+1 wrap-up:** deployed to local XAMPP (upgrade 03:06-03:12). Review PASS. Lane A: unenrol dialog (en + hi) PASS, "&" in index dialogs PASS, enrolment e-mail preview PASS; "#" numbering, the remove-course dialog and the imported-row lock BLOCKED (no local path has courses; `local_sentientia_legacymap` is empty). PHPUnit NOT finished: no test written in session 0+1 has run (the local test-DB re-init was still running at 04:30 and is cut off by the 06:00 shutdown). Not committed, not on UAT. Open: `list_path_courses` still double-escapes names ("&amp;"); Courses-tab headers stay English under Hindi. Evidence: `docs/visual-evidence/2026-11-19/session-01/README.md`.
+
+- Confirm dialogs on the path detail page: the remove-course dialog reads "Remove course from learning path" / "Remove" and the unenrol dialog "Unenrol user from learning path" / "Unenrol" (they said "Add Courses" / "Enrol Users" with a "Delete" button). Names inside every `path_actions` dialog body are now escaped. `amd/src/path_actions.js` and the hand-written `amd/build/path_actions.min.js` were edited together.
+- Imported BizLMS course rows: `list_path_courses` returns a new boolean `imported` (additive) from `provenance::not_imported_sql()`; such a row shows a lock button with an explanation dialog ("Course kept as learning history") instead of an X that always failed. `path_manager::unassign_course()` throws its own `imported_course_protected` message.
+- The "#" column shows `position` (1-based place on the path, from `list_path_courses::positions()`) instead of the raw `sortorder`, which started at 0 and kept gaps.
+- 11 new strings, en + hi. No schema change, no new flag. Tests: `tests/imported_history_test.php` (changed), `tests/external/list_path_courses_test.php` (new).
+- Related: the learner enrolment e-mail now links to My courses; that change lives in `local_sentientia_emails` (`parity_senders::path_enrolled_url()`), still behind its own default-OFF flag.
 
 ---
 

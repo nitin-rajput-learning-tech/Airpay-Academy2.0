@@ -229,7 +229,9 @@ class evaluation_engine {
                 $DB->insert_record(self::RESPONSE_TABLE, $shell);
             }
 
-            self::send_invite_notification((int) $row->userid, $eval);
+            // E2 (2026-11-19): the link names the course, program or classroom this trigger is about.
+            self::send_invite_notification((int) $row->userid, $eval,
+                (string) $row->trigger_event, (int) ($row->itemid ?? 0));
 
             // P1 #37 (2026-05-20) — also record an assignment row so
             // compliance can see "who was assigned this evaluation
@@ -265,8 +267,14 @@ class evaluation_engine {
 
     /**
      * Send a Moodle notification inviting the user to fill in the evaluation.
+     *
+     * @param int       $userid
+     * @param \stdClass $eval
+     * @param string    $trigger_event the trigger-queue row's event (E2: says which kind of item $itemid is)
+     * @param int       $itemid        the course, program or classroom the trigger fired for (0 = none)
      */
-    private static function send_invite_notification(int $userid, \stdClass $eval): void {
+    private static function send_invite_notification(int $userid, \stdClass $eval,
+                                                     string $trigger_event = 'manual', int $itemid = 0): void {
         global $DB, $CFG;
         $user = $DB->get_record('user', ['id' => $userid, 'deleted' => 0, 'suspended' => 0]);
         if (!$user) {
@@ -274,9 +282,11 @@ class evaluation_engine {
         }
         // respond.php reads the evaluation from 'id'. This link used to carry 'evaluationid', which the page
         // does not read, so every invitation opened a "missing parameter" error (found during the ADR-032 review).
-        $url = new \moodle_url('/local/sentientia_evaluation/respond.php', [
-            'id' => (int) $eval->id,
-        ]);
+        // E2 (2026-11-19): it also names the course, program or classroom the invitation is for (it carried the
+        // evaluation id only, so every response it led to was stored with no context). The page and the
+        // submission check that context against this user (evaluation_manager::clean_response_context()).
+        $url = evaluation_manager::respond_url((int) $eval->id,
+            evaluation_manager::invitation_context($trigger_event, $itemid));
 
         $msg = new \core\message\message();
         $msg->component         = 'local_sentientia_evaluation';

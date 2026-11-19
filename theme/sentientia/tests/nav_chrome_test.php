@@ -21,6 +21,9 @@ defined('MOODLE_INTERNAL') || die();
  *   - V17 (Phase C): the sidebar "Authoring Studio" item opened the generate form, so an author
  *     had no way back to earlier drafts. It now opens the drafts list (index.php) and stays
  *     active on every studio page.
+ *   - Post-demo plan 2.4 (2026-11-19): Programs was in the site-admin sidebar only. The L&D
+ *     admin sidebar now has it too, after Learning Paths, when the user holds
+ *     local/sentientia_programs:view at system level (what the Programs page requires).
  *
  * @covers \theme_sentientia\sidebar_navigation::catalog_path
  * @covers \theme_sentientia\output\core_renderer::enrol_redirect_url
@@ -280,5 +283,140 @@ final class nav_chrome_test extends \advanced_testcase {
         foreach ($items as $item) {
             $this->assertNotSame($label, $item['label'] ?? '');
         }
+    }
+
+    // ── sidebar "Programs" item for L&D admins (post-demo plan 2.4) ──────
+
+    /**
+     * Skip unless the capabilities these tests grant are registered.
+     *
+     * @param string[] $caps
+     */
+    private function require_caps(array $caps): void {
+        foreach ($caps as $cap) {
+            if (!get_capability_info($cap)) {
+                $this->markTestSkipped("{$cap} is not installed");
+            }
+        }
+    }
+
+    /**
+     * An Airpay-tenant L&D admin: holds local/sentientia_courses:manage at system level (what
+     * role_detector reads as L&D admin) plus the given capabilities, through one test role.
+     *
+     * @param string[] $caps extra system-level capabilities
+     * @return \stdClass
+     */
+    private function ld_admin(array $caps): \stdClass {
+        $this->require_caps(array_merge(['local/sentientia_courses:manage', 'local/sentientia_programs:view'], $caps));
+        $syscontext = \context_system::instance();
+        $user = $this->user_in('/1');
+        $roleid = $this->getDataGenerator()->create_role();
+        foreach (array_merge(['local/sentientia_courses:manage'], $caps) as $cap) {
+            assign_capability($cap, CAP_ALLOW, $roleid, $syscontext->id);
+        }
+        role_assign($roleid, $user->id, $syscontext->id);
+        return $user;
+    }
+
+    /**
+     * The sidebar items the current user sees on a page.
+     *
+     * @param string $path
+     * @return array
+     */
+    private function nav_items_on(string $path): array {
+        $page = new \moodle_page();
+        $page->set_context(\context_system::instance());
+        $page->set_url($path);
+        return (new \ReflectionMethod(sidebar_navigation::class, 'get_nav_items'))
+            ->invoke(new sidebar_navigation($page));
+    }
+
+    /**
+     * The sidebar "Programs" items among the given ones.
+     *
+     * @param array $items
+     * @return array
+     */
+    private function programs_items(array $items): array {
+        $label = get_string('nav_programs', 'theme_sentientia');
+        return array_values(array_filter($items, static function(array $item) use ($label): bool {
+            return ($item['label'] ?? '') === $label;
+        }));
+    }
+
+    public function test_an_ld_admin_who_may_open_programs_gets_the_item_after_learning_paths(): void {
+        $this->setUser($this->ld_admin(['local/sentientia_learningpath:view', 'local/sentientia_programs:view']));
+        $this->assertTrue(role_detector::detect()['isldadmin'], 'the fixture is an L&D admin');
+
+        $items = $this->nav_items_on('/my/');
+        $programs = $this->programs_items($items);
+        $this->assertCount(1, $programs, 'exactly one Programs item');
+        $this->assertSame((new \moodle_url(sidebar_navigation::PROGRAMS_PAGE))->out(false), $programs[0]['url']);
+        $this->assertSame('fa-trophy', $programs[0]['icon'], 'the site-admin item\'s icon (an FA6 name)');
+        $this->assertFalse($programs[0]['active'], 'not active on the dashboard');
+
+        // Same place as in the site-admin sidebar: right after Learning Paths.
+        $labels = array_column($items, 'label');
+        $learningpaths = array_search(get_string('nav_learningpaths', 'theme_sentientia'), $labels, true);
+        $this->assertNotFalse($learningpaths, 'the fixture sees Learning Paths');
+        $this->assertSame(get_string('nav_programs', 'theme_sentientia'), $labels[$learningpaths + 1]);
+    }
+
+    public function test_the_programs_item_is_active_on_the_programs_page(): void {
+        $this->setUser($this->ld_admin(['local/sentientia_programs:view']));
+
+        $programs = $this->programs_items($this->nav_items_on(sidebar_navigation::PROGRAMS_PAGE));
+        $this->assertCount(1, $programs);
+        $this->assertTrue($programs[0]['active']);
+    }
+
+    public function test_an_ld_admin_without_the_programs_capability_gets_no_item(): void {
+        // The Programs page would refuse this user (require_capability), so no link to it.
+        $this->setUser($this->ld_admin([]));
+        $this->assertTrue(role_detector::detect()['isldadmin'], 'the fixture is an L&D admin');
+
+        $this->assertSame([], $this->programs_items($this->nav_items_on('/my/')));
+    }
+
+    public function test_a_category_level_programs_grant_gives_no_item(): void {
+        // The page checks the system context: a grant held only in a category (the compliance
+        // officer's category-level administrator role) does not open it, so it shows no link.
+        $user = $this->ld_admin([]);
+        $category = $this->getDataGenerator()->create_category();
+        $catroleid = $this->getDataGenerator()->create_role();
+        $catcontext = \context_coursecat::instance((int) $category->id);
+        assign_capability('local/sentientia_programs:view', CAP_ALLOW, $catroleid, $catcontext->id);
+        role_assign($catroleid, $user->id, $catcontext->id);
+        $this->setUser($user);
+
+        $this->assertTrue(has_capability('local/sentientia_programs:view', $catcontext), 'granted in the category');
+        $this->assertFalse(has_capability('local/sentientia_programs:view', \context_system::instance()));
+        $this->assertSame([], $this->programs_items($this->nav_items_on('/my/')));
+    }
+
+    public function test_a_learner_holding_the_programs_capability_gets_no_item(): void {
+        // Scope of plan 2.4: the L&D admin sidebar. A trainer (editingteacher archetype holds the
+        // capability) lands in the Learner shell, which is unchanged.
+        $this->require_caps(['local/sentientia_programs:view']);
+        $syscontext = \context_system::instance();
+        $user = $this->user_in('/1');
+        $roleid = $this->getDataGenerator()->create_role();
+        assign_capability('local/sentientia_programs:view', CAP_ALLOW, $roleid, $syscontext->id);
+        role_assign($roleid, $user->id, $syscontext->id);
+        $this->setUser($user);
+        $this->assertTrue(role_detector::detect()['islearner'], 'the fixture is in the Learner shell');
+
+        $this->assertSame([], $this->programs_items($this->nav_items_on('/my/')));
+    }
+
+    public function test_the_site_admin_sidebar_keeps_one_programs_item(): void {
+        $this->require_caps(['local/sentientia_programs:view']);
+        $this->setAdminUser();
+
+        $programs = $this->programs_items($this->nav_items_on('/my/'));
+        $this->assertCount(1, $programs);
+        $this->assertSame((new \moodle_url(sidebar_navigation::PROGRAMS_PAGE))->out(false), $programs[0]['url']);
     }
 }

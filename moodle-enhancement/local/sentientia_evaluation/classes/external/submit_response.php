@@ -14,6 +14,11 @@ use core_external\external_value;
  * Accepts a JSON-encoded answers map: {"questionid": "answer", ...}
  * The values vary by question type: int for rating/nps, "yes"|"no" for yesno,
  * the option string for multichoice, free text for text.
+ *
+ * E1 (2026-11-19): the optional context names the course, program or classroom
+ * the response is about. Each id must be one the user was invited to give
+ * feedback on, or took part in; any other refuses the submission
+ * (error_responsecontext, evaluation_manager::clean_response_context()).
  */
 class submit_response extends external_api {
 
@@ -56,6 +61,8 @@ class submit_response extends external_api {
         if (!is_array($context_decoded)) {
             $context_decoded = [];
         }
+        // E1: submit_response() checks every course, program and classroom id
+        // against this user and refuses the submission if one is not theirs.
 
         $responseid = \local_sentientia_evaluation\evaluation_manager::submit_response(
             $params['evaluationid'], (int) $USER->id, $answers_decoded, $context_decoded);

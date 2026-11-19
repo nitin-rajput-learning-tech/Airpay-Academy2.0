@@ -113,6 +113,15 @@ Legend: ✓ functional · ⚠ wired but unverified · ✗ broken
 
 ### 2.4 FCM browser push ⚠
 
+> **Correction (2026-11-19): do not activate this path.** `web_push::send()` posts to
+> `https://fcm.googleapis.com/fcm/send` with a server key (`fcm_server_key`). That is Google's **legacy FCM HTTP
+> API, shut down from 22 July 2024**; it can no longer deliver anything, and its server keys no longer exist. Step 4
+> (§6) and the "FCM service worker" row (§8) are withdrawn. Nothing calls `web_push` today (checked 19 Nov 2026:
+> no caller in `moodle-enhancement/local`). Push is covered elsewhere: browser push by `local_sentientia_pwa`
+> (standard Web Push with VAPID, ADR-003), and app push by a new Moodle message output on **FCM HTTP v1**
+> (service-account key on the server, short-lived OAuth 2.0 tokens; ADR-040 D4). Removing `web_push.php` and the
+> two FCM settings from `local_sentientia_integrations` is a separate code change (both plugin trees).
+
 **File:** `classes/web_push.php` (122 LOC)
 
 | Function | Status | Notes |
@@ -366,8 +375,8 @@ extended to Public/ZEEA.
                               │
                               ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│  Step 4  FCM PUSH                                     ~ 1 day    │
-│  ───────────────                                                  │
+│  Step 4  FCM PUSH   WITHDRAWN 2026-11-19 (see §2.4)   ~ 1 day    │
+│  ───────────────  (legacy FCM API shut down July 2024)           │
 │  • Front-end service worker (separate workstream — not yet built) │
 │  • Token-storage endpoint exposed via web service                 │
 │  • First push: deadline reminder for Compliance courses           │
@@ -405,7 +414,7 @@ extended to Public/ZEEA.
 | End-to-end KeKa OAuth dry-run | 4 hrs | Nitin + IT |
 | Teams webhook live test | 30 min | Nitin |
 | db/events.php for outbound sync (if needed) | 3 hrs | Claude |
-| FCM service worker (separate plugin/theme work) | 1 day | Claude |
+| ~~FCM service worker (separate plugin/theme work)~~ Withdrawn 2026-11-19: legacy FCM API shut down (§2.4) | ~~1 day~~ | Claude |
 | **TOTAL pre-cutover (steps 0–1)** | **~ 6 hrs** | |
 | **TOTAL to "fully operational" (through Step 4)** | **~ 5 days** | |
 

@@ -42,6 +42,15 @@ class sidebar_navigation {
      */
     private const CATALOG_LIST_PAGES = [self::CATALOG_TENANT_PAGE, self::CATALOG_STOREFRONT_PAGE];
 
+    /**
+     * The Programs admin list. It requires local/sentientia_programs:view at system context, which
+     * is what the L&D admin sidebar item checks (can_view_programs()).
+     */
+    public const PROGRAMS_PAGE = '/local/sentientia_programs/index.php';
+
+    /** The capability the Programs admin list requires (require_capability, system context). */
+    private const PROGRAMS_VIEW_CAP = 'local/sentientia_programs:view';
+
     /** @var \moodle_page */
     private $page;
 
@@ -165,7 +174,7 @@ class sidebar_navigation {
             $items[] = $this->item(get_string('nav_onlineexams', 'theme_sentientia'), 'fa-edit', '/local/sentientia_exams/index.php', $currenturl);
             $items[] = $this->item(get_string('nav_classrooms', 'theme_sentientia'), 'fa-calendar', '/local/sentientia_classroom/index.php', $currenturl);
             $items[] = $this->item(get_string('nav_learningpaths', 'theme_sentientia'), 'fa-map-signs', '/local/sentientia_learningpath/index.php', $currenturl);
-            $items[] = $this->item(get_string('nav_programs', 'theme_sentientia'), 'fa-trophy', '/local/sentientia_programs/index.php', $currenturl);
+            $items[] = $this->item(get_string('nav_programs', 'theme_sentientia'), 'fa-trophy', self::PROGRAMS_PAGE, $currenturl);
 
             // ── Insights ──
             $items[] = $this->divider();
@@ -237,6 +246,14 @@ class sidebar_navigation {
             }
             if (has_capability('local/sentientia_learningpath:view', $sys)) {
                 $items[] = $this->item(get_string('nav_learningpaths', 'theme_sentientia'), 'fa-road', '/local/sentientia_learningpath/index.php', $currenturl);
+            }
+            // Post-demo plan 2.4 (2026-11-19): Programs was in the site-admin sidebar only, so an
+            // L&D admin reached the Programs page by URL alone. Same place as in the site-admin
+            // sidebar (after Learning Paths), same label and icon, gated like its siblings by the
+            // capability the page itself requires. No feature flag: a link to an existing page
+            // that is not flagged, like the cap-only My Skills and Compliance links below.
+            if ($this->can_view_programs($sys)) {
+                $items[] = $this->item(get_string('nav_programs', 'theme_sentientia'), 'fa-trophy', self::PROGRAMS_PAGE, $currenturl);
             }
 
             // ── Insights ──
@@ -507,6 +524,32 @@ class sidebar_navigation {
     private function can_view_own_skills(): bool {
         try {
             return has_capability('local/sentientia_skills:view', \context_system::instance());
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Can the current user open the Programs admin list?
+     *
+     * Post-demo plan 2.4 (2026-11-19): gates the L&D admin sidebar "Programs" item. The test is the
+     * one local/sentientia_programs/index.php enforces, require_capability(PROGRAMS_VIEW_CAP) at
+     * system context, so the link shows exactly when the page opens (a site admin passes both by
+     * capability bypass, but the site-admin sidebar has its own Programs item). A role that holds
+     * the capability only at a category context, such as a compliance officer's category-level
+     * administrator role, gets no link, as the page would refuse it.
+     *
+     * get_capability_info() first: a customer without local_sentientia_programs has no such
+     * capability, and has_capability() would log "Capability ... was not found" on every page.
+     * Safe-fails to false.
+     *
+     * @param \context_system $sys
+     * @return bool
+     */
+    private function can_view_programs(\context_system $sys): bool {
+        try {
+            return get_capability_info(self::PROGRAMS_VIEW_CAP)
+                && has_capability(self::PROGRAMS_VIEW_CAP, $sys);
         } catch (\Throwable $e) {
             return false;
         }

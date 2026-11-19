@@ -34,6 +34,13 @@ if ((int) $evaluation->status !== \local_sentientia_evaluation\evaluation_manage
     throw new moodle_exception('evaluationnotactive', 'local_sentientia_evaluation');
 }
 
+// E1 (2026-11-19): the course, program or classroom in the link must be one this user was invited to give feedback
+// on, or took part in. Refused here, before the form is filled in, and again on submit (the web service gets the ids
+// from the page, so it checks them itself). Nobody is exempt, managers included: feedback is the respondent's own.
+$responsecontext = \local_sentientia_evaluation\evaluation_manager::clean_response_context(
+    (int) $evaluation->id, (int) $USER->id,
+    ['courseid' => $courseid, 'programid' => $programid, 'classroomid' => $classroomid]);
+
 // P1 #17 — outside the configured availability window? Show a friendly
 // banner instead of throwing a fatal. Admins still get through so they
 // can preview pre/post window.
@@ -50,7 +57,8 @@ if (!$is_admin) {
 }
 
 $PAGE->set_context($context);
-$PAGE->set_url(new moodle_url('/local/sentientia_evaluation/respond.php', ['id' => $evaluationid]));
+// E2 (2026-11-19): the page's own URL (language menu, navigation) keeps the checked context the link carried.
+$PAGE->set_url(\local_sentientia_evaluation\evaluation_manager::respond_url($evaluationid, $responsecontext));
 // set_title() and set_heading() apply format_string() themselves, so they are given the raw name.
 $PAGE->set_title($evaluation->name);
 $PAGE->set_heading($evaluation->name);
@@ -87,9 +95,10 @@ $data = [
     'has_questions'     => !empty($question_rows),
     'questions'         => $question_rows,
     'already_responded' => $already_responded,
-    'context_courseid'    => $courseid,
-    'context_programid'   => $programid,
-    'context_classroomid' => $classroomid,
+    // The checked context (0 = none), which response_actions.js sends back with the answers.
+    'context_courseid'    => (int) ($responsecontext['courseid'] ?? 0),
+    'context_programid'   => (int) ($responsecontext['programid'] ?? 0),
+    'context_classroomid' => (int) ($responsecontext['classroomid'] ?? 0),
     'backurl'           => (new moodle_url('/my/'))->out(false),
     // P1 #17 — window status (null when open). The template renders a
     // banner with the appropriate copy + hides the form.

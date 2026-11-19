@@ -7,6 +7,16 @@
 **ADR refs:** ADR-005 (Path B/C decision), ADR-003 (VAPID crypto), ADR-001 (fork strategy)  
 **Gap analysis trigger:** GAP-ANALYSIS-INVINCE-LXP-2026-06-16.md — Invince competitive gap P2.2 (native iOS/Android offline apps)
 
+> **Update 2026-11-19 (post-demo session 1, plan §2.4):** the scaffold is **superseded by ADR-040** (Flutter or
+> KMP, chosen by spike) and must not be built. Corrections made in the scaffold: the live BizLMS address is gone
+> from `capacitor.config.ts`, `.env.example`, `src/deep-link-handler.ts` and `www/index.html` (placeholder
+> `https://sentientia-site.invalid`, a reserved domain that never resolves); local dev URLs drop the wrong `/moodle`
+> path; `BUILD.md` and `.env.example` no longer tell anyone to use an FCM "server key" (legacy API, shut down
+> 2024; FCM HTTP v1 uses a service-account key on the server). The P0 items below that extend
+> `save_subscription.php` and `push_sender.php` are **withdrawn**: ADR-040 D4 sends app push through a new message
+> output reading core `user_devices`. Rows below that say the config points at the live site describe the
+> scaffold as it was on 2026-06-16.
+
 ---
 
 ## What was scaffolded

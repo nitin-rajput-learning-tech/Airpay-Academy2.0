@@ -9,7 +9,10 @@
     LOCAL BUNDLE MODE ONLY
     This file is used only in LOCAL BUNDLE mode (webDir: 'www').
     In REMOTE URL mode (production), this file is NOT served — Capacitor loads
-    the remote URL (https://www.airpay.academy) directly into the WebView.
+    the remote URL (server.url in capacitor.config.ts) directly into the WebView.
+    Corrected 2026-11-19: the address here was that of the live BizLMS site;
+    it is now a placeholder on the reserved .invalid domain. The scaffold is superseded
+    by ADR-040.
     See BUILD.md §Remote URL vs Local Bundle for details.
   -->
   <style>
@@ -74,7 +77,7 @@
     (function () {
       'use strict';
       var PRODUCTION_URL = document.documentElement.dataset.sentientiaUrl
-        || 'https://www.airpay.academy';
+        || 'https://sentientia-site.invalid';
       function onReady() {
         setTimeout(function () { window.location.href = PRODUCTION_URL; }, 800);
       }
@@ -85,7 +88,7 @@
       }
       setTimeout(function () {
         var errorEl = document.getElementById('loadingError');
-        if (errorEl && window.location.href.indexOf('airpay.academy') === -1) {
+        if (errorEl && window.location.href.indexOf(PRODUCTION_URL) !== 0) {
           errorEl.style.display = 'block';
         }
       }, 10000);

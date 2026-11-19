@@ -153,3 +153,8 @@ $string['scorecard_show_empty'] = 'बिना असाइनमेंट व�
 $string['scorecard_show_empty_one'] = 'बिना असाइनमेंट वाला 1 विभाग दिखाएँ';
 $string['scorecard_hide_empty'] = 'बिना असाइनमेंट वाले विभाग छिपाएँ';
 $string['matrix_showing'] = '{$a->total} में से {$a->from}–{$a->to} कर्मचारी दिखाए जा रहे हैं';
+
+// A1 / D4 (2026-11-20).
+$string['status_not_applicable'] = 'लागू नहीं';
+$string['entity_with_cohort'] = '{$a->entity}, समूह: {$a->cohort}';
+$string['cohort_deleted'] = 'हटाया गया समूह (आईडी {$a})';

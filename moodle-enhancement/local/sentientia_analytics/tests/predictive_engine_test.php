@@ -21,6 +21,7 @@ defined('MOODLE_INTERNAL') || die();
  *     (tested via the compute_score no-op path — flag check is in index.php,
  *     not in the engine itself, so we test the flag check pattern explicitly)
  *  9. skillsai degrade path (class_exists false when not installed)
+ * 10. Pre-warmed caches (at-risk, skill gap, ROI) outlive the hourly refresh
  *
  * @package    local_sentientia_analytics
  * @category   test
@@ -410,6 +411,37 @@ final class predictive_engine_test extends \advanced_testcase {
 
         $this->assertSame(1, substr_count($html, 'airpay-analytics__skillgap-tags'));
         $this->assertSame(2, substr_count($html, 'airpay-analytics__skill-tag"'));
+    }
+
+    /**
+     * Post-demo plan 2.4: the caches the hourly refresh task pre-warms live
+     * for the hour until its next run (they expired after 10 minutes, so the
+     * pre-warm served only the first 10 minutes of each hour). The caches
+     * nothing pre-warms keep their 5-minute TTL.
+     */
+    public function test_prewarmed_caches_outlive_the_hourly_refresh(): void {
+        $tasks = [];
+        require(__DIR__ . '/../db/tasks.php');
+        $refresh = null;
+        foreach ($tasks as $task) {
+            if (ltrim($task['classname'], '\\') === 'local_sentientia_analytics\task\refresh_predictive_cache') {
+                $refresh = $task;
+            }
+        }
+        $this->assertNotNull($refresh, 'the refresh task is registered');
+        $this->assertSame('*', $refresh['hour'], 'it runs every hour');
+        $this->assertMatchesRegularExpression('/^\d+$/', (string) $refresh['minute'], 'once an hour');
+
+        $definitions = [];
+        require(__DIR__ . '/../db/caches.php');
+        foreach (['predictive_atrisk', 'predictive_skillgap', 'roi'] as $name) {
+            $ttl = (int) $definitions[$name]['ttl'];
+            $this->assertGreaterThanOrEqual(HOURSECS, $ttl, "$name outlives the hour between refreshes");
+            $this->assertLessThan(2 * HOURSECS, $ttl, "$name is never older than one missed refresh");
+        }
+        foreach (['kpis', 'funnel', 'compliance_heatmap', 'course_effectiveness'] as $name) {
+            $this->assertSame(300, $definitions[$name]['ttl'], "$name is not pre-warmed: 5 minutes");
+        }
     }
 
     /**

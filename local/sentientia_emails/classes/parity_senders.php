@@ -300,7 +300,7 @@ final class parity_senders {
             $context = [
                 'firstname' => format_string($user->firstname, true, ['escape' => false]),
                 'path_name' => $name,
-                'path_url' => (new \moodle_url('/local/sentientia_learningpath/view.php', ['id' => $pathid]))->out(false),
+                'path_url' => self::path_enrolled_url(),
                 'course_count' => count($courses),
                 'courses' => $courses,
                 'subject' => self::string('parity_subject_path_enrolled', $user, $name),
@@ -317,6 +317,20 @@ final class parity_senders {
             debugging('local_sentientia_emails learning-path e-mail failed: ' . $e->getMessage(), DEBUG_DEVELOPER);
             return false;
         }
+    }
+
+    /**
+     * Where the learning-path enrolment e-mail takes the learner: My courses, which lists the path's courses (the
+     * enrolment enrols the learner in each of them).
+     *
+     * Until 2026-11-19 it linked the path's admin page (local/sentientia_learningpath/view.php), which needs the
+     * :view capability that learner roles do not hold, so every learner who followed it was refused (post-demo
+     * plan 2.4).
+     *
+     * @return string Absolute URL.
+     */
+    public static function path_enrolled_url(): string {
+        return (new \moodle_url('/my/courses.php'))->out(false);
     }
 
     /**

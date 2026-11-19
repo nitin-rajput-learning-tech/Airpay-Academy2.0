@@ -48,13 +48,50 @@ class rule_manager {
     }
 
     /**
+     * The template key a rule stores for the one a request names (G1, 2026-11-19).
+     *
+     * A rule's template_key is rendered as local_sentientia_emails/{key} for every recipient
+     * (notification_sender::send()). The rule editor took it as PARAM_RAW and stored it unchecked,
+     * so a crafted form could point a rule at any template name: this plugin's own manage/* page
+     * templates, a partial, a ../ path. The preview, the template editor and the template web
+     * services were closed to the same gap this morning (email_renderer::known_template_key(),
+     * version 2026111900); the rule editor goes through the same registry check now.
+     *
+     * @param string|null $requested the key as the request gave it ('' or null = no template)
+     * @return string|null '' for no template (plain text), the registry key (the legacy spelling
+     *                     with "_" for "/" comes back as the registry key), or null when the
+     *                     request names something that is not a registry template
+     */
+    public static function rule_template_key(?string $requested): ?string {
+        $requested = trim((string) $requested);
+        if ($requested === '') {
+            return '';
+        }
+        $key = email_renderer::known_template_key($requested);
+        return $key === '' ? null : $key;
+    }
+
+    /**
      * Save or update a rule.
+     *
+     * G1 (2026-11-19): a template_key that is set must be '' (no template) or a key from the
+     * template registry; it is stored as the registry key. Anything else is refused before the
+     * database is touched. A rule saved without a template_key keeps the one it has.
      *
      * @param object $data rule data
      * @return int rule ID
+     * @throws \moodle_exception template_unknown when template_key names no registry template
      */
     public static function save_rule(object $data): int {
         global $DB, $USER;
+
+        if (isset($data->template_key)) {
+            $templatekey = self::rule_template_key((string) $data->template_key);
+            if ($templatekey === null) {
+                throw new \moodle_exception('template_unknown', 'local_sentientia_emails');
+            }
+            $data->template_key = $templatekey;
+        }
 
         $data->usermodified = $USER->id;
         $data->timemodified = time();
