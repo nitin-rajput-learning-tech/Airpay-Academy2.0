@@ -106,7 +106,7 @@ commit need neither a record path nor a marker.
 ## Index
 
 No existing Moodle core file is edited on Moodle 5.3 (ADR-033). The records below are either
-vendor-plugin patches (`// SENTIENTIA-CORE-MOD (vendor)`), additive overlay files, or notes. The status column is the verdict for
+vendor-plugin patches (tagged `// SENTIENTIA-CORE-MOD (vendor)` before ADR-041, `// SENTIENTIA-CORE-MOD:` from it on), additive overlay files, or notes. The status column is the verdict for
 Moodle 5.3; 5.2 stays the fallback target and keeps its notes.
 
 | Record | What it is | Status on 5.3 |
@@ -120,6 +120,7 @@ Moodle 5.3; 5.2 stays the fallback target and keeps its notes.
 | `2026-09-03-tool-certificate-5.2-reset-caches.md` | `issue_handler::reset_caches(): void` (vendor patch) | Still required |
 | `2026-10-08-tool-certificate-duration-defaultunit.md` | `defaulunit` typo fix (vendor patch; throws on 5.3) | Required on 5.3 |
 | `2026-10-08-learnerscript-modal-factory-port.md` | learnerscript report modals ported off the removed modal factory (vendor patch) | Required on 5.2 and 5.3 |
+| `2026-11-19-tool-certificate-verify-on-arrival.md` | tool_certificate `index.php`: verification links show the result on arrival; form posts to the bare URL (vendor patch, decision D32; rules in ADR-041) | Version independent (bug fix) |
 
 ## Decision criteria
 

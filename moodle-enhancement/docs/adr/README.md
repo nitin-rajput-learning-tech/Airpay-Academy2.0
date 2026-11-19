@@ -40,6 +40,7 @@ accepted; superseded decisions get a new ADR that references the old one.
 | [ADR-033](ADR-033-target-moodle-5.3-lts.md) | Target Moodle 5.3 LTS instead of 5.2 | **Accepted** on Nitin's instruction, subject to the compatibility gate; 5.2 stays the fallback. Blockers FX-01 to FX-10 and the non-blockers FX-12 to FX-23 landed on `claude/moodle53-compat` (2026-10-08); the runtime gate (fresh install, upgrade rehearsals, PHPUnit, write paths) is still to run | 2026-10-07 |
 | [ADR-034](ADR-034-content-pipeline-architecture.md) | Content pipeline architecture: canonical course JSON, SCORM 1.2 / 2004 4th / cmi5 outputs, XLIFF + translation memory + two-stage review, self-hosted Indic TTS/ASR with an evaluation gate, DPDP/RBI posture | **Accepted** 2026-11-12 (Nitin: all recommendations approved, decision A1 in docs/cutover/NITIN-DECISIONS-2026-11-12.md); Stage 1 slice 1 in local_sentientia_authoring 2026111200 | 2026-10-15 |
 | [ADR-035](ADR-035-privacy-erasure-completeness.md) | Privacy erasure completeness: a supplementary provider in `local_sentientia_privacy` recovers the contexts stock approval drops (core `contextlist` truncation) and the course completions core never discovers, with no core edit | **Accepted** 2026-11-13 (Nitin chose Option A after the A4 rehearsal); built in local_sentientia_privacy 2026111300, both flags OFF; flag ON needs a recorded DPO retention decision; blocking cutover item before any DPO approves a DELETE request on production | 2026-11-13 |
+| [ADR-041](ADR-041-patching-vendored-plugins.md) | Patching vendored plugins: when a hunk in third-party code is allowed, tag and record shape, no version bump without an upgrade step, Sentientia-owned tests with a tripwire, the import procedure | **Proposed** 2026-11-19; first applied to the tool_certificate verify-on-arrival patch (decision D32) | 2026-11-19 |
 
 > Complete index — every ADR on disk is listed (ADR-006/007 were never assigned;
 > the numbering gap is intentional). ADR-022's component-rename plan was executed by
@@ -49,6 +50,8 @@ accepted; superseded decisions get a new ADR that references the old one.
 > (doc hygiene), pending a per-component pass (gateway / theme / block names differ).
 > ADR-034's open questions name "ADR-035" for the Indic TTS engine choice; ADR-035
 > went to privacy erasure completeness, so that ADR takes the next free number.
+> ADR-036 to ADR-040 are reserved by the post-demo plan (`docs/plans/2026-11-19-POST-DEMO-PLAN.md`
+> §5) and not written yet; ADR-041 was written first, with the certificate fix.
 
 ## Template
 

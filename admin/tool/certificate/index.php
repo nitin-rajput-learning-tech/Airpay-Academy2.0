@@ -47,8 +47,12 @@ $PAGE->set_heading($SITE->fullname);
 
 $PAGE->navbar->add($heading);
 
-$form = new \tool_certificate\verify_certificate_form($pageurl, null, 'post', '',
+// SENTIENTIA-CORE-MOD: post the form to the bare URL. Given $pageurl, formslib prints its ?code= as a second
+// input named "code", and the client-side "required" check then reads an empty value. See
+// moodle-enhancement/docs/core-mods/2026-11-19-tool-certificate-verify-on-arrival.md
+$form = new \tool_certificate\verify_certificate_form(new moodle_url('/admin/tool/certificate/index.php'), null, 'post', '',
     ['class' => 'mt-3 mb-5 p-4 bg-light']);
+// END SENTIENTIA-CORE-MOD
 
 if ($code) {
     $form->set_data(['code' => $code]);
@@ -57,7 +61,10 @@ if ($code) {
 $PAGE->set_heading($heading);
 echo $OUTPUT->header();
 $form->display();
-if ($form->get_data()) {
+// SENTIENTIA-CORE-MOD: verify on arrival. A link that carries ?code= (certificate QR code, gallery "Verify", LinkedIn)
+// shows the result without a second press of Verify. Read-only, same lookup as a submit; see the record named above.
+if ($form->get_data() || ($code && !$form->is_submitted())) {
+// END SENTIENTIA-CORE-MOD
     $result = \tool_certificate\certificate::verify($code);
     $results = new \tool_certificate\output\verify_certificate_results($result);
     echo $OUTPUT->render($results);
