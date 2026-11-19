@@ -6,48 +6,65 @@ namespace local_sentientia_proctoring;
 
 defined('MOODLE_INTERNAL') || die();
 
+/**
+ * Proctoring notifications.
+ *
+ * B1 (ADR-038 D2, 2026-11-20): the texts moved from English literals into the language pack (en + hi) and are
+ * rendered in the RECIPIENT's language, not the sender's: the flag notice is sent from the attempt observer, which
+ * runs as the learner or, for an attempt that timed out, in cron as nobody.
+ *
+ * @package local_sentientia_proctoring
+ */
 class notifier {
 
     public static function session_flagged(\stdClass $session, int $reviewerid): void {
-        if (!$reviewerid) return;
-        $score = number_format((float) $session->risk_score, 1);
-        $decision = $session->auto_decision;
-        self::send($reviewerid, 'session_flagged',
-            "Proctored session flagged — auto-decision: $decision (risk $score)",
-            "A proctored quiz session has been flagged for human review.\n\n"
-            . "Session ID: {$session->id}\nUser ID: {$session->userid}\n"
-            . "Quiz ID: {$session->quizid}\nRisk score: $score/100\n"
-            . "Auto-decision: $decision\n\n"
-            . "Open the review queue to view the recording and make a final decision.");
+        if (!$reviewerid) {
+            return;
+        }
+        $a = (object) [
+            'sessionid' => (int) $session->id,
+            'userid'    => (int) $session->userid,
+            'quizid'    => (int) $session->quizid,
+            'score'     => number_format((float) $session->risk_score, 1),
+            'decision'  => (string) $session->auto_decision,
+        ];
+        self::send($reviewerid, 'session_flagged', 'msg_flagged_subject', 'msg_flagged_body', $a);
     }
 
     public static function session_reviewed(\stdClass $session): void {
-        $decision = $session->human_decision;
-        self::send((int) $session->userid, 'session_reviewed',
-            "Your proctored session was reviewed",
-            "Your proctored quiz session has been reviewed.\n\n"
-            . "Decision: " . ucfirst($decision) . "\n\n"
-            . ($decision === 'fail'
-                ? "Unfortunately, suspicious activity was detected. "
-                  . "You may not have the result of this attempt count. "
-                  . "Contact L&D admin if you believe this is in error."
-                : "Thank you for completing the proctored exam."));
+        $decision = (string) $session->human_decision;
+        $a = (object) ['decision' => $decision];
+        self::send((int) $session->userid, 'session_reviewed', 'msg_reviewed_subject',
+            $decision === 'fail' ? 'msg_reviewed_body_fail' : 'msg_reviewed_body', $a);
     }
 
     public static function identity_failed(\stdClass $session, array $result): void {
-        $score = number_format((float) ($result['score'] ?? 0), 1);
-        self::send((int) $session->userid, 'identity_failed',
-            'Identity verification failed',
-            "Your identity verification did not pass for this proctored exam.\n\n"
-            . "Match score: $score%\n\n"
-            . "Please retake the selfie in better lighting, with your face "
-            . "centred and clearly visible. If this continues, contact support.");
+        $a = (object) ['score' => number_format((float) ($result['score'] ?? 0), 1)];
+        self::send((int) $session->userid, 'identity_failed', 'msg_identityfailed_subject',
+            'msg_identityfailed_body', $a);
     }
 
-    private static function send(int $userid, string $event, string $subject, string $body): void {
+    /**
+     * Send one notification, its texts in the recipient's language.
+     *
+     * @param int $userid recipient
+     * @param string $event message provider name (db/messages.php)
+     * @param string $subjectid language string id of the subject
+     * @param string $bodyid language string id of the plain-text body
+     * @param \stdClass $a placeholders
+     * @return void
+     */
+    private static function send(int $userid, string $event, string $subjectid, string $bodyid, \stdClass $a): void {
         global $DB;
-        $user = $DB->get_record('user', ['id' => $userid], '*');
-        if (!$user) return;
+        $user = $DB->get_record('user', ['id' => $userid, 'deleted' => 0], '*');
+        if (!$user) {
+            return;
+        }
+        $lang = !empty($user->lang) ? $user->lang : null;
+        $strings = get_string_manager();
+        $subject = $strings->get_string($subjectid, 'local_sentientia_proctoring', $a, $lang);
+        $body    = $strings->get_string($bodyid, 'local_sentientia_proctoring', $a, $lang);
+
         $message = new \core\message\message();
         $message->component         = 'local_sentientia_proctoring';
         $message->name              = $event;

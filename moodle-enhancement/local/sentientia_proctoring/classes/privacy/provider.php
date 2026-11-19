@@ -19,14 +19,38 @@ class provider implements
     \core_privacy\local\request\core_userlist_provider {
 
     public static function get_metadata(collection $collection): collection {
-        $collection->add_database_table('local_sentientia_proctor_sessions', [], 'privacy:metadata:local_sentientia_proctor_sessions');
+        // B1 (ADR-038 D2, 2026-11-20): the two tables the quiz pre-start check and the attempt monitor write now name
+        // their personal fields. The aws_rekognition link is gone: no code path sends a photo there since decision
+        // D10 (see identity\verifier_factory). Identity rows written before B1 are still described, exported and
+        // erased below.
+        $collection->add_database_table('local_sentientia_proctor_sessions', [
+            'userid'           => 'privacy:metadata:sessions:userid',
+            'quizid'           => 'privacy:metadata:sessions:quizid',
+            'attemptid'        => 'privacy:metadata:sessions:attemptid',
+            'status'           => 'privacy:metadata:sessions:status',
+            'consent_given_at' => 'privacy:metadata:sessions:consent_given_at',
+            'risk_score'       => 'privacy:metadata:sessions:risk_score',
+            'auto_decision'    => 'privacy:metadata:sessions:auto_decision',
+            'human_decision'   => 'privacy:metadata:sessions:human_decision',
+            'timestarted'      => 'privacy:metadata:sessions:timestarted',
+            'timefinished'     => 'privacy:metadata:sessions:timefinished',
+            // B2 secure assessment mode (2026-11-20).
+            'securitylevel'     => 'privacy:metadata:sessions:securitylevel',
+            'violationlimit'    => 'privacy:metadata:sessions:violationlimit',
+            'violations'        => 'privacy:metadata:sessions:violations',
+            'lastviolation'     => 'privacy:metadata:sessions:lastviolation',
+            'lastheartbeat'     => 'privacy:metadata:sessions:lastheartbeat',
+            'timeautosubmitted' => 'privacy:metadata:sessions:timeautosubmitted',
+        ], 'privacy:metadata:local_sentientia_proctor_sessions');
         $collection->add_database_table('local_sentientia_proctor_identity', [], 'privacy:metadata:local_sentientia_proctor_identity');
-        $collection->add_database_table('local_sentientia_proctor_events',   [], 'privacy:metadata:local_sentientia_proctor_events');
+        $collection->add_database_table('local_sentientia_proctor_events', [
+            'event_type'   => 'privacy:metadata:events:event_type',
+            'severity'     => 'privacy:metadata:events:severity',
+            'payload_json' => 'privacy:metadata:events:payload_json',
+            'timecreated'  => 'privacy:metadata:events:timecreated',
+        ], 'privacy:metadata:local_sentientia_proctor_events');
         $collection->add_database_table('local_sentientia_proctor_recordings', [], 'privacy:metadata:local_sentientia_proctor_recordings');
         $collection->add_database_table('local_sentientia_proctor_reviews',  [], 'privacy:metadata:local_sentientia_proctor_reviews');
-        $collection->add_external_location_link('aws_rekognition',
-            ['photo' => 'privacy:metadata:aws_rekognition:photo'],
-            'privacy:metadata:aws_rekognition');
         $collection->add_external_location_link('aws_s3',
             ['video' => 'privacy:metadata:aws_s3:video'],
             'privacy:metadata:aws_s3');
@@ -66,17 +90,37 @@ class provider implements
         $out = [];
         foreach ($sessions as $s) {
             $events = $DB->get_records('local_sentientia_proctor_events',
-                ['sessionid' => $s->id], 'timecreated');
+                ['sessionid' => $s->id], 'timecreated, id');
+            // B1 (2026-11-20): the learner sees what was recorded about them, event by event, and when they agreed.
+            $eventlist = [];
+            foreach ($events as $e) {
+                $eventlist[] = [
+                    'event'    => $e->event_type,
+                    'severity' => $e->severity,
+                    'time'     => userdate($e->timecreated),
+                    'details'  => $e->payload_json,
+                ];
+            }
             $out[] = [
                 'session_id'     => $s->id,
                 'quiz_id'        => $s->quizid,
+                'attempt_id'     => $s->attemptid,
                 'status'         => $s->status,
+                'consent_given_at' => $s->consent_given_at ? userdate($s->consent_given_at) : null,
                 'risk_score'     => $s->risk_score,
                 'auto_decision'  => $s->auto_decision,
                 'human_decision' => $s->human_decision,
                 'started_at'     => $s->timestarted ? userdate($s->timestarted) : null,
                 'finished_at'    => $s->timefinished ? userdate($s->timefinished) : null,
+                // B2 secure assessment mode (2026-11-20): the rules accepted and what the server counted.
+                'security_level'     => $s->securitylevel ?? null,
+                'violation_limit'    => isset($s->violationlimit) ? (int) $s->violationlimit : null,
+                'violations_counted' => isset($s->violations) ? (int) $s->violations : null,
+                'last_violation_at'  => !empty($s->lastviolation) ? userdate($s->lastviolation) : null,
+                'last_report_at'     => !empty($s->lastheartbeat) ? userdate($s->lastheartbeat) : null,
+                'auto_submitted_at'  => !empty($s->timeautosubmitted) ? userdate($s->timeautosubmitted) : null,
                 'event_count'    => count($events),
+                'events'         => $eventlist,
             ];
         }
         writer::with_context(\context_system::instance())->export_data(
@@ -144,8 +188,10 @@ class provider implements
         // The session and its review stay: they are the exam-integrity verdict
         // on a quiz attempt this flow keeps. Only the identity link is cut; the
         // consent timestamp stays as the lawful-basis record for that verdict.
+        // B2 (2026-11-20): the behavioural timestamps go with the events; the level, the limit, the count and the
+        // auto-submit time stay as part of that verdict.
         $DB->execute("UPDATE {local_sentientia_proctor_sessions}
-                         SET identity_id = NULL
+                         SET identity_id = NULL, lastviolation = NULL, lastheartbeat = NULL
                        WHERE id $insql", $inparams);
     }
 

@@ -4,17 +4,17 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+// B1 (ADR-038 D2, 2026-11-20): the identity-provider choice (AWS Rekognition or mock) and the face-match threshold
+// are gone with the photo step (decision D10: no automated ID-to-face matching in v1). The AWS settings that remain
+// are the recording store's, which the daily purge task reads. Headings come from the language pack.
+
 if ($hassiteconfig) {
     $settings = new admin_settingpage('local_sentientia_proctoring',
         get_string('pluginname', 'local_sentientia_proctoring'));
 
-    $settings->add(new admin_setting_heading('local_sentientia_proctoring/h_id',
-        'Identity verification', ''));
-
-    $settings->add(new admin_setting_configselect('local_sentientia_proctoring/provider',
-        get_string('settings_provider', 'local_sentientia_proctoring'),
-        get_string('settings_provider_desc', 'local_sentientia_proctoring'),
-        'mock', ['aws' => 'AWS Rekognition', 'mock' => 'Mock (dev/testing)']));
+    $settings->add(new admin_setting_heading('local_sentientia_proctoring/h_store',
+        get_string('settings_h_store', 'local_sentientia_proctoring'),
+        get_string('settings_h_store_desc', 'local_sentientia_proctoring')));
 
     $settings->add(new admin_setting_configtext('local_sentientia_proctoring/aws_region',
         get_string('settings_aws_region', 'local_sentientia_proctoring'),
@@ -32,13 +32,8 @@ if ($hassiteconfig) {
         get_string('settings_aws_s3_bucket', 'local_sentientia_proctoring'),
         '', 'airpay-academy-proctoring', PARAM_TEXT));
 
-    $settings->add(new admin_setting_configtext('local_sentientia_proctoring/match_threshold',
-        get_string('settings_match_threshold', 'local_sentientia_proctoring'),
-        get_string('settings_match_threshold_desc', 'local_sentientia_proctoring'),
-        '85', PARAM_INT));
-
     $settings->add(new admin_setting_heading('local_sentientia_proctoring/h_rec',
-        'Recording', ''));
+        get_string('settings_h_rec', 'local_sentientia_proctoring'), ''));
 
     $settings->add(new admin_setting_configtext('local_sentientia_proctoring/retention_days',
         get_string('settings_retention_days', 'local_sentientia_proctoring'),
@@ -51,7 +46,7 @@ if ($hassiteconfig) {
         '30', PARAM_INT));
 
     $settings->add(new admin_setting_heading('local_sentientia_proctoring/h_rev',
-        'Review queue', ''));
+        get_string('settings_h_rev', 'local_sentientia_proctoring'), ''));
 
     $settings->add(new admin_setting_configtext('local_sentientia_proctoring/default_reviewer',
         get_string('settings_default_reviewer', 'local_sentientia_proctoring'),

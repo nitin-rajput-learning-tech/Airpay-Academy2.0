@@ -71,6 +71,21 @@ $functions = [
         'type'         => 'write', 'ajax' => true,
         'capabilities' => 'local/sentientia_proctoring:review',
     ],
+    // B2 "Secure assessment mode" (ADR-038 D3 and D6, 2026-11-20). The attempt page's reports and heartbeat: the
+    // session key is checked by core's ajax endpoint; the caller names only their own open attempt.
+    'local_sentientia_proctoring_secure_report' => [
+        'classname'    => 'local_sentientia_proctoring\external\secure_report',
+        'description'  => 'Secure assessment mode: the attempt page reports its events and heartbeat; the server counts violations',
+        'type'         => 'write', 'ajax' => true,
+        'capabilities' => 'local/sentientia_proctoring:attempt',
+    ],
+    // The integrity report on the quiz attempt review page, for the quiz's teachers (mod/quiz:viewreports).
+    'local_sentientia_proctoring_integrity_report' => [
+        'classname'    => 'local_sentientia_proctoring\external\integrity_report',
+        'description'  => 'Secure assessment mode: integrity report (counts and timeline) of one quiz attempt',
+        'type'         => 'read', 'ajax' => true,
+        'capabilities' => 'mod/quiz:viewreports',
+    ],
     'local_sentientia_proctoring_compliance_report' => [
         'classname'    => 'local_sentientia_proctoring\external\compliance_report',
         'description'  => 'Compliance report: % clean vs flagged vs failed over time',

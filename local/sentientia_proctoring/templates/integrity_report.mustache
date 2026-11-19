@@ -1,0 +1,129 @@
+{{!
+    Copyright 2026 Airpay Payment Services
+    License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+{{!
+    @template local_sentientia_proctoring/integrity_report
+
+    The integrity report of one secure-mode quiz attempt, shown to the quiz's teachers on the attempt review page
+    (B2, ADR-038 D3 and D6, 2026-11-20). Rendered by local_sentientia_proctoring/integrity_report from the
+    local_sentientia_proctoring_integrity_report web service. Every value is text and is escaped here.
+
+    Context variables required for this template:
+    * level, policy, status, autodecision, humandecision, autosubmittedat - labels
+    * violations, limit, gaps, unmonitored, shown, total - numbers
+    * haslimit, autosubmitted, hascounts, hastimeline, truncated - booleans
+    * reviewurl - link to the session in the proctoring pages, or empty
+    * counts - list of {type, label, count}
+    * timeline - list of {time, label, page, severity, counted, notcounted, note}
+
+    Example context (json):
+    {
+        "level": "Standard",
+        "policy": "Submit automatically at 3 violations",
+        "violations": 2,
+        "limit": 3,
+        "haslimit": true,
+        "autosubmitted": false,
+        "autosubmittedat": "",
+        "status": "Flagged for review",
+        "autodecision": "Warning — minor flags",
+        "humandecision": "",
+        "gaps": 1,
+        "unmonitored": 0,
+        "reviewurl": "https://example.com/local/sentientia_proctoring/attempt.php?id=7",
+        "counts": [{"type": "window_blur", "label": "Window lost focus", "count": 2}],
+        "hascounts": true,
+        "timeline": [
+            {"time": "20 Nov, 10:01:02", "label": "Window lost focus", "page": "2", "severity": "warn",
+             "counted": true, "notcounted": false, "note": "Counted as a violation"}
+        ],
+        "hastimeline": true,
+        "truncated": false,
+        "shown": 1,
+        "total": 1
+    }
+}}
+<section class="sentientia-integrity card mb-3" aria-labelledby="sentientia-integrity-title">
+    <div class="card-body">
+        <h3 id="sentientia-integrity-title" class="h5 card-title">{{#str}} report_title, local_sentientia_proctoring {{/str}}</h3>
+        <dl class="sentientia-integrity__facts row mb-2">
+            <dt class="col-sm-4">{{#str}} report_level, local_sentientia_proctoring {{/str}}</dt>
+            <dd class="col-sm-8">{{level}}</dd>
+            <dt class="col-sm-4">{{#str}} report_policy, local_sentientia_proctoring {{/str}}</dt>
+            <dd class="col-sm-8">{{policy}}</dd>
+            <dt class="col-sm-4">{{#str}} report_violations, local_sentientia_proctoring {{/str}}</dt>
+            <dd class="col-sm-8">
+                <span class="badge {{#violations}}bg-warning text-dark{{/violations}}{{^violations}}bg-success{{/violations}}">
+                    {{#haslimit}}{{#str}} report_violations_of, local_sentientia_proctoring, { "count": {{violations}}, "limit": {{limit}} } {{/str}}{{/haslimit}}{{^haslimit}}{{violations}}{{/haslimit}}
+                </span>
+            </dd>
+            {{#autosubmitted}}
+            <dt class="col-sm-4">{{#str}} report_autosubmitted, local_sentientia_proctoring {{/str}}</dt>
+            <dd class="col-sm-8"><span class="badge bg-danger">{{autosubmittedat}}</span></dd>
+            {{/autosubmitted}}
+            <dt class="col-sm-4">{{#str}} report_gaps, local_sentientia_proctoring {{/str}}</dt>
+            <dd class="col-sm-8">{{gaps}}</dd>
+            <dt class="col-sm-4">{{#str}} report_unmonitored, local_sentientia_proctoring {{/str}}</dt>
+            <dd class="col-sm-8">{{unmonitored}}</dd>
+            <dt class="col-sm-4">{{#str}} report_status, local_sentientia_proctoring {{/str}}</dt>
+            <dd class="col-sm-8">{{status}}</dd>
+            {{#autodecision}}
+            <dt class="col-sm-4">{{#str}} report_verdict_auto, local_sentientia_proctoring {{/str}}</dt>
+            <dd class="col-sm-8">{{autodecision}}</dd>
+            {{/autodecision}}
+            {{#humandecision}}
+            <dt class="col-sm-4">{{#str}} report_verdict_human, local_sentientia_proctoring {{/str}}</dt>
+            <dd class="col-sm-8">{{humandecision}}</dd>
+            {{/humandecision}}
+        </dl>
+
+        {{#hascounts}}
+        <h4 class="h6">{{#str}} report_counts, local_sentientia_proctoring {{/str}}</h4>
+        <ul class="sentientia-integrity__counts list-inline">
+            {{#counts}}
+            <li class="list-inline-item"><span class="badge bg-light text-dark border">{{label}}: {{count}}</span></li>
+            {{/counts}}
+        </ul>
+        {{/hascounts}}
+
+        <details class="sentientia-integrity__timeline mb-2">
+            <summary>{{#str}} report_timeline, local_sentientia_proctoring {{/str}}</summary>
+            {{#truncated}}
+            <p class="small text-muted mt-2">{{#str}} report_timeline_truncated, local_sentientia_proctoring, { "shown": {{shown}}, "total": {{total}} } {{/str}}</p>
+            {{/truncated}}
+            {{#hastimeline}}
+            <div class="table-responsive">
+                <table class="table table-sm generaltable mt-2">
+                    <thead>
+                        <tr>
+                            <th scope="col">{{#str}} report_col_time, local_sentientia_proctoring {{/str}}</th>
+                            <th scope="col">{{#str}} report_col_event, local_sentientia_proctoring {{/str}}</th>
+                            <th scope="col">{{#str}} report_col_page, local_sentientia_proctoring {{/str}}</th>
+                            <th scope="col">{{#str}} report_col_note, local_sentientia_proctoring {{/str}}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#timeline}}
+                        <tr class="sentientia-integrity__event sentientia-integrity__event--{{severity}}">
+                            <td class="text-nowrap">{{time}}</td>
+                            <td>{{label}}</td>
+                            <td>{{page}}</td>
+                            <td>{{#counted}}<span class="badge bg-warning text-dark">{{note}}</span>{{/counted}}{{^counted}}{{note}}{{/counted}}</td>
+                        </tr>
+                        {{/timeline}}
+                    </tbody>
+                </table>
+            </div>
+            {{/hastimeline}}
+            {{^hastimeline}}
+            <p class="mt-2">{{#str}} report_none, local_sentientia_proctoring {{/str}}</p>
+            {{/hastimeline}}
+        </details>
+
+        <p class="small text-muted mb-2">{{#str}} report_limits, local_sentientia_proctoring {{/str}}</p>
+        {{#reviewurl}}
+        <a class="btn btn-secondary btn-sm" href="{{reviewurl}}">{{#str}} report_open, local_sentientia_proctoring {{/str}}</a>
+        {{/reviewurl}}
+    </div>
+</section>

@@ -18,7 +18,26 @@ defined('MOODLE_INTERNAL') || die();
 class purge_old_recordings extends \core\task\scheduled_task {
 
     public function get_name(): string {
-        return 'Airpay Proctoring: purge old recordings (GDPR retention)';
+        return get_string('task_purge_old_recordings', 'local_sentientia_proctoring');
+    }
+
+    /**
+     * The S3 credentials, read under the names settings.php stores them.
+     *
+     * B1 fix (ADR-038 D2, 2026-11-20): the purge read `aws_access_key` and
+     * `aws_secret_key`, but settings.php has always saved `aws_key` and
+     * `aws_secret`, so every purge skipped as "config incomplete" and no
+     * expired recording ever left the bucket. The old names are still read
+     * as a fallback, in case a site set them by hand.
+     *
+     * @return array{0: string, 1: string} [access key id, secret]
+     */
+    public static function credentials(): array {
+        $read = static function(string $name, string $legacy): string {
+            $value = (string) get_config('local_sentientia_proctoring', $name);
+            return $value !== '' ? $value : (string) get_config('local_sentientia_proctoring', $legacy);
+        };
+        return [$read('aws_key', 'aws_access_key'), $read('aws_secret', 'aws_secret_key')];
     }
 
     public function execute() {
@@ -61,8 +80,7 @@ class purge_old_recordings extends \core\task\scheduled_task {
     private function delete_s3_object(string $key): bool {
         $bucket = (string) get_config('local_sentientia_proctoring', 'aws_s3_bucket');
         $region = (string) (get_config('local_sentientia_proctoring', 'aws_region') ?: 'ap-south-1');
-        $access_key = (string) get_config('local_sentientia_proctoring', 'aws_access_key');
-        $secret_key = (string) get_config('local_sentientia_proctoring', 'aws_secret_key');
+        [$access_key, $secret_key] = self::credentials();
 
         if (empty($bucket) || empty($key) || empty($access_key) || empty($secret_key)) {
             // Configuration incomplete — log and treat as failure so the

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/sentientia_proctoring/db" VERSION="20260511"
+<XMLDB PATH="local/sentientia_proctoring/db" VERSION="20261120"
        COMMENT="Airpay Proctoring — 5 tables. L1 identity, L2 monitoring, L3 AI review.">
 
   <TABLES>
@@ -30,6 +30,18 @@
                COMMENT="clean|warn|fail — AI's verdict before human review"/>
         <FIELD NAME="human_decision" TYPE="char" LENGTH="20" NOTNULL="false"
                COMMENT="clean|warn|fail — final human verdict"/>
+        <FIELD NAME="securitylevel" TYPE="char" LENGTH="20" NOTNULL="false"
+               COMMENT="B2, ADR-038 D1: the security level of the quiz when the learner accepted the rules (standard, secure, proctored); NULL = a B1-only session"/>
+        <FIELD NAME="violationlimit" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0"
+               COMMENT="B2, ADR-038 D6: violations at which the attempt is submitted automatically, fixed at the pre-start check; 0 = never (warn and flag)"/>
+        <FIELD NAME="violations" TYPE="int" LENGTH="5" NOTNULL="true" DEFAULT="0"
+               COMMENT="B2: violations the server counted (fullscreen exits and focus or tab losses, at most one per 2 seconds)"/>
+        <FIELD NAME="lastviolation" TYPE="int" LENGTH="10" NOTNULL="false"
+               COMMENT="B2: server time of the last counted violation"/>
+        <FIELD NAME="lastheartbeat" TYPE="int" LENGTH="10" NOTNULL="false"
+               COMMENT="B2: server time the attempt page last reported, or a page was last served with no report since"/>
+        <FIELD NAME="timeautosubmitted" TYPE="int" LENGTH="10" NOTNULL="false"
+               COMMENT="B2: when the server submitted the attempt because it reached violationlimit"/>
         <FIELD NAME="timestarted"   TYPE="int"  LENGTH="10" NOTNULL="false"/>
         <FIELD NAME="timefinished"  TYPE="int"  LENGTH="10" NOTNULL="false"/>
         <FIELD NAME="timecreated"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>

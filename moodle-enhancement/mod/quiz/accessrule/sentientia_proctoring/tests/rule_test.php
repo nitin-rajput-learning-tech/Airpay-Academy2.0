@@ -10,11 +10,12 @@
  * - delete_settings() — removes by quizid
  * - is_quiz_proctored() — true/false/missing-row outcomes
  *
- * Out of scope (would need full Moodle quiz fixtures):
- * - make() — depends on quiz_settings + access_rule_base construction
- * - prevent_new_attempt() — depends on local_sentientia_proctor_sessions
- *   table that lives in a sibling plugin (local_sentientia_proctoring)
- * - setup_attempt_page() — depends on a real $PAGE
+ * - B1 (2026-11-20): core discovery of the rule, get_settings_sql(), and
+ *   save_settings() leaving the stored value alone when the field is absent
+ *
+ * make(), the pre-start check, setup_attempt_page() and the attempt
+ * observers run on real quizzes and attempts in preflight_test.php.
+ * (prevent_new_attempt() is gone: it was the B1 lockout.)
  *
  * @package    quizaccess_sentientia_proctoring
  * @category   test
@@ -112,19 +113,53 @@ final class rule_test extends \advanced_testcase {
     }
 
     /**
-     * save_settings() must coerce missing `sentientia_proctoring_enabled`
-     * to 0 (defensive against form-data shape changes).
+     * B1 (2026-11-20): a save without `sentientia_proctoring_enabled` (the
+     * field is not on the form while the flag is OFF, or the quiz is saved by
+     * code that does not know it) leaves the stored setting alone. Until B1
+     * a missing field was saved as 0, which switched proctoring off on every
+     * save made while the setting was hidden.
      */
-    public function test_save_settings_treats_missing_field_as_disabled(): void {
+    public function test_save_settings_leaves_the_stored_setting_when_the_field_is_absent(): void {
         global $DB;
         $this->resetAfterTest();
 
-        $quiz = (object) ['id' => 4245];  // no sentientia_proctoring_enabled key
-        rule::save_settings($quiz);
+        rule::save_settings((object) ['id' => 4245]);  // no field, no row: nothing is written
+        $this->assertFalse($DB->record_exists('quizaccess_sentientia_proctor', ['quizid' => 4245]));
 
-        $row = $DB->get_record('quizaccess_sentientia_proctor', ['quizid' => 4245]);
-        $this->assertNotFalse($row);
-        $this->assertEquals(0, (int) $row->enabled);
+        rule::save_settings((object) ['id' => 4245, 'sentientia_proctoring_enabled' => 1]);
+        rule::save_settings((object) ['id' => 4245]);  // hidden field: still proctored
+        $this->assertTrue(rule::is_quiz_proctored(4245));
+        $this->assertEquals(1, $DB->count_records('quizaccess_sentientia_proctor', ['quizid' => 4245]));
+    }
+
+    /**
+     * B1: core finds an access rule only by the global class name
+     * quizaccess_<plugin> (core_component::get_plugin_list_with_class()).
+     * Before B1 only quizaccess_sentientia_proctoring\rule existed, so core
+     * never loaded the rule at all.
+     */
+    public function test_core_finds_the_rule(): void {
+        $classes = \core_component::get_plugin_list_with_class('quizaccess', '', 'rule.php');
+        $this->assertArrayHasKey('quizaccess_sentientia_proctoring', $classes);
+        $this->assertTrue(is_a($classes['quizaccess_sentientia_proctoring'], rule::class, true));
+    }
+
+    /**
+     * B1: the setting loads with the quiz (one LEFT JOIN in core's settings
+     * query), so the quiz form shows the stored value and make() needs no
+     * query of its own. A quiz with no row reads as 0.
+     */
+    public function test_get_settings_sql_loads_the_setting_with_the_quiz(): void {
+        $this->resetAfterTest();
+        $course = $this->getDataGenerator()->create_course();
+        $on = $this->getDataGenerator()->create_module('quiz', ['course' => $course->id]);
+        $off = $this->getDataGenerator()->create_module('quiz', ['course' => $course->id]);
+        rule::save_settings((object) ['id' => $on->id, 'sentientia_proctoring_enabled' => 1]);
+
+        $settings = \mod_quiz\access_manager::load_settings((int) $on->id);
+        $this->assertEquals(1, (int) $settings['sentientia_proctoring_enabled']);
+        $quiz = \mod_quiz\access_manager::load_quiz_and_settings((int) $off->id);
+        $this->assertEquals(0, (int) $quiz->sentientia_proctoring_enabled);
     }
 
     /**

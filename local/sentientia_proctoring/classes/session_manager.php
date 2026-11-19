@@ -141,7 +141,37 @@ class session_manager {
         return $session;
     }
 
-    /** Candidate clicks "I consent". */
+    /**
+     * Refuse unless the session is one of the pre-B1 browser flow that has not started yet: no quiz attempt bound to
+     * it and its status in $states.
+     *
+     * B1 review (2026-11-20). Consent and identity now belong to the quiz's own pre-start check
+     * (quiz_integration::pass_preflight()). The old web services that reach record_consent() and submit_identity()
+     * stay registered (ADR-038 D2: the 12 services stay) and are open to every logged-in user, and until this check
+     * they changed any session of the caller, whatever its state:
+     *  - during an attempt, give_consent set the active session back to `consenting`; report_event then refused every
+     *    later event and the monitor stopped, so the learner could answer unrecorded, and passing the pre-start check
+     *    again on the summary page made the session active once more, to be scored clean;
+     *  - after an attempt, give_consent or submit_identity reopened a flagged or reviewed session, which left the review
+     *    queue (it lists status `flagged`) and was never closed again.
+     * A session bound to an attempt, or past these states, is refused with error_session_state and left unchanged.
+     *
+     * @param \stdClass $session a local_sentientia_proctor_sessions row
+     * @param string[] $states the statuses the caller may act on
+     * @throws \moodle_exception error_session_state
+     */
+    private static function require_unstarted(\stdClass $session, array $states): void {
+        if (!empty($session->attemptid) || !in_array((string) $session->status, $states, true)) {
+            throw new \moodle_exception('error_session_state', 'local_sentientia_proctoring');
+        }
+    }
+
+    /**
+     * Candidate clicks "I consent" (pre-B1 browser flow, give_consent web service).
+     *
+     * B1 review (2026-11-20): only on the caller's own session that has no attempt and is `new` or `consenting`
+     * (require_unstarted()).
+     */
     public static function record_consent(int $sessionid, int $userid): \stdClass {
         global $DB;
         $session = $DB->get_record('local_sentientia_proctor_sessions',
@@ -149,6 +179,7 @@ class session_manager {
         if ((int) $session->userid !== $userid) {
             throw new \moodle_exception('error_session_state', 'local_sentientia_proctoring');
         }
+        self::require_unstarted($session, ['new', 'consenting']);
         $session->status           = 'consenting';
         $session->consent_given_at = time();
         $session->timemodified     = time();
@@ -159,6 +190,9 @@ class session_manager {
     /**
      * Submit identity photos. Returns the identity row.
      * The photo bytes are NEVER stored — only the score.
+     *
+     * B1 review (2026-11-20): only on the caller's own session that has no attempt and is `new`, `consenting` or
+     * `verifying` (require_unstarted()); checked before anything is written or verified.
      */
     public static function submit_identity(int $sessionid, int $userid,
                                             string $id_photo_bytes,
@@ -169,6 +203,7 @@ class session_manager {
         if ((int) $session->userid !== $userid) {
             throw new \moodle_exception('error_session_state', 'local_sentientia_proctoring');
         }
+        self::require_unstarted($session, ['new', 'consenting', 'verifying']);
 
         $session->status = 'verifying';
         $session->timemodified = time();
@@ -256,6 +291,12 @@ class session_manager {
      * an attacker could pollute another candidate's recording log
      * with bogus chunk references, and `s3_key` (which is a string
      * we trust later when serving recordings) could point anywhere.
+     *
+     * B1 review (2026-11-20): the upload_chunk web service refuses every call while
+     * sentientia.proctoring.recording.enabled is OFF (B4, ADR-038 D5): nothing records yet, and a key registered here
+     * names an object the retention purge (task\purge_old_recordings) later deletes. The regex above still lets the
+     * caller name any object in the bucket; before B4 switches recording on, the key must be tied to a prefix the
+     * server issues for this session.
      */
     public static function register_chunk(int $sessionid, string $kind,
                                            int $chunk_idx, string $s3_key,
@@ -307,27 +348,73 @@ class session_manager {
      * attacker could prematurely finalize another candidate's session
      * mid-attempt, forcing the AI verdict + flagged status before they
      * can complete the quiz.
+     *
+     * B1 (ADR-038 D2, 2026-11-20): the server closes a session when its
+     * quiz attempt is submitted or abandoned (observer -> close_session()).
+     * While that attempt is still open this call changes nothing: a
+     * learner who could close their own session early would be scored
+     * on a clean start and could then cheat unrecorded, because a closed
+     * session is never scored again. A session not tied to an attempt
+     * (the pre-B1 browser flow) is closed as before.
      */
     public static function finalize(int $sessionid): \stdClass {
-        global $DB;
         $session = self::assert_session_owner($sessionid);
+        if (!empty($session->attemptid)
+                && quiz_integration::open_attempt((int) $session->attemptid) !== null) {
+            return $session;
+        }
+        return self::close_session($session);
+    }
 
-        if ($session->status === 'reviewed' || $session->status === 'flagged') {
+    /**
+     * Close a session and score it: the server-side end of a proctored
+     * attempt. No ownership check: the callers are the attempt observers
+     * (which may run in cron, as nobody) and finalize() after its own
+     * check.
+     *
+     * Idempotent: a finished, flagged or reviewed session is returned
+     * unchanged and never scored twice (B1 adds `finished`: a replay used
+     * to log a second session_end and could turn a clean verdict into a
+     * flag from events recorded after the attempt ended).
+     *
+     * B2 (ADR-038 D6, plan decision D11, 2026-11-20): a secure-mode session
+     * first records a heartbeat gap up to the attempt's end and any pages
+     * that never reported (secure_mode::before_close()); then, if it counted
+     * a violation, was submitted automatically or has such a gap, it goes to
+     * review (at least `warn`) whatever its score. The score itself is
+     * unchanged; a `fail` still needs a reviewer. Only the closing fields are
+     * written, so the violation count a report has just stored is never
+     * overwritten from an older copy of the row.
+     *
+     * @param \stdClass $session a local_sentientia_proctor_sessions row
+     * @return \stdClass the stored session
+     */
+    public static function close_session(\stdClass $session): \stdClass {
+        global $DB;
+        $sessionid = (int) $session->id;
+
+        if (in_array($session->status, ['finished', 'flagged', 'reviewed'], true)) {
             return $session;  // idempotent
         }
 
-        $session->timefinished = time();
-        $session->timemodified = time();
+        $now = time();
+        secure_mode::before_close($session, $now);
+        $session->timefinished = $now;
+        $session->timemodified = $now;
 
-        // finalize() already validated ownership; pass skip_ownership=true.
+        // Internal write on the session being closed (skip_ownership).
         self::record_event($sessionid, 'session_end', 'info', [], true);
 
         // Run analyzer.
         $result = \local_sentientia_proctoring\analyzer\risk_analyzer::analyze($sessionid);
+        $decision = $result['decision'];
+        if ($decision === 'clean' && secure_mode::needs_review($session)) {
+            $decision = 'warn';
+        }
         $session->risk_score    = $result['risk_score'];
-        $session->auto_decision = $result['decision'];
+        $session->auto_decision = $decision;
 
-        if ($result['decision'] === 'clean') {
+        if ($decision === 'clean') {
             $session->status = 'finished';
         } else {
             $session->status = 'flagged';
@@ -336,7 +423,14 @@ class session_manager {
             notifier::session_flagged($session, self::flag_recipient($session));
         }
 
-        $DB->update_record('local_sentientia_proctor_sessions', $session);
+        $DB->update_record('local_sentientia_proctor_sessions', (object) [
+            'id'            => $sessionid,
+            'status'        => $session->status,
+            'risk_score'    => $session->risk_score,
+            'auto_decision' => $session->auto_decision,
+            'timefinished'  => $session->timefinished,
+            'timemodified'  => $session->timemodified,
+        ]);
         if ($session->status === 'flagged') {
             // Audit trail (decision A5, 2026-11-12), once the flag is stored. A clean session is not flagged, and an
             // already flagged or reviewed one returned above.

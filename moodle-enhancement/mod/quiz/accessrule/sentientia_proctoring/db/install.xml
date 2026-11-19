@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/quiz/accessrule/sentientia_proctoring/db" VERSION="20260512"
+<XMLDB PATH="mod/quiz/accessrule/sentientia_proctoring/db" VERSION="20261120"
        COMMENT="Airpay proctoring quiz access rule — per-quiz settings table">
   <TABLES>
     <TABLE NAME="quizaccess_sentientia_proctor"
@@ -16,6 +16,12 @@
         <FIELD NAME="retention_days_override" TYPE="int" LENGTH="6"
                NOTNULL="false"
                COMMENT="Recording retention override for this quiz (NULL = use site default)"/>
+        <FIELD NAME="securitylevel" TYPE="char" LENGTH="20" NOTNULL="false"
+               COMMENT="B2, ADR-038 D1: standard, secure or proctored. NULL = not set; a quiz with enabled = 1 and no level counts as proctored"/>
+        <FIELD NAME="purpose"      TYPE="char" LENGTH="20" NOTNULL="false"
+               COMMENT="B2, ADR-038 D1: compliance, skill, certification or hiring. Sets the lowest level; hiring attempts are submitted automatically at violationlimit"/>
+        <FIELD NAME="violationlimit" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="3"
+               COMMENT="B2, ADR-038 D6: hiring only, submit the attempt automatically at this many violations; 0 = never"/>
         <FIELD NAME="timecreated"  TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
       </FIELDS>

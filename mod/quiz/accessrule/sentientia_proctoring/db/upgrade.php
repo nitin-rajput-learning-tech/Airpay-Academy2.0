@@ -95,5 +95,24 @@ function xmldb_quizaccess_sentientia_proctoring_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026052401, 'quizaccess', 'sentientia_proctoring');
     }
 
+    if ($oldversion < 2026112001) {
+        // B2 "Secure assessment mode" (ADR-038 D1 and D6, post-demo plan B2, 2026-11-20): the per-quiz security level,
+        // the assessment purpose (which sets the lowest level and, for hiring, the auto-submit policy) and the
+        // violation limit. Additive and nullable: a quiz with no level behaves as before, and a quiz with
+        // enabled = 1 and no level is read as Proctored, so no row is rewritten here.
+        $table = new xmldb_table('quizaccess_sentientia_proctor');
+        $fields = [
+            new xmldb_field('securitylevel', XMLDB_TYPE_CHAR, '20', null, null, null, null, 'retention_days_override'),
+            new xmldb_field('purpose', XMLDB_TYPE_CHAR, '20', null, null, null, null, 'securitylevel'),
+            new xmldb_field('violationlimit', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '3', 'purpose'),
+        ];
+        foreach ($fields as $field) {
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+        }
+        upgrade_plugin_savepoint(true, 2026112001, 'quizaccess', 'sentientia_proctoring');
+    }
+
     return true;
 }

@@ -1,0 +1,111 @@
+/* local_sentientia_proctoring (B2 "Secure assessment mode", ADR-038 D3, 2026-11-20).
+ *
+ * Everything here is scoped to classes that only local_sentientia_proctoring/secure_mode and the integrity report add,
+ * so no other page changes. Colours, spacing and radii come from the theme tokens (theme/sentientia _tokens.scss),
+ * with the Brand Book 2026-06 values as fallbacks for other themes.
+ */
+
+/* The fullscreen gate: the questions stay hidden (and out of the tab order, see secure_mode.js) until the page is in
+   fullscreen. The access rule adds the class on the server, so they are hidden from the first paint and stay hidden
+   when the script does not run. Layout is kept (visibility, not display) so the rich-text editor sizes itself. */
+body.sentientia-secure-gated #responseform {
+    visibility: hidden !important;
+}
+
+.sentientia-secure-gate {
+    position: fixed;
+    inset: 0;
+    z-index: 1090;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--ap-space-4, 16px);
+    background: var(--ap-color-bg-body, #f2f4fb);
+}
+
+.sentientia-secure-gate[hidden] {
+    display: none;
+}
+
+.sentientia-secure-gate__card {
+    width: 100%;
+    max-width: 32rem;
+    padding: var(--ap-space-6, 24px);
+    text-align: center;
+    color: var(--ap-color-text-primary, #1a1a2e);
+    background: var(--ap-color-bg-surface, #fff);
+    border: 1px solid var(--ap-color-border, #e2e6ef);
+    border-radius: var(--ap-radius-md, 12px);
+    box-shadow: var(--ap-shadow-md, 0 8px 24px rgba(0, 51, 102, 0.08));
+}
+
+.sentientia-secure-gate__title {
+    margin: 0 0 var(--ap-space-3, 12px);
+    font-size: var(--ap-text-xl, 1.25rem);
+    font-weight: var(--ap-weight-bold, 700);
+}
+
+.sentientia-secure-gate__body {
+    margin-bottom: var(--ap-space-4, 16px);
+    color: var(--ap-color-text-secondary, #5a6070);
+}
+
+.sentientia-secure-gate__warning {
+    margin-bottom: var(--ap-space-4, 16px);
+    font-weight: var(--ap-weight-semibold, 600);
+    color: var(--ap-color-danger, #dc2626);
+}
+
+.sentientia-secure-gate__warning:empty {
+    display: none;
+}
+
+/* The candidate watermark: a fixed layer above the page and below the gate; it never takes a click. */
+.sentientia-secure-watermark {
+    position: fixed;
+    inset: 0;
+    z-index: 1080;
+    pointer-events: none;
+    background-repeat: repeat;
+}
+
+/* Text in the questions cannot be selected (copying is blocked anyway); answers can still be edited and selected. */
+body.sentientia-secure-active #responseform {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+body.sentientia-secure-active #responseform input,
+body.sentientia-secure-active #responseform textarea,
+body.sentientia-secure-active #responseform select,
+body.sentientia-secure-active #responseform [contenteditable="true"] {
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+/* The secure-mode banner turns to a warning after a counted violation. */
+.sentientia-secure-banner {
+    margin-bottom: var(--ap-space-4, 16px);
+}
+
+/* Printing a secure attempt page gives a blank page. */
+@media print {
+    body.sentientia-secure-active {
+        display: none !important;
+    }
+}
+
+/* The integrity report on the attempt review page. */
+.sentientia-integrity .sentientia-integrity__facts dd {
+    margin-bottom: var(--ap-space-2, 8px);
+}
+
+.sentientia-integrity .sentientia-integrity__event--critical td {
+    font-weight: var(--ap-weight-semibold, 600);
+}
+
+@media (max-width: 590px) {
+    .sentientia-secure-gate__card {
+        padding: var(--ap-space-4, 16px);
+    }
+}

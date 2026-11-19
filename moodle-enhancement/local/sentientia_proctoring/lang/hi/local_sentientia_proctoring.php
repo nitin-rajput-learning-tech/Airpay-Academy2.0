@@ -128,3 +128,148 @@ $string['privacy:metadata:logstore']                        ='फ़्लैग
 // Decision A5 (2026-11-12): प्लेटफ़ॉर्म के ऑडिट लॉग में सूचीबद्ध दो ऑडिट इवेंट।
 $string['eventsessionflagged']  = 'प्रॉक्टर्ड सत्र समीक्षा के लिए फ़्लैग किया गया';
 $string['eventreviewsubmitted'] = 'प्रॉक्टरिंग समीक्षा सबमिट की गई';
+
+// B1 "Fix the foundation" (ADR-038 D2, 2026-11-20).
+// प्रॉक्टर किए गए खुले प्रयास के हर पेज पर मॉनिटर द्वारा दिखाया जाने वाला बैनर।
+$string['monitor_notice'] = 'यह प्रयास प्रॉक्टर किया जा रहा है: किसी दूसरे टैब या विंडो पर जाना, फ़ुलस्क्रीन छोड़ना और टेक्स्ट पेस्ट करना दर्ज किया जाता है।';
+$string['error_event_type'] = 'यह इवेंट ब्राउज़र से रिपोर्ट नहीं किया जा सकता।';
+// B1 review (2026-11-20): sentientia.proctoring.recording.enabled बंद होने पर upload_chunk मना कर देता है।
+$string['error_recording_disabled'] = 'आपके संगठन के लिए रिकॉर्डिंग चालू नहीं है।';
+// सर्वर और मॉनिटर द्वारा दर्ज इवेंट, जैसे समीक्षक उन्हें देखते हैं।
+$string['event_page_shown']         = 'क्विज़ पेज खोला गया';
+$string['event_window_focus']       = 'विंडो पर फ़ोकस वापस आया';
+$string['event_consent_given']      = 'शिक्षार्थी ने निगरानी के लिए सहमति दी';
+$string['event_identity_confirmed'] = 'शिक्षार्थी ने पुष्टि की कि वह प्रयास स्वयं कर रहा है';
+$string['event_attempt_linked']     = 'क्विज़ प्रयास से जोड़ा गया';
+$string['event_attempt_submitted']  = 'प्रयास सबमिट किया गया';
+$string['event_attempt_abandoned']  = 'प्रयास छोड़ दिया गया';
+$string['event_attempt_overdue']    = 'प्रयास का समय समाप्त';
+// शेड्यूल्ड टास्क।
+$string['task_purge_old_recordings'] = 'प्रॉक्टरिंग: अवधारण तिथि बीत चुकी रिकॉर्डिंग हटाएँ';
+// सेटिंग्स शीर्षक।
+$string['settings_h_store']      = 'रिकॉर्डिंग संग्रहण (AWS S3)';
+$string['settings_h_store_desc'] = 'अवधारण तिथि बीत चुकी रिकॉर्डिंग हटाने वाला दैनिक टास्क इनका उपयोग करता है। पहचान फ़ोटो अब किसी प्रदाता को नहीं भेजे जाते (निर्णय D10: ID से चेहरे का स्वचालित मिलान नहीं)।';
+$string['settings_h_rec']        = 'रिकॉर्डिंग';
+$string['settings_h_rev']        = 'समीक्षा कतार';
+// सूचनाएँ (प्राप्तकर्ता की भाषा में भेजी जाती हैं)।
+$string['msg_flagged_subject'] = 'प्रॉक्टर्ड सत्र फ़्लैग किया गया: {$a->decision} (जोखिम {$a->score})';
+$string['msg_flagged_body'] = 'एक प्रॉक्टर्ड क्विज़ सत्र समीक्षा के लिए फ़्लैग किया गया है।
+
+सत्र ID: {$a->sessionid}
+यूज़र ID: {$a->userid}
+क्विज़ ID: {$a->quizid}
+जोखिम स्कोर: {$a->score}/100
+स्वचालित निर्णय: {$a->decision}
+
+सत्र देखने और निर्णय दर्ज करने के लिए प्रॉक्टरिंग समीक्षा कतार खोलें।';
+$string['msg_reviewed_subject'] = 'आपके प्रॉक्टर्ड क्विज़ प्रयास की समीक्षा हो गई';
+$string['msg_reviewed_body'] = 'एक समीक्षक ने आपके प्रॉक्टर्ड क्विज़ प्रयास को देख लिया है।
+
+निर्णय: {$a->decision}
+
+प्रॉक्टर्ड क्विज़ पूरी करने के लिए धन्यवाद।';
+$string['msg_reviewed_body_fail'] = 'एक समीक्षक ने आपके प्रॉक्टर्ड क्विज़ प्रयास को देख लिया है।
+
+निर्णय: {$a->decision}
+
+समीक्षक को ऐसी गतिविधि मिली जो इस क्विज़ के नियमों का उल्लंघन करती है, इसलिए इस प्रयास का परिणाम मान्य नहीं भी हो सकता है। यदि आपको लगता है कि यह गलती है, तो कृपया अपनी L&D टीम से संपर्क करें।';
+$string['msg_identityfailed_subject'] = 'पहचान सत्यापन विफल';
+$string['msg_identityfailed_body'] = 'इस प्रॉक्टर्ड क्विज़ के लिए आपका पहचान सत्यापन पास नहीं हुआ।
+
+मैच स्कोर: {$a->score}%
+
+कृपया अपना चेहरा बीच में और अच्छी रोशनी में रखकर फिर से प्रयास करें। यदि यह बार-बार विफल हो, तो अपनी L&D टीम से संपर्क करें।';
+// गोपनीयता फ़ील्ड।
+$string['privacy:metadata:sessions:userid']           = 'वह शिक्षार्थी जिसका प्रयास प्रॉक्टर किया गया';
+$string['privacy:metadata:sessions:quizid']           = 'प्रॉक्टर की गई क्विज़';
+$string['privacy:metadata:sessions:attemptid']        = 'वह क्विज़ प्रयास जिससे सत्र जुड़ा है';
+$string['privacy:metadata:sessions:status']           = 'सत्र अपने जीवन-चक्र में कहाँ है';
+$string['privacy:metadata:sessions:consent_given_at'] = 'शिक्षार्थी ने क्विज़ की प्रारंभ-पूर्व जाँच में निगरानी के लिए कब सहमति दी';
+$string['privacy:metadata:sessions:risk_score']       = 'दर्ज इवेंट से निकाला गया स्कोर';
+$string['privacy:metadata:sessions:auto_decision']    = 'उस स्कोर से स्वचालित निर्णय';
+$string['privacy:metadata:sessions:human_decision']   = 'समीक्षक का निर्णय';
+$string['privacy:metadata:sessions:timestarted']      = 'निगरानी कब शुरू हुई';
+$string['privacy:metadata:sessions:timefinished']     = 'सर्वर ने सत्र कब बंद किया';
+$string['privacy:metadata:events:event_type']         = 'क्या हुआ (जैसे टैब बदलना, पेस्ट, सहमति देना, प्रयास सबमिट होना)';
+$string['privacy:metadata:events:severity']           = 'स्कोर में इवेंट कितना गिना जाता है';
+$string['privacy:metadata:events:payload_json']       = 'इवेंट का विवरण, जैसे क्विज़ पेज नंबर और, सिक्योर मोड में, वह नेटवर्क (IP) पता जिससे हर क्विज़ पेज माँगा गया';
+$string['privacy:metadata:events:timecreated']        = 'सर्वर ने इवेंट कब दर्ज किया';
+
+// B2 "Secure assessment mode" (ADR-038 D3 और D6, 2026-11-20)।
+// प्रयास के पेजों पर (local_sentientia_proctoring/secure_mode), शिक्षार्थी की भाषा में।
+$string['secure_banner'] = 'सिक्योर मोड: कॉपी, पेस्ट और प्रिंट रोके गए हैं, और फ़ुलस्क्रीन या यह पेज छोड़ना दर्ज होता है।';
+$string['secure_banner_count'] = 'दर्ज उल्लंघन: {$a}।';
+$string['secure_banner_limit'] = 'दर्ज उल्लंघन: {$a->limit} में से {$a->count}। {$a->limit} पर आपका प्रयास अपने आप सबमिट हो जाता है।';
+$string['secure_gate_title'] = 'फ़ुलस्क्रीन आवश्यक';
+$string['secure_gate_body'] = 'प्रश्न केवल फ़ुलस्क्रीन में दिखाए जाते हैं। जारी रखने के लिए बटन चुनें।';
+$string['secure_gate_returned'] = 'आपने फ़ुलस्क्रीन छोड़ दी, इसलिए प्रश्न छिपा दिए गए हैं। यह दर्ज किया गया।';
+$string['secure_gate_denied'] = 'आपका ब्राउज़र फ़ुलस्क्रीन में नहीं गया। फिर से प्रयास करें। यदि यह विफल होता रहे, तो किसी अद्यतन डेस्कटॉप ब्राउज़र का उपयोग करें या अपनी L&D टीम से संपर्क करें।';
+$string['secure_gate_button'] = 'फ़ुलस्क्रीन में जारी रखें';
+$string['secure_warning_flag'] = 'उल्लंघन {$a} दर्ज: आपने फ़ुलस्क्रीन या यह पेज छोड़ा। आपका प्रयास एक समीक्षक के लिए चिह्नित किया जाएगा।';
+$string['secure_warning_limit'] = '{$a->limit} में से उल्लंघन {$a->count} दर्ज: आपने फ़ुलस्क्रीन या यह पेज छोड़ा। {$a->limit} पर आपका प्रयास अपने आप सबमिट हो जाता है।';
+$string['secure_autosubmitted_title'] = 'आपका प्रयास सबमिट हो गया';
+$string['secure_autosubmitted_body'] = 'आपका प्रयास {$a} उल्लंघनों तक पहुँच गया, इसलिए उस क्षण तक सहेजे गए उत्तरों के साथ इसे अपने आप सबमिट कर दिया गया। एक समीक्षक इसे देखेगा।';
+$string['secure_continue'] = 'जारी रखें';
+$string['secure_blocked'] = 'इस मूल्यांकन के दौरान इसकी अनुमति नहीं है।';
+$string['secure_watermark'] = '{$a->name} · प्रयास {$a->attempt}';
+// सिक्योर मोड के इवेंट, जैसे समीक्षक उन्हें देखते हैं।
+$string['event_page_served']             = 'सर्वर ने क्विज़ पेज भेजा';
+$string['event_heartbeat_gap']           = 'पेज ने रिपोर्ट करना बंद कर दिया';
+$string['event_monitor_missing']         = 'पेज जिन्होंने कभी रिपोर्ट नहीं किया';
+$string['event_rate_limited']            = 'बहुत अधिक रिपोर्ट: कुछ संग्रहीत नहीं हुईं';
+$string['event_integrity_autosubmitted'] = 'प्रयास अपने आप सबमिट हुआ (उल्लंघन सीमा)';
+$string['event_secure_rules_accepted']   = 'शिक्षार्थी ने सिक्योर मोड के नियम स्वीकार किए';
+$string['event_fullscreen_enter']        = 'फ़ुलस्क्रीन में गया';
+$string['event_fullscreen_unavailable']  = 'ब्राउज़र में फ़ुलस्क्रीन नहीं है (प्रश्न छिपाए नहीं गए)';
+$string['event_fullscreen_denied']       = 'ब्राउज़र ने फ़ुलस्क्रीन से इनकार किया';
+$string['event_file_dialog']             = 'फ़ाइल चुनने वाला खुला (गिना नहीं गया)';
+$string['event_copy_blocked']            = 'कॉपी रोकी गई';
+$string['event_cut_blocked']             = 'कट रोका गया';
+$string['event_paste_blocked']           = 'पेस्ट रोका गया';
+$string['event_contextmenu_blocked']     = 'राइट-क्लिक रोका गया';
+$string['event_print_blocked']           = 'प्रिंट रोका गया';
+$string['event_shortcut_blocked']        = 'कीबोर्ड शॉर्टकट रोका गया';
+$string['event_drop_blocked']            = 'ड्रैग और ड्रॉप रोका गया';
+$string['event_screenshot_key']          = 'Print Screen कुंजी दबाई गई (रोकी नहीं जा सकती)';
+$string['event_extended_display']        = 'एक दूसरा डिस्प्ले जुड़ा है (जैसा ब्राउज़र बताता है)';
+$string['event_ip_changed']              = 'दो पेजों के बीच नेटवर्क पता बदल गया';
+// क्विज़ प्रयास समीक्षा पेज पर इंटीग्रिटी रिपोर्ट (शिक्षक)।
+$string['report_title'] = 'इंटीग्रिटी रिपोर्ट';
+$string['report_level'] = 'सुरक्षा स्तर';
+$string['report_policy'] = 'उल्लंघन होने पर';
+$string['report_policy_warn'] = 'चेतावनी और समीक्षा के लिए चिह्न';
+$string['report_policy_autosubmit'] = '{$a} उल्लंघनों पर अपने आप सबमिट';
+$string['report_violations'] = 'गिने गए उल्लंघन';
+$string['report_violations_of'] = '{$a->limit} में से {$a->count}';
+$string['report_autosubmitted'] = 'अपने आप सबमिट हुआ';
+$string['report_status'] = 'समीक्षा स्थिति';
+$string['report_verdict_auto'] = 'स्वचालित निर्णय';
+$string['report_verdict_human'] = 'समीक्षक का निर्णय';
+$string['report_gaps'] = 'हार्टबीट अंतराल';
+$string['report_unmonitored'] = 'पेज जिन्होंने कभी रिपोर्ट नहीं किया';
+$string['report_counts'] = 'इवेंट';
+$string['report_timeline'] = 'समयरेखा (सर्वर समय)';
+$string['report_timeline_truncated'] = '{$a->total} में से सबसे नए {$a->shown} इवेंट दिखाए जा रहे हैं।';
+$string['report_col_time'] = 'समय';
+$string['report_col_event'] = 'इवेंट';
+$string['report_col_page'] = 'पेज';
+$string['report_col_note'] = 'विवरण';
+$string['report_counted'] = 'उल्लंघन के रूप में गिना गया';
+$string['report_counted_grace_exceeded'] = 'उल्लंघन के रूप में गिना गया: पेज खुलने के {$a} सेकंड के भीतर विंडो से फ़ोकस हटा और उन्हीं सेकंड में वापस नहीं आया';
+$string['report_notcounted_duplicate'] = 'नहीं गिना गया: पिछले उल्लंघन के {$a} सेकंड के भीतर';
+$string['report_notcounted_grace'] = 'नहीं गिना गया: पेज खुलने के {$a} सेकंड के भीतर';
+$string['report_note_gap'] = '{$a} सेकंड तक कोई रिपोर्ट नहीं';
+$string['report_note_missing'] = '{$a->served} पेज भेजे गए, {$a->shown} ने रिपोर्ट किया';
+$string['report_note_autosubmitted'] = '{$a->limit} में से {$a->violations} उल्लंघनों पर';
+$string['report_note_ip'] = '{$a->from} से {$a->to} तक';
+$string['report_summarypage'] = 'सारांश';
+$string['report_none'] = 'कोई इवेंट दर्ज नहीं।';
+$string['report_open'] = 'प्रॉक्टरिंग पेजों में खोलें';
+$string['report_limits'] = 'ये रिकॉर्ड शिक्षार्थी के ब्राउज़र से आते हैं; हर समय हमारे सर्वर का है। फ़ुलस्क्रीन या पेज छोड़ना गिना जाता है; रोके गए कॉपी, पेस्ट और प्रिंट प्रयास सूचीबद्ध होते हैं लेकिन गिने नहीं जाते। पेज दूसरे उपकरण, दूसरे व्यक्ति या कंप्यूटर के अपने टूल से लिए गए स्क्रीनशॉट को नहीं देख सकता, और बदला हुआ ब्राउज़र इसे रोक सकता है: तब हार्टबीट का अंतराल, या ऐसा पेज जिसने कभी रिपोर्ट नहीं किया, ही निशान होता है। निर्णय समीक्षक करता है; स्वचालित निर्णय केवल समीक्षा कतार का क्रम तय करता है।';
+// गोपनीयता फ़ील्ड (B2)।
+$string['privacy:metadata:sessions:securitylevel']     = 'जब शिक्षार्थी ने क्विज़ के नियम स्वीकार किए, तब उसका सुरक्षा स्तर';
+$string['privacy:metadata:sessions:violationlimit']    = 'उल्लंघनों की वह संख्या जिस पर प्रयास अपने आप सबमिट होता है (भर्ती मूल्यांकन)';
+$string['privacy:metadata:sessions:violations']        = 'सर्वर ने कितने उल्लंघन गिने';
+$string['privacy:metadata:sessions:lastviolation']     = 'पिछला उल्लंघन कब गिना गया';
+$string['privacy:metadata:sessions:lastheartbeat']     = 'प्रयास के पेज ने आख़िरी बार सर्वर को कब रिपोर्ट किया';
+$string['privacy:metadata:sessions:timeautosubmitted'] = 'सीमा तक पहुँचने के कारण सर्वर ने प्रयास कब सबमिट किया';

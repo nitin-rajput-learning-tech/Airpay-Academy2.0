@@ -14,6 +14,12 @@ use core_external\external_value;
 /**
  * Register a recording chunk that was uploaded directly to S3 by the
  * browser (using a pre-signed URL). We never see the bytes server-side.
+ *
+ * B1 review (2026-11-20): refused (error_recording_disabled) while
+ * sentientia.proctoring.recording.enabled is OFF for the caller's organisation.
+ * Recording arrives with B4 (ADR-038 D5); until then nothing records, and the
+ * call let any learner attach an object key of their choice to their own active
+ * session, which the retention purge and an erasure request then delete.
  */
 class upload_chunk extends external_api {
     public static function execute_parameters(): external_function_parameters {
@@ -38,8 +44,12 @@ class upload_chunk extends external_api {
         $ctx = \context_system::instance();
         self::validate_context($ctx);
         require_capability('local/sentientia_proctoring:attempt', $ctx);
+        if (!\local_sentientia_platform\feature_flags::is_enabled(
+                \local_sentientia_proctoring\quiz_integration::RECORDING_FLAG)) {
+            throw new \moodle_exception('error_recording_disabled', 'local_sentientia_proctoring');
+        }
 
-        $id = \local_sentientia_proctoring\session_manager::register_chunk(
+        $id =\local_sentientia_proctoring\session_manager::register_chunk(
             (int) $params['sessionid'], (string) $params['kind'],
             (int) $params['chunk_idx'], (string) $params['s3_key'],
             (int) $params['size_bytes'], (int) $params['duration_ms']);
