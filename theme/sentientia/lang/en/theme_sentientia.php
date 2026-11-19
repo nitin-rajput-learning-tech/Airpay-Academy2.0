@@ -250,6 +250,11 @@ $string['nav_home']       = 'Home';
 $string['a11y_search']    = 'Search courses, people, content';
 $string['a11y_usermenu']  = 'User menu';
 $string['a11y_mobilemenu'] = 'Mobile menu';
+// Phase C 2026-11-19 (V8-F): mobile bottom-nav aria-label and labels (templates/mobile_bottom_nav.mustache; were hard-coded English). Home reuses nav_home.
+$string['a11y_mobilenav'] = 'Primary mobile navigation';
+$string['mobilenav_mylearning'] = 'My Learning';
+$string['mobilenav_search'] = 'Search';
+$string['mobilenav_me'] = 'Me';
 
 // P0 #4 follow-up (2026-05-24, chip-B) — footer i18n.
 $string['footer_privacy']   = 'Privacy';
@@ -262,6 +267,7 @@ $string['footer_private_notice'] = 'Private &amp; confidential &middot; For auth
 // B10/F-065 stabilization fix (2026-05-28) — i18n the 6 hardcoded English
 // secondary labels the F-13 sweep missed on dashboard.mustache.
 $string['dash_dark_mode_label']        = 'Dark Mode';
+$string['dash_light_mode_label']       = 'Light Mode'; // Phase C 2026-11-19 (PB-5): the sidebar toggle label in dark mode; the shell JS swaps it with dash_dark_mode_label.
 $string['dash_toggle_theme']           = 'Toggle theme';
 $string['dash_profile_settings']       = 'Profile &amp; Settings';
 $string['dash_overall_completion']     = 'Overall Completion';
@@ -437,6 +443,7 @@ $string['dash_sec_system_health'] = 'System Health';
 $string['dash_sec_user_analytics'] = 'User Analytics';
 $string['dash_sec_compliance_overview'] = 'Compliance Overview';
 $string['dash_sec_my_team'] = 'My Team';
+$string['dash_sec_teaching'] = 'Courses you teach'; // Phase C V16 (2026-11-19): courses the user teaches, apart from the learner figures.
 $string['dash_sec_team_compliance'] = 'Team Compliance';
 $string['dash_sec_activity_timeline'] = 'Activity Timeline';
 $string['dash_sec_recent_achievements'] = 'Recent Achievements';

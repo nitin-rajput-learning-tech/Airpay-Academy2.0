@@ -44,6 +44,12 @@ $format = optional_param('format', 'xlsx', PARAM_ALPHA);
 $engine = \local_sentientia_compliance_report\compliance_engine::class;
 $matrix = $engine::get_compliance_matrix($orgpath, 0, 10000, $scope->userids); // All employees in scope.
 $kpis = $engine::get_summary_kpis($orgpath, $scope->userids);
+// The rate the page prints: rounded once from the counts, as index.php does.
+// The export wrote the engine's one-decimal figure (71.9%) beside the page's
+// 72% (V11, 11-18 surface walk).
+$rate = ((int) ($kpis['total'] ?? 0)) > 0
+    ? (int) round(((int) $kpis['completed']) / ((int) $kpis['total']) * 100)
+    : 0;
 
 // CSV export option.
 if ($format === 'csv') {
@@ -65,13 +71,16 @@ if ($format === 'csv') {
     // fullname / designation / courses, each course having status_label). C-005:
     // the previous code read array keys (`empid`, `statuses`, `$course['shortname']`)
     // that never existed and fatally errored on the object-as-array access.
+    // Name, designation and Department are the unescaped (_plain) values: a
+    // file is not HTML. Department is the org unit's name, as on the page; it
+    // was the raw org path until 2026-11-18 (V11).
     foreach ($matrix['rows'] as $r) {
         $csvrow = [
             $r['employee_id'],
             $r['email'],
-            $r['fullname'],
-            $r['designation'],
-            $r['department'],
+            $r['fullname_plain'],
+            $r['designation_plain'],
+            $r['department_name_plain'],
         ];
         foreach ($r['courses'] as $cs) {
             $csvrow[] = $cs['status_label'];
@@ -87,7 +96,7 @@ if ($format === 'csv') {
     fputcsv($output, ['Overdue', $kpis['overdue'] ?? 0], ',', '"', '\\');
     fputcsv($output, ['Not Enrolled', $kpis['not_enrolled'] ?? 0], ',', '"', '\\');
     fputcsv($output, ['Exempted', $kpis['exempted'] ?? 0], ',', '"', '\\');
-    fputcsv($output, ['Compliance Rate', ($kpis['compliance_rate'] ?? 0) . '%'], ',', '"', '\\');
+    fputcsv($output, ['Compliance Rate', $rate . '%'], ',', '"', '\\');
     fputcsv($output, ['Generated', date('d M Y H:i')], ',', '"', '\\');
 
     fclose($output);
@@ -123,9 +132,10 @@ foreach ($matrix['rows'] as $r) {
     $col = 0;
     $sheet1->write($row, $col++, $r['employee_id'], $format_default);
     $sheet1->write($row, $col++, $r['email'], $format_default);
-    $sheet1->write($row, $col++, $r['fullname'], $format_default);
-    $sheet1->write($row, $col++, $r['designation'], $format_default);
-    $sheet1->write($row, $col++, $r['department'], $format_default);
+    // Unescaped values, and the org unit's name under Department (V11; see the CSV branch).
+    $sheet1->write($row, $col++, $r['fullname_plain'], $format_default);
+    $sheet1->write($row, $col++, $r['designation_plain'], $format_default);
+    $sheet1->write($row, $col++, $r['department_name_plain'], $format_default);
 
     foreach ($r['courses'] as $cs) {
         $fmt = ($cs['status'] === 'completed') ? $format_completed :
@@ -151,7 +161,7 @@ $sheet2->write(4, 1, $kpis['not_enrolled']);
 $sheet2->write(5, 0, 'Exempted');
 $sheet2->write(5, 1, $kpis['exempted']);
 $sheet2->write(6, 0, 'Compliance Rate');
-$sheet2->write(6, 1, $kpis['compliance_rate'] . '%');
+$sheet2->write(6, 1, $rate . '%');
 $sheet2->write(7, 0, 'Report Date');
 $sheet2->write(7, 1, date('Y-m-d H:i'));
 

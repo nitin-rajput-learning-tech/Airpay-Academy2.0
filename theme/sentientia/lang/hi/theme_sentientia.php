@@ -178,6 +178,11 @@ $string['nav_home']       = 'होम';
 $string['a11y_search']    = 'कोर्स, लोग, कंटेंट खोजें';
 $string['a11y_usermenu']  = 'यूज़र मेनू';
 $string['a11y_mobilemenu'] = 'मोबाइल मेनू';
+// Phase C 2026-11-19 (V8-F): मोबाइल बॉटम-नेव का aria-label और लेबल (templates/mobile_bottom_nav.mustache; पहले हार्ड-कोडेड अंग्रेज़ी थे)। Home के लिए nav_home इस्तेमाल होता है।
+$string['a11y_mobilenav'] = 'मुख्य मोबाइल नेविगेशन';
+$string['mobilenav_mylearning'] = 'मेरी लर्निंग';
+$string['mobilenav_search'] = 'खोजें';
+$string['mobilenav_me'] = 'मैं';
 
 // P0 #4 फ़ॉलो-अप (2026-05-24, chip-B) — फ़ुटर i18n।
 $string['footer_privacy']   = 'प्राइवेसी';
@@ -205,6 +210,7 @@ $string['kpi_total_assigned']      = 'टोटल असाइन्ड';
 
 // B10/F-065 dash i18n (2026-05-28)
 $string['dash_dark_mode_label']    = 'डार्क मोड';
+$string['dash_light_mode_label']   = 'लाइट मोड'; // Phase C 2026-11-19 (PB-5): डार्क मोड में साइडबार टॉगल का लेबल; शेल JS इसे dash_dark_mode_label से बदलता है।
 $string['dash_toggle_theme']           = 'थीम बदलें';
 $string['dash_profile_settings']   = 'प्रोफ़ाइल और सेटिंग्स';
 $string['dash_overall_completion'] = 'कुल पूर्णता';
@@ -361,6 +367,7 @@ $string['dash_sec_system_health'] = 'सिस्टम हेल्थ';
 $string['dash_sec_user_analytics'] = 'यूज़र एनालिटिक्स';
 $string['dash_sec_compliance_overview'] = 'कम्प्लायंस ओवरव्यू';
 $string['dash_sec_my_team'] = 'मेरी टीम';
+$string['dash_sec_teaching'] = 'आप जो कोर्स पढ़ाते हैं'; // Phase C V16 (2026-11-19): उपयोगकर्ता जो कोर्स पढ़ाता है, सीखने के आँकड़ों से अलग।
 $string['dash_sec_team_compliance'] = 'टीम कम्प्लायंस';
 $string['dash_sec_activity_timeline'] = 'गतिविधि टाइमलाइन';
 $string['dash_sec_recent_achievements'] = 'हाल की उपलब्धियाँ';

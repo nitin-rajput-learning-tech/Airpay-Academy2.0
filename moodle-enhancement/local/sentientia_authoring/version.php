@@ -95,10 +95,17 @@ $plugin->component = 'local_sentientia_authoring';
 // when that role has no system-context role_capabilities row for ANY of the
 // three (the gap's signature; one row of any permission means an admin set
 // it: nothing granted). No schema/flag change.
-$plugin->version   = 2026111600;  // Fresh-install author caps + guarded back-fill step
+// 2026111800 — Phase C surface-walk fixes (V17, 2026-11-18). studio.php: the
+// token-usage line shows only in live mode (number-formatted), Cancel goes to the
+// drafts list, a "My drafts" button sits beside Templates, and only a site
+// administrator (moodle/site:config) sees or can submit the Model field; everyone
+// else generates with the configured default model. index.php: the primary button
+// reads "Generate a module" and draft statuses show translated labels. Preview-mode
+// and confirm copy reworded (lang). No schema/flag/capability change.
+$plugin->version   = 2026111800;  // V17 studio copy, admin-only model, drafts entry point
 $plugin->requires  = 2024100700;          // Moodle 4.5+
 $plugin->maturity  = MATURITY_ALPHA;      // MVP — prod sign-off before any flag flips
-$plugin->release   = '0.3.1-alpha';
+$plugin->release   = '0.3.2-alpha';
 $plugin->dependencies = [
     // feature_flags resolver + tenant + customer scope, the ADR-031
     // tenant::is_cross_tenant() authority, and (2026111200) customer::of_tenant()
@@ -120,3 +127,5 @@ $plugin->dependencies = [
 // 0.3.1-alpha  A fresh install now gives the Sentientia Author role this
 //              plugin's three caps itself; a guarded upgrade step back-fills
 //              sites installed with the gap (2026-11-16).
+// 0.3.2-alpha  Studio: token line in live mode only, admin-only model field,
+//              "My drafts" entry point, translated draft statuses (2026-11-18).

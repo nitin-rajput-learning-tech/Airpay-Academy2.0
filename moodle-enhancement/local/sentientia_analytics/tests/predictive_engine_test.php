@@ -291,4 +291,56 @@ final class predictive_engine_test extends \advanced_testcase {
         $this->assertIsArray($result,
             'get_skill_gap_projection must return array even without skillsai');
     }
+
+    // ── 10. Skill-gap names are formatted once, escaped once (PB-3) ──
+
+    /**
+     * Team and skill names reach predictive_skillgap.mustache unescaped, so the
+     * template's {{ }} escapes "&" once. Before PB-3 format_string() escaped it as
+     * well and the card printed a literal "&amp;".
+     */
+    public function test_skillgap_names_not_pre_escaped(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->ensure_bizlms_schema();
+
+        $teampath = '/1/90001/90002';
+        $DB->insert_record('local_sentientia_org', (object) [
+            'fullname' => 'Human Resources & Admin', 'shortname' => 'pb3team',
+            'parentid' => 0, 'path' => $teampath, 'depth' => 3, 'visible' => 1,
+            'sortorder' => 0, 'timecreated' => time(), 'timemodified' => time(),
+        ]);
+        $cat    = $this->getDataGenerator()->create_category(['name' => 'Safety & Risk']);
+        $course = $this->getDataGenerator()->create_course(['category' => $cat->id]);
+        $user   = $this->user_at_path($teampath);
+        $this->getDataGenerator()->enrol_user($user->id, $course->id);
+
+        predictive_engine::invalidate_caches();
+        $result = predictive_engine::get_skill_gap_projection('/1', true);
+
+        $teams = array_values(array_filter($result,
+            fn($r) => $r['team_path'] === $teampath));
+        $this->assertCount(1, $teams);
+        $this->assertSame('Human Resources & Admin', $teams[0]['team_name']);
+        $this->assertSame(['Safety & Risk'],
+            array_column($teams[0]['skill_gaps'], 'skill_name'));
+
+        // The template escapes once: one "&amp;" in the HTML, never "&amp;amp;".
+        $html = $this->render_skillgap($teams);
+        $this->assertStringContainsString('Human Resources &amp; Admin', $html);
+        $this->assertStringContainsString('Safety &amp; Risk', $html);
+        $this->assertStringNotContainsString('&amp;amp;', $html);
+    }
+
+    /**
+     * Render predictive_skillgap.mustache with the given rows.
+     */
+    private function render_skillgap(array $rows): string {
+        global $OUTPUT;
+        return $OUTPUT->render_from_template('local_sentientia_analytics/predictive_skillgap', [
+            'skillgap_description' => '',
+            'has_skillgaps'        => true,
+            'skillgaps'            => $rows,
+        ]);
+    }
 }

@@ -63,8 +63,8 @@ Coming Soon" button. With `sentientia.catalog.storefront_checkout.enabled` ON
 With `sentientia.request.catalog_button` ON, a course card (`course_card.mustache`) and `course.php` show
 **Request enrolment** (or **Request pending**) in place of Enroll for a learner whose only way in is a request:
 a free course the one-click route does not enrol at once, not enrolled, in their tenant scope. An enabled
-self-enrolment instance (open or keyed) is not a way in: the theme sends `/enrol/index.php` to `/my`, so the learner
-cannot reach it.
+self-enrolment instance (open or keyed) is not a way in: the theme never renders `/enrol/index.php` (since
+2026-11-18 it sends it to the catalogue course page, before that to `/my`), so the learner cannot reach it.
 The rule lives in `\local_sentientia_request\catalog_cta`; this plugin adds its own routes first
 (`enrolment::request_state()`: a paid course goes to the cart, a free course offered one-click enrolment is
 enrolled at once) and marks the cards after the cached lists are read (`catalog_manager::with_request_offers()`,

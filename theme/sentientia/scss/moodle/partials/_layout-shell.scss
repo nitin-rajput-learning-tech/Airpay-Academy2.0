@@ -828,6 +828,32 @@ body.ap-course-shell .ap-shell__breadcrumbs {
 .ap-shell__breadcrumbs ~ #page #page-navbar {
     display: none;
 }
+/* 2026-11-18 surface walk V15: below 576px core.scss gives each crumb flex-grow: 1, which spread a short trail
+   across the whole width (member.php at 390px). The crumbs sit left-aligned at their own width instead. */
+@media (max-width: 575.98px) {
+    .ap-shell__breadcrumbs .breadcrumb:not(:empty) .breadcrumb-item {
+        flex-grow: 0;
+        min-width: 0;
+    }
+}
+
+/* ── 2026-11-18 surface walk V3: visible page title ──
+   airpay_shell_start() prints the page's h1 as this visible title on shell pages that print no title of their own
+   (core_renderer::shell_visible_title()); every other page keeps the screen-reader-only h1. */
+.ap-shell__title {
+    margin: 0 0 var(--ap-space-4);
+    font-family: var(--ap-font-family);
+    font-size: var(--ap-text-2xl);
+    font-weight: var(--ap-weight-bold);
+    line-height: var(--ap-leading-tight);
+    color: var(--ap-color-text-primary);
+}
+@media (max-width: 590px) {
+    .ap-shell__title {
+        font-size: var(--ap-text-xl);
+        margin-bottom: var(--ap-space-3);
+    }
+}
 
 /* ── Phase D2 (N-06): topbar notification/message icon links ── */
 .ap-topbar__right {
@@ -836,6 +862,7 @@ body.ap-course-shell .ap-shell__breadcrumbs {
     gap: var(--ap-space-1);
 }
 .ap-topbar__iconlink {
+    position: relative; /* 2026-11-18 surface walk V20: anchors the unread badge */
     width: 38px;
     height: 38px;
     display: flex;
@@ -853,4 +880,25 @@ body.ap-course-shell .ap-shell__breadcrumbs {
     background: var(--ap-color-bg-body);
     color: var(--ap-color-primary);
     text-decoration: none;
+}
+
+/* ── 2026-11-18 surface walk V20: unread badge on the topbar bell ──
+   core_renderer::topbar_notifications_link() prints it when the user has unread popup notifications (99+ above 99).
+   Surface-coloured text and ring on the danger token: white on red in light mode, dark on light red in dark mode. */
+.ap-topbar__badge {
+    position: absolute;
+    top: 2px;
+    right: 0;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 var(--ap-space-1);
+    border-radius: var(--ap-radius-pill);
+    background: var(--ap-color-danger);
+    color: var(--ap-color-bg-surface);
+    font-size: 0.6875rem;
+    font-weight: var(--ap-weight-bold);
+    line-height: 18px;
+    text-align: center;
+    box-shadow: 0 0 0 2px var(--ap-color-bg-surface);
+    pointer-events: none;
 }

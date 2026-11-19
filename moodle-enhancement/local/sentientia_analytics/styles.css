@@ -33,7 +33,8 @@
 /* Heatmap */
 .airpay-analytics__heat-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .airpay-analytics__heat-dept { width: 140px; font-size: 0.8rem; color: #1a1a2e; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.airpay-analytics__heat-users { width: 70px; font-size: 0.75rem; color: #9ca3af; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* PB-4: sizes to its label (min 70px keeps English as it was); the fixed 70px + ellipsis cut the Hindi label. */
+.airpay-analytics__heat-users { min-width: 70px; font-size: 0.75rem; color: #9ca3af; flex-shrink: 0; white-space: nowrap; }
 .airpay-analytics__heat-bar-wrap { flex: 1; height: 16px; background: #e5e7eb; border-radius: 3px; overflow: hidden; }
 .airpay-analytics__heat-bar { height: 100%; border-radius: 3px; transition: width 0.5s; }
 .airpay-analytics__heat-bar--green { background: #16a34a; }

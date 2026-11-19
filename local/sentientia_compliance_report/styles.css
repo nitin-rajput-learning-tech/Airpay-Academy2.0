@@ -62,6 +62,8 @@ body.dark-mode .airpay-compliance-rpt__tabs a { background: #232733; color: #9ca
     border-radius: 8px; font-size: 13px; font-family: inherit;
     background: var(--ap-surface, #fff); color: var(--ap-text, #1a1a2e);
     cursor: pointer; transition: border-color 0.15s;
+    /* PB-2: a long business-unit name must not push the select past the card. */
+    max-width: 100%;
 }
 .airpay-compliance-rpt__filter-select:focus {
     outline: none; border-color: var(--ap-primary, #0066A7);
@@ -166,6 +168,7 @@ body.dark-mode .airpay-compliance-rpt__scorecard-name { color: #e8eaed; }
     .airpay-compliance-rpt__tabs { flex-direction: column; }
     .airpay-compliance-rpt__table { font-size: 0.75rem; }
     .airpay-compliance-rpt__filter-bar { flex-direction: column; align-items: stretch; }
+    .airpay-compliance-rpt__filter-select { width: 100%; }
 }
 
 /* Matrix row count, scorecard tree and empty rows (2026-11-18) */

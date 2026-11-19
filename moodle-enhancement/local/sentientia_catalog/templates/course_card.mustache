@@ -11,7 +11,7 @@
 }}
 <article class="airpay-catalog__card" aria-labelledby="course-{{id}}-title">
     <a href="{{detailurl}}" class="airpay-catalog__card-link"
-       aria-label="View details for {{fullname}}">
+       aria-label="{{#str}}card_viewdetails_aria, local_sentientia_catalog, {{fullname}}{{/str}}">
         <div class="airpay-catalog__card-thumb airpay-catalog__card-thumb--v{{thumb_variant}}">
             {{#has_image}}
             <img class="airpay-catalog__card-img" src="{{imageurl}}" alt="" loading="lazy" aria-hidden="true">
@@ -24,11 +24,11 @@
                 top-right corner of the card (see styles.css). }}
             {{#is_new}}
             <span class="airpay-catalog__badge airpay-catalog__badge--new airpay-catalog__badge--beside-heart"
-                  aria-label="New course">NEW</span>
+                  aria-label="{{#str}}badge_new_aria, local_sentientia_catalog{{/str}}">{{#str}}badge_new, local_sentientia_catalog{{/str}}</span>
             {{/is_new}}
             {{#is_completed}}
             <span class="airpay-catalog__badge airpay-catalog__badge--done airpay-catalog__badge--beside-heart"
-                  aria-label="Completed">
+                  aria-label="{{#str}}mycourses_completed, local_sentientia_catalog{{/str}}">
                 <i class="fa fa-check" aria-hidden="true"></i>
             </span>
             {{/is_completed}}
@@ -78,7 +78,7 @@
         {{/is_borrowed}}
 
         <div class="airpay-catalog__card-footer">
-            <span class="airpay-catalog__card-enrolled" aria-label="{{enrolled_count}} learners enrolled">
+            <span class="airpay-catalog__card-enrolled" aria-label="{{#str}}card_enrolled_aria, local_sentientia_catalog, {{enrolled_count}}{{/str}}">
                 <i class="fa fa-users" aria-hidden="true"></i> {{enrolled_count}}
             </span>
             {{#is_enrolled}}

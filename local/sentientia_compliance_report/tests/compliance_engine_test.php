@@ -447,5 +447,76 @@ final class compliance_engine_test extends \advanced_testcase {
         $this->assertSame(format_string('Finance & Accounts'), $rows[$deep->id]['department_name']);
         $this->assertSame('Analyst', $rows[$deep->id]['designation']);
         $this->assertSame('', $rows[$root->id]['department_name'], 'nobody\'s department at the tenant root');
+
+        // V11 (11-18): the export writes the org unit's name, unescaped (it
+        // wrote the raw org path, and a page-escaped name would read "&amp;").
+        $this->assertSame('Finance & Accounts', $rows[$deep->id]['department_name_plain']);
+        $this->assertSame('', $rows[$root->id]['department_name_plain']);
+        $this->assertSame('Analyst', $rows[$deep->id]['designation_plain']);
+        $this->assertSame('', $rows[$root->id]['designation_plain']);
+        $this->assertSame('/1/2/3/99', $rows[$deep->id]['department'], '\'department\' stays the raw org path');
+    }
+
+    /**
+     * KPI-CACHE (11-18): the KPI row of the report (and of the admin
+     * dashboard's Compliance Overview) is cached in an ad-hoc definition with
+     * no TTL, and nothing purged it, so both pages served the first row they
+     * ever cached. The snapshot rebuild (both of its returns) and every
+     * Configure-tab change now purge it.
+     */
+    public function test_kpi_cache_is_purged_by_the_snapshot_and_by_configuration(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $dbman = $DB->get_manager();
+        foreach (['local_compliance_courses', 'local_compliance_exemptions', 'local_compliance_snapshot'] as $table) {
+            if (!$dbman->table_exists($table)) {
+                $this->markTestSkipped($table . ' table not present.');
+            }
+        }
+        $this->ensure_bizlms_schema();
+        // No escalation mail and no enrolment from the full rebuild below.
+        set_config('auto_enrol', 0, 'local_sentientia_compliance_report');
+
+        $cache = compliance_engine::kpi_cache();
+        $key = 'kpis_phpunit_probe';
+        $prime = function () use ($cache, $key): void {
+            $cache->set($key, ['total' => 7, 'completed' => 3]);
+            $this->assertSame(['total' => 7, 'completed' => 3], $cache->get($key), 'the probe row is cached');
+        };
+
+        // Snapshot rebuild with no active mandatory course: the early return.
+        $DB->delete_records('local_compliance_courses');
+        $prime();
+        compliance_engine::rebuild_snapshot();
+        $this->assertFalse($cache->get($key), 'rebuild_snapshot() with no mandatory course purges');
+
+        // Configure tab: add a course.
+        $course = $this->getDataGenerator()->create_course();
+        $prime();
+        compliance_engine::add_compliance_course((int) $course->id, 0, 30);
+        $this->assertFalse($cache->get($key), 'add_compliance_course() purges');
+
+        // Snapshot rebuild over a mandatory course: the final return.
+        $prime();
+        compliance_engine::rebuild_snapshot();
+        $this->assertFalse($cache->get($key), 'a full rebuild_snapshot() purges');
+
+        // Configure tab: remove the course.
+        $rowid = (int) $DB->get_field('local_compliance_courses', 'id',
+            ['courseid' => $course->id, 'costcenterid' => 0], MUST_EXIST);
+        $prime();
+        compliance_engine::remove_compliance_course($rowid);
+        $this->assertFalse($cache->get($key), 'remove_compliance_course() purges');
+
+        // Configure tab: exclude, then include, a user.
+        $user = $this->getDataGenerator()->create_user();
+        $prime();
+        compliance_engine::exclude_user((int) $user->id, 'phpunit');
+        $this->assertFalse($cache->get($key), 'exclude_user() purges');
+
+        $prime();
+        compliance_engine::include_user((int) $user->id);
+        $this->assertFalse($cache->get($key), 'include_user() purges');
     }
 }

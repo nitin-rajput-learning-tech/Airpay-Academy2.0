@@ -36,7 +36,7 @@ echo $OUTPUT->heading(get_string('index_page_heading', 'local_sentientia_authori
 
 echo html_writer::div(
     html_writer::link(new moodle_url('/local/sentientia_authoring/studio.php'),
-        get_string('nav_studio', 'local_sentientia_authoring'), ['class' => 'btn btn-primary me-2'])
+        get_string('nav_generate', 'local_sentientia_authoring'), ['class' => 'btn btn-primary me-2'])
     . html_writer::link(new moodle_url('/local/sentientia_authoring/templates.php'),
         get_string('nav_templates', 'local_sentientia_authoring'), ['class' => 'btn btn-outline-secondary']),
     'mb-3');
@@ -53,14 +53,20 @@ if (empty($drafts)) {
         get_string('index_col_created', 'local_sentientia_authoring'),
         get_string('index_col_actions', 'local_sentientia_authoring'),
     ];
+    $strman = get_string_manager();
     foreach ($drafts as $d) {
+        // V17 (2026-11-18): the status badge shows a translated label; a status
+        // with no string (none today, see draft_manager::STATUS_*) shows as stored.
+        $key = 'draft_status_' . $d->status;
+        $label = $strman->string_exists($key, 'local_sentientia_authoring')
+            ? get_string($key, 'local_sentientia_authoring') : $d->status;
         $link = html_writer::link(
             new moodle_url('/local/sentientia_authoring/review.php', ['draftid' => (int) $d->id]),
             get_string('index_review_link', 'local_sentientia_authoring'),
             ['class' => 'btn btn-sm btn-outline-primary']);
         $table->data[] = [
             format_string($d->title),
-            html_writer::tag('span', s($d->status), ['class' => 'badge bg-secondary']),
+            html_writer::tag('span', s($label), ['class' => 'badge bg-secondary']),
             (int) $d->num_cards,
             (int) $d->num_questions,
             userdate((int) $d->timecreated, get_string('strftimedatetimeshort', 'core_langconfig')),

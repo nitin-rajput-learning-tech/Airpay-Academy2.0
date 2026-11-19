@@ -7,14 +7,14 @@ $string['help_center'] = 'सहायता केंद्र';
 $string['contact_us'] = 'हमसे संपर्क करें';
 
 // ── C10 P1 / Gap 3 — tenant-scoped certificate template browser ────
-$string['cert_templates_title'] = 'प्रमाणपत्र टेम्पलेट (टेनेंट के अनुसार)';
+$string['cert_templates_title'] = 'प्रमाणपत्र टेम्पलेट';
 $string['cert_templates_intro'] = 'प्रमाणपत्र टेम्पलेट उनके टेनेंट दायरे के साथ देखें। संपादन खोलने पर मानक प्रमाणपत्र टेम्पलेट संपादक खुलता है।';
 $string['cert_templates_empty'] = 'आपको कोई भी प्रमाणपत्र टेम्पलेट दिखाई नहीं दे रहा है।';
 $string['cert_scope_heading'] = 'प्रमाणपत्र टेम्पलेट का टेनेंट दायरा';
 $string['cert_scope_heading_desc'] = 'वैकल्पिक मैपिंग जो प्रमाणपत्र टेम्पलेट को टेनेंट तक सीमित करती है। यह केवल तभी लागू होती है जब sentientia.certificate.tenant_scope.enabled फ़ीचर फ़्लैग ON हो।';
 $string['cert_template_tenant_map'] = 'टेम्पलेट → टेनेंट मैप (JSON)';
 $string['cert_template_tenant_map_desc'] = 'JSON ऑब्जेक्ट जो प्रमाणपत्र टेम्पलेट ID को BizLMS टेनेंट रूट से जोड़ता है: 1 = Airpay, 77 = Public, 177 = ZEEA। जो टेम्पलेट ID सूची में नहीं है, या 0 से जुड़ी है, उसे GLOBAL माना जाता है (हर टेनेंट को दिखाई देती है)। उदाहरण: <code>{"5": 1, "8": 177, "11": 0}</code>। गलत JSON अनदेखा कर दिया जाता है (सब कुछ ग्लोबल माना जाता है)।';
-$string['cert_scope_off_notice'] = 'टेनेंट दायरा बंद (OFF) है। हर व्यवस्थापक को सभी टेम्पलेट दिखाई देते हैं — यह मौजूदा प्रोडक्शन व्यवहार जैसा ही है। टेनेंट के अनुसार फ़िल्टर करने के लिए sentientia.certificate.tenant_scope.enabled फ़्लैग चालू करें।';
+$string['cert_scope_off_notice'] = 'हर व्यवस्थापक को सभी प्रमाणपत्र टेम्पलेट दिखाई देते हैं। टेनेंट के अनुसार फ़िल्टर करना चालू नहीं है।';
 $string['cert_scope_filtered_notice'] = 'ग्लोबल टेम्पलेट और आपके टेनेंट ({$a}) को सौंपे गए टेम्पलेट दिखाए जा रहे हैं।';
 $string['cert_col_template'] = 'टेम्पलेट';
 $string['cert_col_scope'] = 'टेनेंट दायरा';
@@ -25,6 +25,9 @@ $string['cert_action_edit'] = 'संपादित करें';
 $string['cert_map_edit_hint'] = 'टेम्पलेट → टेनेंट असाइनमेंट प्लगइन सेटिंग्स में संपादित किए जाते हैं।';
 $string['cert_map_edit_link'] = 'टेनेंट मैप संपादित करें';
 $string['cert_hidden_count'] = 'आपके टेनेंट दायरे के कारण {$a} टेम्पलेट छिपे हैं।';
+// Phase C 2026-11-19 (V19-CERT-TEMPLATES): टेम्पलेट के नाम के साथ उसकी आईडी और खाली टेम्पलेट का बैज।
+$string['cert_tpl_id'] = 'आईडी {$a}';
+$string['cert_tpl_empty'] = 'खाली टेम्पलेट';
 
 // ── QR attendance: what a learner sees after scanning (qr_scan.php) ──
 $string['qr_scan_title'] = 'उपस्थिति की पुष्टि';
@@ -77,6 +80,31 @@ $string['certs_verify'] = 'सत्यापित करें';
 $string['certs_verify_label'] = '{$a} के प्रमाणपत्र का सत्यापन पेज खोलें';
 $string['certs_linkedin'] = 'LinkedIn';
 $string['certs_linkedin_label'] = '{$a} का प्रमाणपत्र अपनी LinkedIn प्रोफ़ाइल में जोड़ें';
+
+// ── ऑनबोर्डिंग विज़र्ड (onboarding.php, templates/onboarding.mustache; Phase C 2026-11-19 V8-D: पहले हार्ड-कोडेड अंग्रेज़ी था)। onboard_pagetitle, onboard_consent_hint और onboard_done_notice में {$a} = कस्टमर ब्रांड का नाम, onboard_welcome में लर्नर का पहला नाम ──
+$string['onboard_pagetitle'] = '{$a} में आपका स्वागत है';
+$string['onboard_welcome'] = 'स्वागत है, {$a}!';
+$string['onboard_welcome_sub'] = 'आइए 30 सेकंड में आपका लर्निंग अनुभव सेट करें।';
+$string['onboard_letsgo'] = 'चलिए शुरू करें';
+$string['onboard_skip'] = 'अभी छोड़ें';
+$string['onboard_interests_title'] = 'आप क्या सीखना चाहते हैं?';
+$string['onboard_interests_sub'] = 'अपनी रुचि के विषय चुनें। हम आपका अनुभव उसी के अनुसार बनाएँगे।';
+$string['onboard_ncourses'] = '{$a} कोर्स';
+$string['onboard_goal_title'] = 'अपना साप्ताहिक लक्ष्य तय करें';
+$string['onboard_goal_sub'] = 'आप हफ़्ते में कितने दिन सीखना चाहते हैं?';
+$string['onboard_goal_casual'] = 'आराम से';
+$string['onboard_goal_regular'] = 'नियमित';
+$string['onboard_goal_committed'] = 'पूरी लगन से';
+$string['onboard_goal_days'] = 'हफ़्ते में {$a} दिन';
+$string['onboard_recs_title'] = 'इन लोकप्रिय कोर्स से शुरुआत करें';
+$string['onboard_recs_sub'] = 'आपकी भूमिका के दूसरे लोग जो सीख रहे हैं, उसके आधार पर आपके लिए सुझाए गए।';
+$string['onboard_n_enrolled'] = '{$a} नामांकित';
+$string['onboard_privacy_heading'] = 'प्राइवेसी विकल्प';
+$string['onboard_consent_marketing'] = 'मुझे ईमेल से कोर्स सुझाव और प्रोडक्ट अपडेट भेजें';
+$string['onboard_consent_leaderboard'] = 'मुझे सार्वजनिक लर्नर लीडरबोर्ड पर दिखाएँ (आप कभी भी ऑप्ट-आउट कर सकते हैं)';
+$string['onboard_consent_hint'] = 'आप इन्हें कभी भी अपनी प्रोफ़ाइल में बदल सकते हैं। {$a} का उपयोग करने के लिए इनमें से कोई भी ज़रूरी नहीं है।';
+$string['onboard_finish'] = 'मेरे डैशबोर्ड पर जाएँ';
+$string['onboard_done_notice'] = '{$a} में आपका स्वागत है! आपका डैशबोर्ड तैयार है।';
 
 // Privacy API (null provider).
 $string['privacy:metadata'] = 'Sentientia पेज प्लगइन कोई व्यक्तिगत डेटा संग्रहीत नहीं करता। QR उपस्थिति स्कैन क्लासरूम प्लगइन की तालिकाओं में दर्ज होते हैं और उसी प्लगइन के प्राइवेसी प्रदाता में वर्णित हैं।';

@@ -26,14 +26,19 @@ defined('MOODLE_INTERNAL') || die();
  *           the BizLMS org-admin role, shortname
  *           'administrator', at a category - id 9
  *           on the Airpay data, looked up by
- *           shortname since 2026-11-17), a
- *           moodle/site:viewreports
- *           holder (HRBP, trainer), or a holder of
- *           the export capability (export.php hands
- *           them the tenant anyway)
+ *           shortname since 2026-11-17), or a
+ *           holder of the export capability
+ *           local/sentientia_compliance_report:export
+ *           (export.php hands them the tenant anyway;
+ *           the compliance officer role carries it)
  *   team    a line manager - admitted only through      their reporting tree:
  *           the supervisor relationship                 direct reports and
  *                                                       everyone below them
+ *
+ * moodle/site:viewreports admits nobody here any more (B6, 2026-11-18): core
+ * grants it to every teacher-archetype role, so it admitted every trainer to
+ * the tenant matrix. A report viewer who also manages people is admitted as a
+ * line manager, to their own team.
  *
  * Anyone else, and any non-site-admin whose tenant cannot be resolved from
  * their open_path, gets no scope at all. Every report query reads '' as
@@ -43,7 +48,7 @@ final class viewer_scope {
 
     /** Site admin: every tenant. */
     public const LEVEL_SITE = 'site';
-    /** Compliance admin or report viewer: their own tenant. */
+    /** Compliance admin or export holder: their own tenant. */
     public const LEVEL_TENANT = 'tenant';
     /** Line manager: their reporting tree inside their tenant. */
     public const LEVEL_TEAM = 'team';
@@ -95,7 +100,7 @@ final class viewer_scope {
      * Which level a user qualifies for, before their tenant is resolved.
      *
      * Order matters: every admission that gives a whole tenant is tried before
-     * the supervisor relationship, so a compliance admin or report viewer who
+     * the supervisor relationship, so a compliance admin or export holder who
      * also manages people keeps the tenant view they had.
      *
      * @param \stdClass $user
@@ -132,9 +137,8 @@ final class viewer_scope {
                 ['uid' => $userid, 'roleid' => $complianceroleid, 'level' => CONTEXT_COURSECAT])) {
             return self::LEVEL_TENANT;
         }
-        if (has_capability('moodle/site:viewreports', $systemcontext, $userid)) {
-            return self::LEVEL_TENANT;
-        }
+        // B6 (Nitin, 2026-11-18): moodle/site:viewreports no longer admits to the tenant matrix:
+        // core grants it to every teacher-archetype role, so every trainer saw every employee.
         // Whoever may DOWNLOAD the tenant's matrix (export.php) sees it on
         // screen too. Without this, a category Manager with direct reports was
         // shown "your team only" beside an Export button handing over the tenant.

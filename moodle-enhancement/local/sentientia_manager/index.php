@@ -15,8 +15,9 @@ global $DB, $USER, $CFG, $OUTPUT, $PAGE;
 $context = context_system::instance();
 $PAGE->set_context($context);
 $PAGE->set_url('/local/sentientia_manager/index.php');
-$PAGE->set_title('My Team — Learning Dashboard');
-$PAGE->set_heading('My Team — Learning Dashboard');
+// V15 (2026-11-18): translated page title (was hard-coded English).
+$PAGE->set_title(get_string('myteam', 'local_sentientia_manager'));
+$PAGE->set_heading(get_string('myteam', 'local_sentientia_manager'));
 $PAGE->set_pagelayout('standard');
 
 // D9 (persona pass 2026-09-30): was the retired BizLMS name local/courses:manage,

@@ -1175,6 +1175,27 @@ body.dark-mode .airpay-catalog__card-level {
     border-color: var(--ap-color-primary-hover);
 }
 
+/* ── Course detail (course.php), persona walk 2026-11-18 V5 ── */
+.ap-public-course__hero { padding: 40px 32px; }
+.ap-public-course__hero-inner { display: flex; align-items: center; gap: var(--ap-space-6); }
+.ap-public-course__hero-text { flex: 1 1 auto; min-width: 0; }
+.ap-public-course__title { font-size: 28px; overflow-wrap: anywhere; }
+.ap-public-course__poster { flex: 0 0 220px; width: 220px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--ap-radius-md); }
+.ap-public-course__meta { display: flex; flex-wrap: wrap; gap: var(--ap-space-2) var(--ap-space-4); }
+.ap-public-course__body { padding: 28px 32px; }
+.ap-public-course__cta-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--ap-space-3) var(--ap-space-4); }
+.ap-public-course__actions { display: flex; flex-wrap: wrap; gap: var(--ap-space-2); }
+@media (max-width: 590px) {
+    .ap-public-course__hero { padding: var(--ap-space-6) var(--ap-space-4); }
+    .ap-public-course__hero-inner { flex-direction: column-reverse; align-items: stretch; }
+    .ap-public-course__poster { flex: none; width: 100%; }
+    .ap-public-course__title { font-size: 22px; }
+    .ap-public-course__body { padding: var(--ap-space-5) var(--ap-space-4); }
+    .ap-public-course__actions { width: 100%; }
+    .ap-public-course__actions > * { flex: 1 1 100%; text-align: center; }
+    .ap-public-course__actions > form > button { width: 100%; }
+}
+
 /* ── Mobile ──────────────────────────────────────────────────────────── */
 @media (max-width: 590px) {
     .ap-mycourses__grid { grid-template-columns: 1fr; }

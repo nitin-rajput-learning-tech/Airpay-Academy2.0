@@ -159,6 +159,29 @@ final class enrolment_test extends \advanced_testcase {
         $this->assertEquals(1, $count, 'must not create duplicate enrolments');
     }
 
+    public function test_enrol_now_refuses_and_leaves_a_suspended_enrolment(): void {
+        global $DB;
+        // Persona walk 2026-11-18: manual enrol_user() would re-activate a suspended enrolment; that is the L&D
+        // team's call, so enrol_now() refuses and writes nothing.
+        $course = $this->make_keyed_free_course(1);
+        $user   = $this->make_user(1);
+        $context = \context_course::instance($course->id);
+        $this->getDataGenerator()->enrol_user($user->id, $course->id, 'student', 'manual', 0, 0, ENROL_USER_SUSPENDED);
+
+        $this->assertFalse(enrolment::enrol_now((int) $course->id, (int) $user->id),
+            'an enrolment that is not active is refused');
+        $this->assertFalse(is_enrolled($context, $user->id, '', true), 'and stays inactive');
+
+        $rows = $DB->get_records_sql(
+            "SELECT ue.id, ue.status
+               FROM {user_enrolments} ue
+               JOIN {enrol} e ON e.id = ue.enrolid
+              WHERE e.courseid = :cid AND ue.userid = :uid",
+            ['cid' => $course->id, 'uid' => $user->id]);
+        $this->assertCount(1, $rows, 'no new enrolment is written');
+        $this->assertEquals(ENROL_USER_SUSPENDED, (int) reset($rows)->status, 'the suspension is left untouched');
+    }
+
     public function test_enrol_now_refuses_paid_course(): void {
         $course = $this->make_keyed_free_course(1);
         // Make it paid.

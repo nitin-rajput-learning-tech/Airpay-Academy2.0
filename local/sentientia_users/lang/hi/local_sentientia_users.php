@@ -274,6 +274,20 @@ $string['domain'] = 'डोमेन';
 // Surface walk 2026-11-18 - profile header chip (roles beyond learning) and the consumer detail grid.
 $string['profile_role_linemanager'] = 'लाइन मैनेजर';
 $string['profile_weekly_goal_value'] = '{$a} घंटे/सप्ताह';
+// Phase C 2026-11-19 (V6) - प्रोफ़ाइल बैज पंक्ति और आँकड़ों के लेबल, और विवरण ग्रिड के दो लेबल जो पहले हार्ड-कोडेड अंग्रेज़ी थे।
+$string['profile_points'] = '{$a} अंक';
+$string['profile_level_rank'] = '{$a->level} · रैंक #{$a->rank}';
+$string['profile_badges_one'] = '{$a} बैज';
+$string['profile_badges_many'] = '{$a} बैज';
+$string['profile_streak_days'] = '{$a} दिन की स्ट्रीक';
+$string['profile_streak_start'] = 'स्ट्रीक शुरू करें!';
+$string['profile_badges_heading'] = 'अर्जित बैज';
+$string['subdepartment'] = 'उप-विभाग';
+$string['joindate'] = 'जॉइनिंग तिथि';
+// Phase C 2026-11-19 (V8-G): प्रोफ़ाइल की पहली स्क्रीन, फ़ोटो बटन का title और स्किल रेडीनेस कार्ड (पहले हार्ड-कोडेड अंग्रेज़ी थे)।
+$string['profile_changephoto'] = 'फ़ोटो बदलें';
+$string['profile_skill_readiness'] = '{$a}% स्किल रेडीनेस';
+$string['profile_skills_met'] = '{$a->total} में से {$a->met} स्किल पूरी';
 $string['hrms_source_bizlms'] = 'BizLMS से आयातित';
 // IDN-07 / XC-IMPORTED-HISTORY-READERS (2026-10-07): who sees an HRMS run's rejected lines, and the imported-history flag.
 $string['hrms_lines_uploader_only'] = 'इस रन की अस्वीकृत पंक्तियों में ईमेल पता, कर्मचारी कोड और नाम होते हैं। वे केवल रन अपलोड करने वाले व्यक्ति और प्लेटफ़ॉर्म प्रशासकों को दिखाई देती हैं।';

@@ -69,7 +69,9 @@
     {{/roleswitch.hasoptions}}
     <div class="ap-sidebar__footer-actions">
         {{> theme_sentientia/sidebar_langswitch }}
-        <button class="ap-sidebar__theme-btn" id="ap-dark-toggle" title="{{#str}}dash_toggle_theme, theme_sentientia{{/str}}">
+        {{! 11-19 PB-5: the shell JS in core_renderer::airpay_shell_end() swaps the label between these two
+            localised strings; it used to write English literals, so ?lang=hi showed "Dark Mode". }}
+        <button class="ap-sidebar__theme-btn" id="ap-dark-toggle" title="{{#str}}dash_toggle_theme, theme_sentientia{{/str}}" data-label-dark="{{#cleanstr}}dash_dark_mode_label, theme_sentientia{{/cleanstr}}" data-label-light="{{#cleanstr}}dash_light_mode_label, theme_sentientia{{/cleanstr}}">
             <i class="fa fa-moon"></i>
             <span class="ap-sidebar__theme-label">{{#str}}dash_dark_mode_label, theme_sentientia{{/str}}</span>
         </button>

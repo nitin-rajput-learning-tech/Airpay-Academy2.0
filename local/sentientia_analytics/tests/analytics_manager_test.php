@@ -307,4 +307,58 @@ final class analytics_manager_test extends \advanced_testcase {
         $this->assertSame(3, (int) $kpis[1]['value'],
             'twin in two courses (2 pairs, not 3 rows) plus the single learner');
     }
+
+    /**
+     * Insert a row, filling every other NOT NULL column without a default
+     * ('' for text, 0 for numbers), so the test survives schema changes in
+     * tables this plugin does not own.
+     *
+     * @param string $table
+     * @param array $rec the columns the test cares about
+     * @return int new id
+     */
+    private function insert_filled(string $table, array $rec): int {
+        global $DB;
+        foreach ($DB->get_columns($table) as $col) {
+            if ($col->name === 'id' || array_key_exists($col->name, $rec) || !$col->not_null || $col->has_default) {
+                continue;
+            }
+            $rec[$col->name] = ($col->meta_type === 'C' || $col->meta_type === 'X') ? '' : 0;
+        }
+        return (int) $DB->insert_record($table, (object) $rec);
+    }
+
+    /**
+     * V12 (11-18 surface walk): the funnel's Certified bar was taller than
+     * Completed, because imported certificates (courseid 0) were counted
+     * whether or not their holder had completed anything. Certified now means
+     * a certificate AND at least one completion.
+     */
+    public function test_funnel_certified_never_exceeds_completed(): void {
+        global $DB;
+        $this->resetAfterTest();
+        if (!$DB->get_manager()->table_exists('tool_certificate_issues')) {
+            $this->markTestSkipped('tool_certificate is not installed.');
+        }
+        $this->ensure_bizlms_schema();
+        \cache_helper::purge_by_definition('local_sentientia_analytics', 'funnel');
+
+        $now = time();
+        $course = $this->getDataGenerator()->create_course();
+        $u1 = $this->user_at_path('/1/2');
+        $u2 = $this->user_at_path('/1/2');
+        // Both hold an imported certificate (courseid 0); only u2 completed a course.
+        foreach ([$u1, $u2] as $i => $u) {
+            $this->insert_filled('tool_certificate_issues', ['userid' => $u->id, 'courseid' => 0,
+                'code' => 'PHPUNITV12' . $i, 'timecreated' => $now]);
+        }
+        $this->insert_filled('course_completions', ['userid' => $u2->id, 'course' => $course->id,
+            'timeenrolled' => $now, 'timestarted' => $now, 'timecompleted' => $now, 'reaggregate' => 0]);
+
+        $bystage = array_column(analytics_manager::get_funnel('/1'), null, 'stagekey');
+        $this->assertSame(1, (int) $bystage['completed']['count']);
+        $this->assertSame(1, (int) $bystage['certified']['count'],
+            'a certificate holder with no completion is not counted as certified');
+        $this->assertLessThanOrEqual((int) $bystage['completed']['count'], (int) $bystage['certified']['count']);
+    }
 }

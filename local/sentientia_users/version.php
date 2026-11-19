@@ -83,7 +83,9 @@ $plugin->component = 'local_sentientia_users';
 // imported HRMS sync runs sit behind the new default-OFF flag sentientia.users.imported_sync_history), IDN-06 (login days
 // are deleted on erasure, comment-only). Two strings (en + hi), no schema change.
 // 2026101501 - UI fix (visual pass 2026-10-14 review): the profile Suggested next courses card is a double-brace template, so user_manager now asks skills_manager::get_gap_courses() for plain-text names (plain = true). The HTML-escaped default printed an ampersand in a course or skill name as the literal text amp-semicolon, while the Skills rows above it (already plain) did not. No schema change.
-$plugin->version   = 2026111800;  // Surface walk 2026-11-18: profile chip - a /77 (self-signup tenant) account with no user_type row is a consumer (it read "Employee" over N/A employee fields), roles beyond learning follow the type (admin role, Line manager); a consumer gets no N/A designation line and Joined = account creation; consumer grid strings in en+hi. No schema change.
+$plugin->version   = 2026111801;  // Persona walk 2026-11-18 (V6): profile account buttons spaced without BS5 gap-* utilities; earned badges show their names under a heading; the enrichment cards' pts / badges / streak / rank labels come from the language pack ("1 badge", not "1 badges"); an empty HR field reads an em dash, not "N/A", and an empty designation shows no line; detail-grid labels from the language pack. No schema change.
+// 2026111801 also carries Phase C addendum (2026-11-19): V19-USERS-BLANK-ROW an account with a blank first and last name sorts last in a name sort of the user list (ordering only); V8-G profile first-screen strings (profile_changephoto, profile_skill_readiness, profile_skills_met; en + hi); PB-1 the profile details grid wraps a long value (e-mail) inside its cell.
+// 2026111800: Surface walk 2026-11-18: profile chip - a /77 (self-signup tenant) account with no user_type row is a consumer (it read "Employee" over N/A employee fields), roles beyond learning follow the type (admin role, Line manager); a consumer gets no N/A designation line and Joined = account creation; consumer grid strings in en+hi. No schema change.
 // 2026110300: user search matches a full name ("Rahul Sharma"), 2026-11-03. Was: 2026101501;  // UI fix: profile gap-course names escaped once (on top of 2026100800)
 // 2026100800: SITEID is the DB string; strict === / !== against it never matched, so the site-course guard did nothing - now (int) SITEID: the transcript importer skips the site course again; no schema change
 // 2026100701: ADR-032 owner decisions: sync-history visibility + imported-history flag (on top of 2026100101)
@@ -96,7 +98,7 @@ $plugin->version   = 2026111800;  // Surface walk 2026-11-18: profile chip - a /
 // 2026090302: H1, signup no longer reveals whether an email exists.
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '2.9.3';  // 2.9.3: profile chip type + roles. 2.9.2: full-name user search.  // ADR-032 owner decisions: sync-history visibility + flag (2.9.0: users import; 2.8.2: name-field notice fix; 2.8.1: welcome email fix; 2.8.0: ADR-031)
+$plugin->release   = '2.9.4';  // 2.9.4: profile V6 labels, badges, em dash. 2.9.3: profile chip type + roles. 2.9.2: full-name user search.  // ADR-032 owner decisions: sync-history visibility + flag (2.9.0: users import; 2.8.2: name-field notice fix; 2.8.1: welcome email fix; 2.8.0: ADR-031)
 $plugin->dependencies = [
     'local_sentientia_org' => 2026051501,
     'local_sentientia_platform' => 2026093001,  // ADR-032: the bizlms import framework the importer implements

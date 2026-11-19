@@ -31,7 +31,8 @@ $plugin->component = 'local_sentientia_manager';
 // team through team_manager::get_team() (open_supervisorid via the org seam).
 // member.php sets its page context before rendering text and refuses with a
 // string this plugin defines. No schema change, no capability change, no flag.
-$plugin->version   = 2026111800;  // Surface walk 2026-11-18: My Team "Last Active" says Never for a report who never logged in (was the 999-day sentinel "999d ago"), uses lastaccess like the member page, string in en+hi. No schema change.
+$plugin->version   = 2026111801;  // Phase C surface-walk fixes (V15, 2026-11-18): translated page titles on My Team, Course allocations, Enrolment requests, Team performance and the member page; performance.php on the standard layout, escaped web-service values, period labels and stat cards that wrap at phone width, the table in a scroll container; member.php fact labels translated, long e-mails wrap, avatar letter, "Never" from core, empty values as a dash. No schema change.
+// Was: 2026111800;  // Surface walk 2026-11-18: My Team "Last Active" says Never for a report who never logged in (was the 999-day sentinel "999d ago"), uses lastaccess like the member page, string in en+hi. No schema change.
 // Same version, same day: the Overdue column reads local_compliance_snapshot (it read a table that never existed, so it was always 0); Enrolment Requests hands off to local_sentientia_request's Pending approvals (B7), strings in en+hi.
 // 2026110300: user search matches a full name ("Rahul Sharma"), 2026-11-03. Was: 2026093001;  // D4: team_performance gate + team query
 // 2026092501: ADR-031 allocation targets tenant-bounded.
@@ -39,7 +40,7 @@ $plugin->version   = 2026111800;  // Surface walk 2026-11-18: My Team "Last Acti
 // 2026060200: ADR-020 W3.4 org-seam migration.
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.3.9';  // 1.3.9: "Never" instead of "999d ago"; Overdue from the compliance snapshot; requests hand off to Pending approvals. 1.3.8: full-name user search.  // D4/D14: team performance works for line managers
+$plugin->release   = '1.3.10';  // 1.3.10: Phase C page titles, Team performance and member page polish (V15). 1.3.9: "Never" instead of "999d ago"; Overdue from the compliance snapshot; requests hand off to Pending approvals. 1.3.8: full-name user search.  // D4/D14: team performance works for line managers
 // 1.3.6: Decision 5 - typed allocations no longer collide
 // 1.3.5: ADR-031 tenant bound on allocations
 // 1.3.4: ADR-031 tenant bound on member drill-down

@@ -73,6 +73,9 @@ final class dashboard_chrome_template_test extends \advanced_testcase {
 
     /**
      * The topbar carries the Notifications bell and the Messages link, once, as the shell topbar does.
+     *
+     * Surface walk V20 (2026-11-18): the bell is the renderer's own (core_renderer::topbar_notifications_link(),
+     * with the unread-count badge), not a hard-coded link without a count.
      */
     public function test_topbar_has_the_notifications_bell_and_the_messages_link(): void {
         $branch = $this->shell_branch();
@@ -82,25 +85,32 @@ final class dashboard_chrome_template_test extends \advanced_testcase {
         $this->assertNotFalse($end);
         $right = substr($branch, $start, $end - $start);
 
-        $this->assertStringContainsString('/message/output/popup/notifications.php', $right);
-        $this->assertStringContainsString('fa fa-bell', $right);
+        $this->assertStringContainsString('{{{ topbar.notificationhtml }}}', $right);
         $this->assertStringContainsString('{{{ topbar.messageslink }}}', $right);
         // One bell on the page: the dashboard does not print the shell topbar as well.
-        $this->assertSame(1, substr_count($branch, '/message/output/popup/notifications.php'));
+        $this->assertSame(1, substr_count($branch, 'topbar.notificationhtml'));
         $this->assertSame(1, substr_count($branch, 'topbar.messageslink'));
+        // The hard-coded bell (no unread count) is gone from the template.
+        $template = $this->template('dashboard');
+        $this->assertStringNotContainsString('fa fa-bell', $template);
+        $this->assertStringNotContainsString('/message/output/popup/notifications.php', $template);
 
-        // The same destination as the shell topbar on every other page.
+        // The same destination as the shell topbar on every other page: the renderer builds the bell.
         $renderer = (string) file_get_contents(dirname(__DIR__) . '/classes/output/core_renderer.php');
         $this->assertStringContainsString("'/message/output/popup/notifications.php'", $renderer);
     }
 
     /**
-     * The layout hands the template the shell's own (gated) Messages link.
+     * The layout hands the template the shell's own (gated) Messages link and Notifications bell.
      */
     public function test_layout_passes_the_gated_messages_link(): void {
         $layout = (string) file_get_contents(dirname(__DIR__) . '/layout/dashboard.php');
         $this->assertMatchesRegularExpression("/'messageslink'\\s*=>/", $layout);
         $this->assertStringContainsString('core_renderer::topbar_messages_link()', $layout);
+        $this->assertMatchesRegularExpression("/'notificationhtml'\\s*=>/", $layout);
+        $this->assertStringContainsString('core_renderer::topbar_notifications_link()', $layout);
+        // The key is no longer hard-wired to an empty string.
+        $this->assertDoesNotMatchRegularExpression("/'notificationhtml'\\s*=>\\s*''/", $layout);
     }
 
     /**

@@ -183,7 +183,7 @@ function read_creds(string $path): array {
     $map = [];
     if ($path !== '' && is_readable($path)) {
         foreach (array_slice(file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES), 1) as $line) {
-            $c = str_getcsv($line);
+            $c = str_getcsv($line, ',', '"', '\\');
             if (count($c) >= 3) { $map[$c[0]] = $c[2]; }
         }
     }
@@ -789,13 +789,13 @@ if (stage('users') && !$DRY) {
     }
     // Credentials CSV (the only place passwords are written).
     $fh = fopen($CREDSOUT, 'w');
-    fputcsv($fh, ['username', 'persona', 'password', 'tenant', 'roles', 'landing_url']);
-    fputcsv($fh, ['admin', 'Site administrator (existing)', $CREDS['admin'] ?? '(vaulted separately)', 'airpay /1', 'siteadmin', $CFG->wwwroot . '/admin/search.php']);
+    fputcsv($fh, ['username', 'persona', 'password', 'tenant', 'roles', 'landing_url'], ',', '"', '\\');
+    fputcsv($fh, ['admin', 'Site administrator (existing)', $CREDS['admin'] ?? '(vaulted separately)', 'airpay /1', 'siteadmin', $CFG->wwwroot . '/admin/search.php'], ',', '"', '\\');
     foreach ($USERS as $username => $u) {
         [$persona, $password, $root] = $NEWCREDS[$username];
         $rolestr = implode('; ', array_map(fn($r) => $r[0] . '@' . $r[1], $u[11]));
         $tenant = [1 => 'airpay /1', 77 => 'public /77', 177 => 'ZEEA /177'][$root];
-        fputcsv($fh, [$username, $persona, $password, $tenant, $rolestr, $CFG->wwwroot . '/my/']);
+        fputcsv($fh, [$username, $persona, $password, $tenant, $rolestr, $CFG->wwwroot . '/my/'], ',', '"', '\\');
     }
     fclose($fh);
     @chmod($CREDSOUT, 0600);

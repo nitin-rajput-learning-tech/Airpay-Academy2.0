@@ -83,10 +83,15 @@
         </div>
     </div>
 
+    {{! 11-18 surface walk V4: admin-layout pages had no footer. As in columns2, the footer is the last element of the
+        content scroller. The partial prints standard_footer_html, standard_end_of_body_html and debug_footer_html, so
+        the separate standard_end_of_body_html line that sat after the page wrapper is gone: keeping it would load the
+        page JS twice. }}
+    {{> theme_sentientia/footer }}
+
     {{{ output.airpay_shell_end }}}
 
 </div>
-{{{ output.standard_end_of_body_html }}}
 </body>
 </html>
 {{#js}}

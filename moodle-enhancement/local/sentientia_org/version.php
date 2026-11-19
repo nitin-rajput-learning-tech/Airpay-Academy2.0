@@ -56,10 +56,11 @@ $plugin->component = 'local_sentientia_org';
 // again. The ME copy UAT runs gains the WF-016 after_config hook (db/hooks.php, classes/hook_callbacks.php,
 // classes/compat/bizlms_lib.php) that class_aliases the retired local_costcenter\lib\accesslib and local_costcenter\lib,
 // so block_learnerscript's left-menu node renders instead of failing "class not found"; and the 2026061700 violet
-// repaint step in db/upgrade.php (it does not re-run on sites already past 2026061700). The top copy takes the newer
+// repaint step in db/upgrade.php (renumbered to 2026111800 so UAT, at 2026101502, runs it once; idempotent). The top copy takes the newer
 // ME test fixture. The alias guards now autoload, so a real local_costcenter would win. The bump re-reads db/hooks.php
 // (hook callbacks are cached). No schema change.
 $plugin->version   = 2026111800;  // cross-tree drift fix: WF-016 hook in both trees (on top of 2026101502)
+// 2026111800 also carries Phase C addendum V19-ORG-CARD (2026-11-19): the tenant card's meta row (units, users) stays in the card's flex row and the row menu no longer collides with the Active chip (the menu was nested inside the row link; manage.mustache, org_node.mustache; template and CSS only).
 // 2026101502: UI fix review follow-up: plain() independent of formatstringstriptags (on top of 2026101501)
 // 2026101501: UI fix: org tree names escaped once (on top of 2026100802 FX-20 round 1)
 // 2026100701:  // ADR-032 IDN-04: copies_files marker (on top of 2026093002 cohort_scope importer)

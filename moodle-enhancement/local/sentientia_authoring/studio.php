@@ -65,6 +65,9 @@ if ($defaultmodel === '') {
 }
 $defaultmastery = (int) get_config('local_sentientia_authoring', 'default_mastery_score');
 $defaultmastery = ($defaultmastery >= 0 && $defaultmastery <= 100) ? $defaultmastery : 70;
+// V17 (2026-11-18): only a site administrator may pick the AI model. Everyone
+// else always generates with the configured default, whatever the request says.
+$canchoosemodel = has_capability('moodle/site:config', $context);
 
 $uilocale = (string) (current_language() ?? 'en');
 
@@ -95,7 +98,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $prefill['numcards']   = optional_param('numcards', $prefill['numcards'], PARAM_INT);
     $prefill['numq']       = optional_param('numq', $prefill['numq'], PARAM_INT);
     $prefill['mastery']    = optional_param('mastery', $prefill['mastery'], PARAM_INT);
-    $prefill['model']      = trim(optional_param('model', $defaultmodel, PARAM_TEXT));
+    $prefill['model']      = $canchoosemodel
+        ? trim(optional_param('model', $defaultmodel, PARAM_TEXT)) : $defaultmodel;
+    if ($prefill['model'] === '') {
+        $prefill['model'] = $defaultmodel;
+    }
     $prefill['confirm']    = optional_param('confirm', 0, PARAM_INT) ? 1 : 0;
 
     if (!in_array($prefill['language'], ['en', 'hi'], true)) {
@@ -186,8 +193,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Mode badge.
+// Mode badge. $livemode is true only on the live-with-key branch: the token
+// usage line means nothing in preview (mock) mode, so it is shown only then.
 $badge = null;
+$livemode = false;
 if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
     $badge = ['class' => 'alert-warning', 'text' => get_string('mode_disabled_badge', 'local_sentientia_authoring')];
 } else if (!\local_sentientia_platform\feature_flags::is_enabled('sentientia.authoring.live_api')) {
@@ -196,6 +205,7 @@ if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
     $badge = ['class' => 'alert-warning', 'text' => get_string('mode_no_apikey_badge', 'local_sentientia_authoring')];
 } else {
     $badge = ['class' => 'alert-success', 'text' => get_string('mode_live_badge', 'local_sentientia_authoring')];
+    $livemode = true;
 }
 
 $tokensusedtoday = draft_manager::tokens_used_today((int) $USER->id);
@@ -225,12 +235,19 @@ if ($badge) {
 }
 echo html_writer::div(get_string('studio_intro', 'local_sentientia_authoring'), 'mb-3 text-muted');
 echo html_writer::div(html_writer::link(
-    new moodle_url('/local/sentientia_authoring/templates.php'),
-    get_string('nav_templates', 'local_sentientia_authoring'),
-    ['class' => 'btn btn-outline-secondary btn-sm']), 'mb-3');
+        new moodle_url('/local/sentientia_authoring/index.php'),
+        get_string('nav_drafts', 'local_sentientia_authoring'),
+        ['class' => 'btn btn-outline-secondary btn-sm me-2'])
+    . html_writer::link(
+        new moodle_url('/local/sentientia_authoring/templates.php'),
+        get_string('nav_templates', 'local_sentientia_authoring'),
+        ['class' => 'btn btn-outline-secondary btn-sm']), 'mb-3');
 
-echo html_writer::div(get_string('tokens_used_today', 'local_sentientia_authoring',
-    (object) ['used' => $tokensusedtoday, 'cap' => $dailycap]), 'small text-muted mb-3');
+if ($livemode) {
+    echo html_writer::div(get_string('tokens_used_today', 'local_sentientia_authoring',
+        (object) ['used' => number_format($tokensusedtoday), 'cap' => number_format($dailycap)]),
+        'small text-muted mb-3');
+}
 
 if (!empty($errors)) {
     $list = '';
@@ -316,13 +333,15 @@ echo html_writer::empty_tag('input', ['type' => 'number', 'id' => 'authoring-mas
 echo html_writer::end_div();
 echo html_writer::end_div();
 
-// Model.
-echo html_writer::start_div('mb-3');
-echo html_writer::tag('label', get_string('studio_form_model', 'local_sentientia_authoring'),
-    ['for' => 'authoring-model', 'class' => 'form-label']);
-echo html_writer::empty_tag('input', ['type' => 'text', 'id' => 'authoring-model', 'name' => 'model',
-    'class' => 'form-control', 'value' => s($prefill['model'])]);
-echo html_writer::end_div();
+// Model (site administrators only; see $canchoosemodel).
+if ($canchoosemodel) {
+    echo html_writer::start_div('mb-3');
+    echo html_writer::tag('label', get_string('studio_form_model', 'local_sentientia_authoring'),
+        ['for' => 'authoring-model', 'class' => 'form-label']);
+    echo html_writer::empty_tag('input', ['type' => 'text', 'id' => 'authoring-model', 'name' => 'model',
+        'class' => 'form-control', 'value' => s($prefill['model'])]);
+    echo html_writer::end_div();
+}
 
 // Confirm gate.
 echo html_writer::start_div('mb-3 alert alert-warning');
@@ -338,7 +357,8 @@ echo html_writer::end_div();
 echo html_writer::div(
     html_writer::tag('button', get_string('studio_submit', 'local_sentientia_authoring'),
         ['type' => 'submit', 'class' => 'btn btn-primary me-2'])
-    . html_writer::link(new moodle_url('/'), get_string('cancel'), ['class' => 'btn btn-secondary']),
+    . html_writer::link(new moodle_url('/local/sentientia_authoring/index.php'), get_string('cancel'),
+        ['class' => 'btn btn-secondary']),
     'mb-3');
 
 echo html_writer::end_tag('form');

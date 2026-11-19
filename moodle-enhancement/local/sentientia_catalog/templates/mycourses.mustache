@@ -1,29 +1,29 @@
 <div class="ap-mycourses">
 
-    <div class="ap-mycourses__stats" role="group" aria-label="Filter your courses">
+    <div class="ap-mycourses__stats" role="group" aria-label="{{#str}}mycourses_filter_label, local_sentientia_catalog{{/str}}">
         <a href="{{baseurl}}?filter=all"
            class="ap-mycourses__stat {{#filter_all}}ap-mycourses__stat--active{{/filter_all}}"
            aria-pressed="{{#filter_all}}true{{/filter_all}}{{^filter_all}}false{{/filter_all}}">
             <span class="ap-mycourses__stat-num">{{total}}</span>
-            <span class="ap-mycourses__stat-label">All Courses</span>
+            <span class="ap-mycourses__stat-label">{{#str}}mycourses_all, local_sentientia_catalog{{/str}}</span>
         </a>
         <a href="{{baseurl}}?filter=inprogress"
            class="ap-mycourses__stat {{#filter_inprogress}}ap-mycourses__stat--active{{/filter_inprogress}}"
            aria-pressed="{{#filter_inprogress}}true{{/filter_inprogress}}{{^filter_inprogress}}false{{/filter_inprogress}}">
             <span class="ap-mycourses__stat-num ap-mycourses__stat-num--accent">{{inprogress}}</span>
-            <span class="ap-mycourses__stat-label">In Progress</span>
+            <span class="ap-mycourses__stat-label">{{#str}}mycourses_inprogress, local_sentientia_catalog{{/str}}</span>
         </a>
         <a href="{{baseurl}}?filter=completed"
            class="ap-mycourses__stat {{#filter_completed}}ap-mycourses__stat--active{{/filter_completed}}"
            aria-pressed="{{#filter_completed}}true{{/filter_completed}}{{^filter_completed}}false{{/filter_completed}}">
             <span class="ap-mycourses__stat-num ap-mycourses__stat-num--success">{{completed}}</span>
-            <span class="ap-mycourses__stat-label">Completed</span>
+            <span class="ap-mycourses__stat-label">{{#str}}mycourses_completed, local_sentientia_catalog{{/str}}</span>
         </a>
         <a href="{{baseurl}}?filter=notstarted"
            class="ap-mycourses__stat {{#filter_notstarted}}ap-mycourses__stat--active{{/filter_notstarted}}"
            aria-pressed="{{#filter_notstarted}}true{{/filter_notstarted}}{{^filter_notstarted}}false{{/filter_notstarted}}">
             <span class="ap-mycourses__stat-num ap-mycourses__stat-num--muted">{{notstarted}}</span>
-            <span class="ap-mycourses__stat-label">Not Started</span>
+            <span class="ap-mycourses__stat-label">{{#str}}mycourses_notstarted, local_sentientia_catalog{{/str}}</span>
         </a>
     </div>
 
@@ -37,17 +37,17 @@
                 {{/has_image}}
                 {{^has_image}}
                 <div class="ap-mycourses__card-image ap-mycourses__card-image--fallback">
-                    <span>{{{shortname}}}</span>
+                    <span><i class="fa fa-graduation-cap fa-2x" aria-hidden="true"></i></span>
                 </div>
                 {{/has_image}}
                 {{#is_completed}}
-                <div class="ap-mycourses__card-badge ap-mycourses__card-badge--done"><i class="fa fa-check"></i> Done</div>
+                <div class="ap-mycourses__card-badge ap-mycourses__card-badge--done"><i class="fa fa-check"></i> {{#str}}mycourses_done, local_sentientia_catalog{{/str}}</div>
                 {{/is_completed}}
                 {{#is_inprogress}}
                 <div class="ap-mycourses__card-progress-ring"
                      role="progressbar"
                      aria-valuenow="{{progress}}" aria-valuemin="0" aria-valuemax="100"
-                     aria-label="{{progress}}% complete">
+                     aria-label="{{#str}}mycourses_percentcomplete, local_sentientia_catalog, {{progress}}{{/str}}">
                     <svg width="36" height="36" viewBox="0 0 36 36">
                         <circle class="ap-mycourses__card-progress-ring-track"
                                 cx="18" cy="18" r="15" fill="none" stroke-width="3"/>
@@ -68,14 +68,14 @@
                 <div class="ap-mycourses__card-progressbar">
                     <div class="ap-mycourses__card-progressbar-fill" style="width:{{progress}}%;"></div>
                 </div>
-                <span class="ap-mycourses__card-progresstext">{{progress}}% complete</span>
+                <span class="ap-mycourses__card-progresstext">{{#str}}mycourses_percentcomplete, local_sentientia_catalog, {{progress}}{{/str}}</span>
                 {{/has_progress}}
                 <div class="ap-mycourses__card-footer">
                     <span class="ap-mycourses__card-access"><i class="fa fa-clock"></i> {{lastaccess}}</span>
                     <a href="{{viewurl}}" class="ap-mycourses__card-cta">
-                        {{#is_completed}}Review{{/is_completed}}
-                        {{#is_inprogress}}Continue{{/is_inprogress}}
-                        {{#is_notstarted}}Start{{/is_notstarted}}
+                        {{#is_completed}}{{#str}}mycourses_review, local_sentientia_catalog{{/str}}{{/is_completed}}
+                        {{#is_inprogress}}{{#str}}mycourses_continue, local_sentientia_catalog{{/str}}{{/is_inprogress}}
+                        {{#is_notstarted}}{{#str}}mycourses_start, local_sentientia_catalog{{/str}}{{/is_notstarted}}
                         <i class="fa fa-arrow-right"></i>
                     </a>
                 </div>
@@ -85,8 +85,8 @@
     </div>
 
     {{#has_pagination}}
-    <nav class="ap-mycourses__pagination" aria-label="My courses pagination">
-        <span class="ap-mycourses__pagination-summary">Showing {{showing_from}}-{{showing_to}} of {{total_filtered}}</span>
+    <nav class="ap-mycourses__pagination" aria-label="{{#str}}mycourses_pagination, local_sentientia_catalog{{/str}}">
+        <span class="ap-mycourses__pagination-summary">{{showing_label}}</span>
         <div class="ap-mycourses__pagination-pages">
             {{#pages}}
             <a href="{{url}}"
@@ -103,10 +103,10 @@
     {{^has_courses}}
     <div class="ap-empty-state">
         <i class="fa fa-graduation-cap ap-empty-state__icon"></i>
-        <h4 class="ap-empty-state__title">No courses found</h4>
-        <p class="ap-empty-state__message">Browse the catalog to discover courses.</p>
-        <a href="{{{config.wwwroot}}}/local/sentientia_catalog/index.php" class="ap-empty-state__cta">
-            <i class="fa fa-search"></i> Browse Catalog
+        <h4 class="ap-empty-state__title">{{#str}}mycourses_empty_title, local_sentientia_catalog{{/str}}</h4>
+        <p class="ap-empty-state__message">{{#str}}mycourses_empty_message, local_sentientia_catalog{{/str}}</p>
+        <a href="{{{browseurl}}}" class="ap-empty-state__cta">
+            <i class="fa fa-search" aria-hidden="true"></i> {{#str}}mycourses_browse, local_sentientia_catalog{{/str}}
         </a>
     </div>
     {{/has_courses}}

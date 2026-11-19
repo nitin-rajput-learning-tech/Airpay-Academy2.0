@@ -70,6 +70,20 @@ if (empty($certificates)) {
     echo '</div>';
 } else {
     $syscontext = context_system::instance();
+    // Phase C LINKEDIN-ORG (2026-11-18): the LinkedIn "Add to profile" link named
+    // the issuing organisation with a hard-coded 'Airpay Academy'. It now takes the
+    // customer brand name; the default stays for a site without the platform plugin.
+    $orgname = 'Airpay Academy';
+    if (class_exists('\\local_sentientia_platform\\customer')) {
+        try {
+            $brand = \local_sentientia_platform\customer::branding();
+            if (!empty($brand['name'])) {
+                $orgname = (string) $brand['name'];
+            }
+        } catch (\Throwable $e) {
+            // Keep the default organisation name.
+        }
+    }
     echo '<div class="airpay-cert-gallery__grid">';
     foreach ($certificates as $cert) {
         $rawname = (string) ($cert->coursename ?: ($cert->templatename ?: ''));
@@ -90,7 +104,7 @@ if (empty($certificates)) {
         $downloadurl = \tool_certificate\template::view_url($cert->code);
         $verifyurl = \tool_certificate\template::verification_url($cert->code);
         $linkedinurl = 'https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=' .
-            urlencode($plainname) . '&organizationName=Airpay%20Academy&certId=' .
+            urlencode($plainname) . '&organizationName=' . rawurlencode($orgname) . '&certId=' .
             urlencode($cert->code) . '&certUrl=' . urlencode($verifyurl->out(false));
 
         echo '<div class="airpay-cert-gallery__card">';

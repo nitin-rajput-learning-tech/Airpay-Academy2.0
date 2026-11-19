@@ -104,7 +104,7 @@ foreach ($enrolledcourses as $course) {
         'is_notstarted' => ($status === 'notstarted'),
         'viewurl'      => (new moodle_url('/course/view.php', ['id' => $course->id]))->out(false),
         'detailurl'    => (new moodle_url('/course/view.php', ['id' => $course->id]))->out(false),
-        'lastaccess'   => $lastaccess ? userdate($lastaccess, '%d %b %Y') : 'Never',
+        'lastaccess'   => $lastaccess ? userdate($lastaccess, '%d %b %Y') : get_string('never'),
     ];
 }
 
@@ -141,6 +141,14 @@ $data = [
     'has_pagination' => ($totalpages > 1),
     'pages'         => $pages,
 ];
+// Persona walk 2026-11-18 (V8): the pagination summary and the empty state's catalogue link, in the viewer's
+// language and to the viewer's own catalogue (the same rule as the sidebar's Catalog link).
+$data['showing_label'] = get_string('mycourses_showing', 'local_sentientia_catalog', (object) [
+    'from'  => $data['showing_from'],
+    'to'    => $data['showing_to'],
+    'total' => $data['total_filtered'],
+]);
+$data['browseurl'] = \local_sentientia_catalog\catalog_manager::catalog_home_url($USER)->out(false);
 
 echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_sentientia_catalog/mycourses', $data);

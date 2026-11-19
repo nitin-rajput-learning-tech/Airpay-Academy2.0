@@ -16,6 +16,19 @@ $string['requests_moved_title'] = 'New enrolment requests are decided in Pending
 $string['requests_moved_message'] = 'Enrolment requests from your team wait for you there. The list below holds earlier requests recorded on this page.';
 $string['requests_open_approvals'] = 'Open Pending approvals ({$a})';
 $string['requests_earlier'] = 'Earlier enrolment requests';
+// Phase C 2026-11-19 (V15) - page titles, the performance period selector and the team member page (were hard-coded English).
+$string['teamperformance'] = 'Team performance';
+$string['perioddays'] = '{$a} days';
+$string['teammember_title'] = 'Team member: {$a}';
+$string['backtomyteam'] = 'Back to My Team';
+$string['fullprofile'] = 'Full profile';
+$string['label_email'] = 'Email';
+$string['label_employeeid'] = 'Employee ID';
+$string['label_department'] = 'Department';
+$string['label_organisation'] = 'Organisation';
+$string['label_lastactive'] = 'Last active';
+$string['enrolmentrequests'] = 'Enrolment requests';
+$string['courseallocations'] = 'Course allocations';
 $string['privacy:metadata'] = 'The manager dashboard plugin records enrolment requests + course allocations made by managers for compliance / audit purposes.';
 
 // Capability descriptions.

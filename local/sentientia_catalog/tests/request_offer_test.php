@@ -17,8 +17,6 @@ defined('MOODLE_INTERNAL') || die();
  *
  *   1. enrolment::request_state() keeps the catalogue's own routes first: a paid course goes to the cart, and a
  *      free course the learner is offered one-click enrolment for is enrolled at once, so neither gets a request.
- *      Since the persona walk of 2026-11-18 a free course whose own key-less self-enrolment the learner may use is
- *      enrolled from course.php's button, so it gets no request either.
  *   2. With the flag OFF (the default) every state is 'none' and with_request_offers() hands the cards back
  *      exactly as they went in.
  *   3. with_request_offers() marks only the cards the viewer is not enrolled in, never changes the fields the
@@ -129,15 +127,13 @@ final class request_offer_test extends \advanced_testcase {
         $this->assertSame('none', enrolment::request_state($learner, (int) $course->id));
     }
 
-    public function test_a_free_course_the_learner_can_self_enrol_in_is_enrolled_from_its_button_not_requested(): void {
+    public function test_a_free_course_with_an_open_self_enrolment_still_offers_the_request(): void {
         global $DB;
         $learner = $this->learner(1);
         $this->flag('sentientia.request.catalog_button', true);
         $course = $this->restricted_course(1);
-        $this->assertSame('request', enrolment::request_state($learner, (int) $course->id));
 
-        // Persona walk 2026-11-18: the course's own key-less self-enrolment is a way in (course.php's Enroll button,
-        // enrolment::self_enrol()), so there is nothing to request.
+        // An enabled, key-less self-enrolment instance open to new enrolments.
         $instance = $DB->get_record('enrol', ['courseid' => $course->id, 'enrol' => 'self'], '*', IGNORE_MULTIPLE);
         if (!$instance) {
             $id = enrol_get_plugin('self')->add_instance($course, ['status' => ENROL_INSTANCE_ENABLED]);
@@ -147,12 +143,8 @@ final class request_offer_test extends \advanced_testcase {
         $instance->customint6 = 1;
         $instance->password = '';
         $DB->update_record('enrol', $instance);
-        $this->assertNotNull(enrolment::self_enrol_instance((int) $course->id));
-        $this->assertSame('none', enrolment::request_state($learner, (int) $course->id));
 
-        // With an enrolment key the learner cannot use it here (course.php has no field for one): a request again.
-        $DB->set_field('enrol', 'password', 'KEY-123', ['id' => $instance->id]);
-        $this->assertNull(enrolment::self_enrol_instance((int) $course->id));
+        // Self-enrolment is not a way in on this theme (catalog_cta), so the request is still the learner's way in.
         $this->assertSame('request', enrolment::request_state($learner, (int) $course->id));
     }
 

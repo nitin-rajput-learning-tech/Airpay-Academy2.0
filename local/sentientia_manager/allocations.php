@@ -12,8 +12,9 @@ $context = context_system::instance();
 $PAGE->set_url('/local/sentientia_manager/allocations.php');
 $PAGE->set_context($context);
 $PAGE->set_pagelayout('standard');
-$PAGE->set_title('Course Allocations');
-$PAGE->set_heading('Course Allocations');
+// V15 (2026-11-18): translated page title (was hard-coded English).
+$PAGE->set_title(get_string('courseallocations', 'local_sentientia_manager'));
+$PAGE->set_heading(get_string('courseallocations', 'local_sentientia_manager'));
 
 $columns = [
     ['key' => 'username',   'label' => 'Direct report', 'sortable' => false],

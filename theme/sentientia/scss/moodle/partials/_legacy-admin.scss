@@ -428,7 +428,7 @@
 }
 
 /* Logo fix handled at line 3766 with filter: brightness(0) invert(1) */
-/* Footer logo brightness handled by filter: brightness(10) in template */
+/* Footer logo colour handled by filter: brightness(0) invert(1) in _surface-footer.scss and layout/frontpage.php (2026-11-18 surface walk V21) */
 
 /* ═══════════════════════════════════════════════════════════
    STATIC PAGES (Help, Contact, Privacy, Terms)
@@ -1858,11 +1858,13 @@ body.path-course-view {
     .course-section li.activity .activity-item {
         position: relative;
     }
+    /* Anchored to the first row (the activity icon row), not centred: centred, the
+       pill landed on the description text of an activity with a long description. */
     .course-section li.activity [data-region="activity-information"] {
         position: absolute;
         right: 16px;
-        top: 50%;
-        transform: translateY(-50%);
+        top: 12px;
+        transform: none;
         margin: 0;
         padding: 0;
         z-index: 2;

@@ -117,13 +117,16 @@ final class dashboard_compliance_test extends \advanced_testcase {
     /**
      * An L&D-admin-like viewer of tenant 1, whom the report scopes to that tenant.
      *
+     * Admitted through the report's export capability: since B6 (2026-11-18)
+     * moodle/site:viewreports no longer admits anyone to the tenant view.
+     *
      * @return \stdClass
      */
     private function tenant_viewer(): \stdClass {
         $viewer = $this->getDataGenerator()->create_user();
         $roleid = $this->getDataGenerator()->create_role();
         $syscontext = \context_system::instance();
-        assign_capability('moodle/site:viewreports', CAP_ALLOW, $roleid, $syscontext->id, true);
+        assign_capability('local/sentientia_compliance_report:export', CAP_ALLOW, $roleid, $syscontext->id, true);
         role_assign($roleid, $viewer->id, $syscontext->id);
         // Only the object carries the tenant: neither scope class reads the column.
         $viewer->open_path = '/1/5';

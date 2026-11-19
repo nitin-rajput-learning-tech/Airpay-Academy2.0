@@ -39,11 +39,11 @@ $detail = \local_sentientia_manager\team_manager::get_member_detail($userid);
 $user = $detail['user'];
 
 $PAGE->set_url(new moodle_url('/local/sentientia_manager/member.php', ['id' => $userid]));
-$PAGE->set_title('Team Member — ' . fullname($user));
-$PAGE->set_heading('Team Member — ' . fullname($user));
+$PAGE->set_title(get_string('teammember_title', 'local_sentientia_manager', fullname($user)));
+$PAGE->set_heading(get_string('teammember_title', 'local_sentientia_manager', fullname($user)));
 $PAGE->set_pagelayout('standard');
 $PAGE->set_secondary_navigation(false);
-$PAGE->navbar->add('My Team', new moodle_url('/local/sentientia_manager/index.php'));
+$PAGE->navbar->add(get_string('myteam', 'local_sentientia_manager'), new moodle_url('/local/sentientia_manager/index.php'));
 $PAGE->navbar->add(fullname($user));
 
 // Resolve org name.
@@ -70,15 +70,19 @@ $completion_rate = $detail['enrolments_total'] > 0
 
 $last_active_label = !empty($user->lastaccess)
     ? userdate($user->lastaccess, '%d %b %Y, %H:%M')
-    : 'Never';
+    : get_string('never');
 
+// V15 (2026-11-18): the template escapes every value ({{ }}), so the e-mail and
+// the employee id are passed raw (s() here as well showed an & as "&amp;"). An empty value
+// shows as a dash, not a blank cell. first_letter fills the avatar circle.
 $data = [
     'userid'        => (int) $user->id,
     'fullname'      => fullname($user),
-    'email'         => s($user->email),
-    'employeeid'    => s($user->open_employeeid ?? '—'),
-    'designation'   => format_string($user->open_designation ?? '—'),
-    'department'    => format_string($user->department ?? '—'),
+    'first_letter'  => core_text::strtoupper(core_text::substr(trim(fullname($user)), 0, 1)),
+    'email'         => $user->email,
+    'employeeid'    => trim((string) ($user->open_employeeid ?? '')) ?: '—',
+    'designation'   => format_string(trim((string) ($user->open_designation ?? '')) ?: '—'),
+    'department'    => format_string(trim((string) ($user->department ?? '')) ?: '—'),
     'orgname'       => $orgname ?: '—',
     'last_active'   => $last_active_label,
     'profile_url'   => (new moodle_url('/local/sentientia_users/profile.php', ['id' => $user->id]))->out(false),

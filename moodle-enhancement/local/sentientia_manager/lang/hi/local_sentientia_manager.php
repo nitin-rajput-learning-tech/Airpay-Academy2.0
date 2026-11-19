@@ -22,6 +22,19 @@ $string['requests_moved_title'] = 'नए नामांकन अनुरो�
 $string['requests_moved_message'] = 'आपकी टीम के नामांकन अनुरोध वहाँ आपकी प्रतीक्षा करते हैं। नीचे दी गई सूची में इस पेज पर दर्ज पुराने अनुरोध हैं।';
 $string['requests_open_approvals'] = 'लंबित अनुमोदन खोलें ({$a})';
 $string['requests_earlier'] = 'पुराने नामांकन अनुरोध';
+// Phase C 2026-11-19 (V15) - पेज शीर्षक, प्रदर्शन अवधि चयनकर्ता और टीम सदस्य पेज (पहले हार्ड-कोडेड अंग्रेज़ी)।
+$string['teamperformance'] = 'टीम प्रदर्शन';
+$string['perioddays'] = '{$a} दिन';
+$string['teammember_title'] = 'टीम सदस्य: {$a}';
+$string['backtomyteam'] = 'मेरी टीम पर वापस जाएँ';
+$string['fullprofile'] = 'पूरी प्रोफ़ाइल';
+$string['label_email'] = 'ईमेल';
+$string['label_employeeid'] = 'कर्मचारी आईडी';
+$string['label_department'] = 'विभाग';
+$string['label_organisation'] = 'संगठन';
+$string['label_lastactive'] = 'अंतिम सक्रियता';
+$string['enrolmentrequests'] = 'नामांकन अनुरोध';
+$string['courseallocations'] = 'कोर्स आवंटन';
 $string['privacy:metadata'] = 'मैनेजर डैशबोर्ड प्लगइन अनुपालन / ऑडिट उद्देश्यों के लिए मैनेजर द्वारा किए गए नामांकन अनुरोध और कोर्स आवंटन रिकॉर्ड करता है।';
 
 // Capability descriptions.

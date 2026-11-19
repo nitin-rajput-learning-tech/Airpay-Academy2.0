@@ -23,10 +23,13 @@ $string['sentientia_authoring:manage_all'] = 'सभी स्वामियो
 // Navigation.
 $string['nav_studio'] = 'ऑथरिंग स्टूडियो';
 $string['nav_templates'] = 'डिज़ाइन टेम्पलेट';
+// Phase C 2026-11-19 (V17): ड्राफ़्ट सूची और स्टूडियो एक-दूसरे से लिंक करते हैं।
+$string['nav_drafts'] = 'मेरे ड्राफ़्ट';
+$string['nav_generate'] = 'मॉड्यूल जनरेट करें';
 
 // Mode badges.
 $string['mode_disabled_badge'] = 'ऑथरिंग स्टूडियो अक्षम है — sentientia.authoring.enabled feature flag चालू करें।';
-$string['mode_mock_badge'] = 'MOCK MODE — जनरेशन नियतात्मक placeholder सामग्री लौटाता है। कोई Anthropic कॉल नहीं की जाती और कोई शुल्क नहीं लगता।';
+$string['mode_mock_badge'] = 'पूर्वावलोकन मोड: स्टूडियो नमूना सामग्री बनाता है ताकि आप पूरा कार्यप्रवाह आज़मा सकें। कोई AI सेवा कॉल नहीं होती और कोई लागत नहीं आती।';
 $string['mode_no_apikey_badge'] = 'Live API flag चालू है परन्तु कोई Anthropic API key विन्यस्त नहीं है — key सेट होने तक जनरेशन mock mode में चलेगा।';
 $string['mode_live_badge'] = 'LIVE MODE — जनरेशन Anthropic को कॉल करेगा। प्रत्येक run प्रति token शुल्क योग्य है।';
 
@@ -41,6 +44,13 @@ $string['index_col_questions'] = 'प्रश्न';
 $string['index_col_created'] = 'निर्मित';
 $string['index_col_actions'] = 'क्रियाएँ';
 $string['index_review_link'] = 'समीक्षा';
+// Phase C 2026-11-19 (V17): स्थिति कॉलम कच्चे स्टेटस कोड की जगह लेबल दिखाता है।
+$string['draft_status_pending'] = 'जनरेट हो रहा है';
+$string['draft_status_generated'] = 'समीक्षा के लिए तैयार';
+$string['draft_status_approved'] = 'स्वीकृत';
+$string['draft_status_published'] = 'प्रकाशित';
+$string['draft_status_rejected'] = 'अस्वीकृत';
+$string['draft_status_failed'] = 'विफल';
 
 // Studio (generate) page.
 $string['studio_page_title'] = 'ऑथरिंग स्टूडियो — जनरेट';
@@ -58,9 +68,9 @@ $string['studio_form_source_help'] = 'अपना prompt, दस्तावे
 $string['studio_form_numcards'] = 'कार्डों की संख्या';
 $string['studio_form_numq'] = 'प्रश्नों की संख्या';
 $string['studio_form_mastery'] = 'दक्षता अंक (%)';
-$string['studio_form_model'] = 'Model';
-$string['studio_confirm_label'] = 'मैं इस जनरेशन को चलाने की पुष्टि करता/करती हूँ। (live mode में यह Anthropic को कॉल करता है और प्रति token शुल्क योग्य है।)';
-$string['studio_confirm_help'] = 'यह [CONFIRM] द्वार प्रत्येक जनरेशन हेतु अनिवार्य है, mock-mode runs सहित, ताकि कार्यप्रवाह दोनों modes में समान रहे।';
+$string['studio_form_model'] = 'AI मॉडल';
+$string['studio_confirm_label'] = 'मैं पुष्टि करता/करती हूँ कि मैं यह मॉड्यूल जनरेट करना चाहता/चाहती हूँ।';
+$string['studio_confirm_help'] = 'लाइव मोड में हर जनरेशन सशुल्क AI क्षमता का उपयोग करता है, इसलिए हर बार यह पुष्टि माँगी जाती है, पूर्वावलोकन मोड में भी।';
 $string['studio_submit'] = 'ड्राफ्ट तैयार करें';
 
 $string['sourcetype_prompt'] = 'Prompt';
@@ -70,7 +80,7 @@ $string['language_en'] = 'अंग्रेज़ी';
 $string['language_hi'] = 'हिन्दी';
 $string['template_builtin_suffix'] = '(अंतर्निहित)';
 
-$string['tokens_used_today'] = 'आज प्रयुक्त tokens: {$a->cap} में से {$a->used}।';
+$string['tokens_used_today'] = 'आज AI उपयोग: {$a->cap} में से {$a->used} टोकन।';
 $string['source_word_count'] = '{$a} शब्द';
 
 // Review page.

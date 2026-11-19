@@ -16,6 +16,10 @@ defined('MOODLE_INTERNAL') || die();
  * every tenant's employees - employee id, name, email, per-course status - to
  * any holder of local/sentientia_courses:manage.
  *
+ * B6 (Nitin, 2026-11-18): moodle/site:viewreports alone no longer gives even
+ * the viewer's own tenant; the tenant level follows the compliance report's
+ * viewer_scope.
+ *
  * @package    block_sentientia_compliance
  * @category   test
  * @copyright  2026 Airpay Payment Services
@@ -101,6 +105,42 @@ final class audit_test extends \advanced_testcase {
 
         $this->assertNull(audit::viewer_scope($this->user_at('/1')), 'a plain learner sees their own status');
         $this->assertSame(['path' => '', 'userids' => null], audit::viewer_scope(get_admin()));
+    }
+
+    public function test_a_report_viewer_alone_does_not_get_the_tenant_matrix(): void {
+        // B6 (Nitin, 2026-11-18): core grants moodle/site:viewreports to every
+        // teacher-archetype role, so it used to hand every trainer the tenant
+        // matrix. The tenant level now follows the compliance report's
+        // viewer_scope; without that plugin the block falls back to the cap.
+        if (!class_exists('\local_sentientia_compliance_report\viewer_scope')) {
+            $this->markTestSkipped('local_sentientia_compliance_report is not installed.');
+        }
+        $sys = \context_system::instance();
+        $viewreports = (int) $this->getDataGenerator()->create_role(['shortname' => 'b6viewreportsonly']);
+        assign_capability('moodle/site:viewreports', CAP_ALLOW, $viewreports, $sys->id, true);
+
+        $trainer = $this->user_at('/1');
+        role_assign($viewreports, $trainer->id, $sys->id);
+        accesslib_clear_all_caches_for_unit_testing();
+        $this->assertNull(audit::viewer_scope($trainer),
+            'a viewreports-only user at /1 with nobody reporting to them sees their own status only');
+
+        // The same cap on a line manager: their team, not the tenant.
+        $manager = $this->user_at('/1');
+        role_assign($viewreports, $manager->id, $sys->id);
+        $report = $this->user_at('/1/2', (int) $manager->id);
+        accesslib_clear_all_caches_for_unit_testing();
+        $this->assertSame(['path' => '/1', 'userids' => [(int) $report->id]], audit::viewer_scope($manager),
+            'a viewreports holder who manages people sees their team, not every employee of the tenant');
+
+        // The report's export capability still gives the tenant.
+        $export = (int) $this->getDataGenerator()->create_role(['shortname' => 'b6exportholder']);
+        assign_capability('local/sentientia_compliance_report:export', CAP_ALLOW, $export, $sys->id, true);
+        $officer = $this->user_at('/1');
+        role_assign($export, $officer->id, $sys->id);
+        accesslib_clear_all_caches_for_unit_testing();
+        $this->assertSame(['path' => '/1', 'userids' => null], audit::viewer_scope($officer),
+            'an export holder (the compliance officer) keeps the tenant matrix');
     }
 
     public function test_tenant_matrix_counts_only_the_tenants_people_and_courses(): void {

@@ -310,6 +310,56 @@ final class list_users_test extends \advanced_testcase {
     }
 
     /**
+     * V19-USERS-BLANK-ROW (2026-11-18): an account with an empty first and last
+     * name sorted first under the default Name sort (lastname ASC), so the first
+     * row of the users table looked broken. A name sort now puts it last in both
+     * directions, and it is still listed. The named users keep their order.
+     */
+    public function test_blank_name_sorts_last(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->ensure_bizlms_schema();
+
+        $this->seed_org('/8001', 0, 1);
+
+        $caller = $this->user_at_path('/8001');
+        $this->grant_cap($caller, 'local/sentientia_users:view');
+        $this->setUser($caller);
+
+        $blank = $this->user_at_path('/8001/9001');
+        $alpha = $this->user_at_path('/8001/9001');
+        $zulu  = $this->user_at_path('/8001/9001');
+        $DB->update_record('user', (object) ['id' => $blank->id, 'firstname' => '', 'lastname' => '']);
+        $DB->update_record('user', (object) ['id' => $alpha->id, 'firstname' => 'Aarav', 'lastname' => 'Alpha']);
+        $DB->update_record('user', (object) ['id' => $zulu->id, 'firstname' => 'Zoya', 'lastname' => 'Zulu']);
+
+        foreach (['lastname', 'firstname'] as $sort) {
+            foreach (['asc', 'desc'] as $dir) {
+                $r = $this->call([
+                    'sort' => $sort,
+                    'sortdir' => $dir,
+                    'filters' => json_encode(['status' => 'all']),
+                    'perpage' => 50,
+                ]);
+                $ids = array_map('intval', array_column($r['rows'], 'id'));
+                $label = "{$sort} {$dir}";
+
+                $this->assertContains((int) $blank->id, $ids, "{$label}: the blank-name account must still be listed");
+                $this->assertSame((int) $blank->id, end($ids), "{$label}: the blank-name account must be the last row");
+                $this->assertNotSame((int) $blank->id, $ids[0], "{$label}: the blank-name account must not be the first row");
+
+                $posalpha = array_search((int) $alpha->id, $ids, true);
+                $poszulu = array_search((int) $zulu->id, $ids, true);
+                if ($dir === 'asc') {
+                    $this->assertLessThan($poszulu, $posalpha, "{$label}: Alpha must come before Zulu");
+                } else {
+                    $this->assertGreaterThan($poszulu, $posalpha, "{$label}: Zulu must come before Alpha");
+                }
+            }
+        }
+    }
+
+    /**
      * Fail closed (N1 review, 2026-09-24): a non-siteadmin :view holder whose
      * open_path has no tenant root used to get NO tenant clause, and so listed
      * every tenant's users. They must now list nobody, as

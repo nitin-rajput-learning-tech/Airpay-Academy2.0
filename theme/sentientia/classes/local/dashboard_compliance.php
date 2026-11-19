@@ -21,8 +21,9 @@ defined('MOODLE_INTERNAL') || die();
  * Now the figures come from the report's own engine (compliance_engine::get_summary_kpis() and
  * get_active_courses_for_scope()), the rate is rounded once from completed / total exactly as the
  * report's index.php does, and the KPI row is read from, and written to, the report's own KPI cache
- * under the key the report uses for this viewer. The report serves that cached row until caches are
- * purged; reading it here is what keeps the two pages equal after the snapshot task has run.
+ * under the key the report uses for this viewer. The cached row is served until the snapshot task or
+ * a Configure-tab change purges it (compliance_engine::purge_kpi_cache()); reading it here is what
+ * keeps the two pages equal between those purges.
  *
  * Tenant boundary: an L&D admin whose tenant cannot be resolved gets zeros (the engine reads an empty
  * path as the whole site), the way every other tile on the dashboard fails closed (tenant_scope).

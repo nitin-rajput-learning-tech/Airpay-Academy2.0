@@ -200,6 +200,11 @@ $string['browse_state_pending'] = 'Pending approval';
 $string['browse_state_in_catalog'] = 'In your catalog';
 $string['browse_state_rejected'] = 'Rejected';
 $string['browse_tenant_fallback'] = 'Tenant {$a}';
+// Phase C 2026-11-19 (V8-E): the featured-courses dashboard widget (templates/featured_widget.mustache; was hard-coded English).
+$string['featured_widget_heading'] = 'Featured for you';
+$string['featured_widget_browseall'] = 'Browse all courses';
+$string['featured_widget_enrol'] = 'Enrol';
+$string['featured_widget_preview'] = 'Preview';
 
 // Privacy metadata (classes/privacy/provider.php, added 2026-09-22).
 // Replaced a null_provider that wrongly asserted this plugin held no

@@ -52,10 +52,11 @@ defined('MOODLE_INTERNAL') || die();
  * Notice. The fallback has been removed; the sentientia_courses-namespaced
  * cap is the only one we need (it covers the L&D Admin and Operations
  * Administrator roles that grant manage on the org subtree).
- *   ismanager   = !isadmin && (
- *                   has_capability('moodle/site:viewreports', system) ||
- *                   count_records(user open_supervisorid = $USER->id) > 0
- *                 )
+ *   ismanager   = !isadmin && !switched_to_employee &&
+ *                   count_records(user open_supervisorid = $USER->id,
+ *                                 deleted = 0, suspended = 0) > 0
+ *                 (B6, 2026-11-18: moodle/site:viewreports no longer makes a
+ *                 manager; core grants it to every teacher-archetype role)
  *   islearner   = !isadmin && !ismanager
  *
  * switched_to_employee respects the BizLMS role-switch flow: a user who
@@ -150,26 +151,23 @@ class role_detector {
 
         $isadmin = $issiteadmin || $isldadmin;
 
-        // Manager: cap OR direct reports via open_supervisorid.
+        // Manager: active direct reports only (B6, 2026-11-18; was also moodle/site:viewreports)
         $ismanager = false;
         if (!$isadmin && !$switchedtoemployee) {
-            $ismanager = has_capability('moodle/site:viewreports', $systemcontext, $userid);
-            if (!$ismanager) {
-                // Guard the open_supervisorid column — it's a BizLMS
-                // extension that may not exist on stock Moodle.
-                try {
-                    $manager = $DB->get_manager();
-                    $usertable = new \xmldb_table('user');
-                    $superfield = new \xmldb_field('open_supervisorid');
-                    if ($manager->field_exists($usertable, $superfield)) {
-                        $directreports = $DB->count_records_select('user',
-                            'open_supervisorid = :uid AND deleted = 0 AND suspended = 0',
-                            ['uid' => $userid]);
-                        $ismanager = $directreports > 0;
-                    }
-                } catch (\Throwable $e) {
-                    // Stock Moodle without BizLMS — not a manager.
+            // Guard the open_supervisorid column — it's a BizLMS
+            // extension that may not exist on stock Moodle.
+            try {
+                $manager = $DB->get_manager();
+                $usertable = new \xmldb_table('user');
+                $superfield = new \xmldb_field('open_supervisorid');
+                if ($manager->field_exists($usertable, $superfield)) {
+                    $directreports = $DB->count_records_select('user',
+                        'open_supervisorid = :uid AND deleted = 0 AND suspended = 0',
+                        ['uid' => $userid]);
+                    $ismanager = $directreports > 0;
                 }
+            } catch (\Throwable $e) {
+                // Stock Moodle without BizLMS — not a manager.
             }
         }
 

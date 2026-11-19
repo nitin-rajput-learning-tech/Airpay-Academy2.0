@@ -8,8 +8,13 @@
  * somebody reports to them - was scoped to their whole tenant, and could read
  * the compliance status of every employee in the company. The rule now: a
  * manager sees their direct reports and everyone below them, inside their own
- * tenant, and nobody else. Tenant admins, report viewers and export holders
- * keep the whole tenant; site admins keep everything.
+ * tenant, and nobody else. Tenant admins and export holders keep the whole
+ * tenant; site admins keep everything.
+ *
+ * B6 (Nitin, 2026-11-18): moodle/site:viewreports no longer admits anyone to
+ * the tenant view. Core grants it to every teacher-archetype role, so every
+ * trainer saw every employee. A report viewer with no reports is refused; one
+ * who manages people gets their team.
  *
  * @package    local_sentientia_compliance_report
  * @category   test
@@ -215,8 +220,19 @@ final class team_scope_test extends \advanced_testcase {
         $this->assertSame(viewer_scope::REFUSED_NO_ACCESS, viewer_scope::refusal_reason($this->p['M4']));
     }
 
-    public function test_a_report_viewer_keeps_tenant_scope(): void {
+    public function test_a_report_viewer_without_reports_is_refused(): void {
+        // B6 (2026-11-18): core grants moodle/site:viewreports to every
+        // teacher-archetype role. It used to admit every trainer to the tenant.
         $this->grant('Peer', 'moodle/site:viewreports', \context_system::instance());
+
+        $this->assertNull(viewer_scope::level_for($this->p['Peer']),
+            'moodle/site:viewreports alone must not admit anyone to the compliance report.');
+        $this->assertNull(viewer_scope::for_user($this->p['Peer']));
+        $this->assertSame(viewer_scope::REFUSED_NO_ACCESS, viewer_scope::refusal_reason($this->p['Peer']));
+    }
+
+    public function test_an_export_holder_keeps_tenant_scope(): void {
+        $this->grant('Peer', permission::EXPORT_CAPABILITY, \context_system::instance());
 
         $scope = viewer_scope::for_user($this->p['Peer']);
 
@@ -230,7 +246,7 @@ final class team_scope_test extends \advanced_testcase {
         // The BizLMS org-admin role at a category, as UAT's tenant admins hold
         // it. Found by shortname, so its id does not matter. No archetype, so
         // only the role assignment can admit E1 (a manager archetype would
-        // admit through moodle/site:viewreports instead).
+        // admit through the :export capability it carries by default).
         $roleid = create_role('Administrator', permission::COMPLIANCE_ROLE_SHORTNAME, '', '');
         $category = $this->getDataGenerator()->create_category();
         role_assign($roleid, $this->p['E1']->id, \context_coursecat::instance($category->id)->id);
@@ -264,9 +280,16 @@ final class team_scope_test extends \advanced_testcase {
     }
 
     public function test_an_admission_to_the_tenant_outranks_managing_people(): void {
-        // L2 manages people AND can view site reports: the tenant view wins, as
-        // before the change.
+        // L2 manages people AND can view site reports. Since B6 (2026-11-18)
+        // viewreports admits nobody to the tenant, so L2 keeps their own tree.
         $this->grant('L2', 'moodle/site:viewreports', \context_system::instance());
+        $scope = viewer_scope::for_user($this->p['L2']);
+        $this->assertSame(viewer_scope::LEVEL_TEAM, $scope->level);
+        $this->assertSame($this->ids('M1', 'M2', 'E1', 'E2', 'E3', 'E4'), $this->sorted($scope->userids));
+
+        // L2 is then given the export capability: the tenant view wins over
+        // managing people, as before.
+        $this->grant('L2', permission::EXPORT_CAPABILITY, \context_system::instance());
         $this->assertSame(viewer_scope::LEVEL_TENANT, viewer_scope::for_user($this->p['L2'])->level);
 
         // M1 manages people AND may export (a category-level role): whoever may
@@ -300,7 +323,8 @@ final class team_scope_test extends \advanced_testcase {
     public function test_a_tenant_viewer_with_no_tenant_is_refused(): void {
         global $DB;
         // The riskier case: a TENANT-level viewer would otherwise get '' - every tenant.
-        $this->grant('Peer', 'moodle/site:viewreports', \context_system::instance());
+        // Admitted through the export capability (B6: viewreports no longer admits).
+        $this->grant('Peer', permission::EXPORT_CAPABILITY, \context_system::instance());
         foreach (['', '/', 'garbage'] as $path) {
             $DB->set_field('user', 'open_path', $path, ['id' => $this->p['Peer']->id]);
             $peer = $DB->get_record('user', ['id' => $this->p['Peer']->id]);

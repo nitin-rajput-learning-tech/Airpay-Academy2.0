@@ -61,6 +61,9 @@ $columns = [
     ['key' => 'designation', 'label' => 'Designation',   'sortable' => true,  'sortkey' => 'open_designation'],
     ['key' => 'lastaccess',  'label' => 'Last Access',   'sortable' => true,  'sortkey' => 'lastaccess'],
     ['key' => 'statuslabel', 'label' => 'Status',        'sortable' => true,  'sortkey' => 'suspended', 'format' => 'badge'],
+    // Surface walk 2026-11-18 V19: the rows carry 'actions'; declaring the column gives it a header
+    // cell (theme datatable.js WF-023 path), so the blue header spans the table.
+    ['key' => 'actions', 'label' => get_string('actions'), 'sortable' => false, 'format' => 'html'],
 ];
 
 // Map sortable columns to underlying DB fields. The AMD module passes

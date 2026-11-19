@@ -182,9 +182,10 @@
                 <div class="ap-topbar__right">
                     {{! User avatar + dark mode live in the sidebar. The Notifications bell and the Messages link are
                         the ones core_renderer::airpay_shell_start() prints on every other shell page (11-18 surface
-                        walk V4: /my/ alone had neither). topbar.messageslink is empty when the user may not use
-                        messaging. }}
-                    <a class="ap-topbar__iconlink" href="{{{config.wwwroot}}}/message/output/popup/notifications.php" title="{{#str}}notifications{{/str}}" aria-label="{{#str}}notifications{{/str}}"><i class="fa fa-bell" aria-hidden="true"></i></a>
+                        walk V4: /my/ alone had neither). topbar.notificationhtml is the renderer's bell with its
+                        unread-count badge (surface walk V20), empty for a guest. topbar.messageslink is empty when
+                        the user may not use messaging. Both are built by the renderer, which escapes them. }}
+                    {{{ topbar.notificationhtml }}}
                     {{{ topbar.messageslink }}}
                 </div>
             </header>
@@ -262,14 +263,16 @@
                     {{#tenant_scope}}{{tenant_scope}} &mdash; {{/tenant_scope}}{{#hassystemhealth}}{{# str }} subtitle_admin, theme_sentientia {{/ str }}{{/hassystemhealth}}{{^hassystemhealth}}{{# str }} subtitle_admin_scoped, theme_sentientia {{/ str }}{{/hassystemhealth}}
                 </p>
                 {{/isadmin}}
-                {{#ismanager}}{{^isadmin}}
+                {{! showmanagerheader is set on the learner branch only (never for an admin): ismanager and, since V16,
+                    only for a manager with a team. }}
+                {{#showmanagerheader}}
                 <h2 class="airpay-dash__welcome-header__title">{{# str }} welcome_manager, theme_sentientia, {{firstname}} {{/ str }}</h2>
                 <p class="airpay-dash__welcome-header__subtitle">{{# str }} subtitle_manager, theme_sentientia {{/ str }}</p>
-                {{/isadmin}}{{/ismanager}}
-                {{^isadmin}}{{^ismanager}}
+                {{/showmanagerheader}}
+                {{^isadmin}}{{^showmanagerheader}}
                 <h2 class="airpay-dash__welcome-header__title">{{# str }} welcome_learner, theme_sentientia, {{firstname}} {{/ str }}</h2>
                 <p class="airpay-dash__welcome-header__subtitle">{{# str }} subtitle_learner, theme_sentientia {{/ str }}</p>
-                {{/ismanager}}{{/isadmin}}
+                {{/showmanagerheader}}{{/isadmin}}
             </div>
 
             {{! ═══ ADMIN DASHBOARD (siteadmin / L&D admin) ═══ }}
@@ -583,6 +586,9 @@
             {{#hasteamcompliance}}
             <div class="airpay-dash__section airpay-dash__section--bottom-spacing">
                 <h3 class="airpay-dash__section-title"><i class="fa fa-shield" aria-hidden="true"></i> {{#str}}dash_sec_team_compliance, theme_sentientia{{/str}}</h3>
+                {{! 11-18 surface walk B4: the wrapper scrolls the table inside the card at phone width
+                    (custom_media.scss styles .airpay-dash__team-table-wrapper), so the page does not scroll sideways. }}
+                <div class="airpay-dash__team-table-wrapper">
                 <table class="generaltable airpay-dash__team-table">
                     <thead>
                         <tr>
@@ -611,6 +617,7 @@
                         {{/teamcompliance}}
                     </tbody>
                 </table>
+                </div>
             </div>
             {{/hasteamcompliance}}
 
@@ -709,7 +716,7 @@
                         <div class="airpay-gamification__leaderboard airpay-gamification__leaderboard--spaced">
                             <div class="airpay-gamification__leaderboard-header">
                                 <h4><i class="fa fa-trophy airpay-dash__trophy-icon"></i> {{#str}}dash_leaderboard, theme_sentientia{{/str}}</h4>
-                                <small>{{#str}}dash_your_department, theme_sentientia{{/str}}</small>
+                                <small>{{#str}}dash_your_organisation, theme_sentientia{{/str}}</small>
                             </div>
                             {{#leaderboard.has_entries}}
                             <div class="airpay-gamification__leaderboard-list">
@@ -731,6 +738,23 @@
             </div>
             {{/hasgamification}}
 
+            {{! Courses you teach (V16, 11-18 surface walk; a bug fix, no flag): the courses the user teaches and does
+                not take are listed here and left out of the learner figures.
+                name is format_string output from layout/dashboard.php; url is a moodle_url. }}
+            {{#hasteachingcourses}}
+            <div class="airpay-dash__section">
+                <h3 class="airpay-dash__section-title"><i class="fa fa-book" aria-hidden="true"></i> {{#str}}dash_sec_teaching, theme_sentientia{{/str}}</h3>
+                <div class="airpay-dash__top-courses">
+                    {{#teachingcourses}}
+                    <a href="{{url}}" class="airpay-dash__top-courses__row">
+                        <span class="airpay-dash__top-courses__name">{{{name}}}</span>
+                        <span class="airpay-dash__top-courses__stats"><i class="fa fa-arrow-right" aria-hidden="true"></i></span>
+                    </a>
+                    {{/teachingcourses}}
+                </div>
+            </div>
+            {{/hasteachingcourses}}
+
             {{! Continue Learning — Phase B0 iter 3: migrated to course_progress_card partial }}
             {{#hascontinuecourses}}
             <div class="airpay-dash__section">
@@ -745,15 +769,17 @@
                 </div>
             </div>
             {{/hascontinuecourses}}
-            {{! Empty state — Phase B0 iter 7: migrated to empty_state partial }}
-            {{^hascontinuecourses}}
+            {{! Empty state — Phase B0 iter 7: migrated to empty_state partial. V16: not for a user who only teaches
+                (teachingonly), whose courses are listed under "Courses you teach" above; a learner with no courses
+                still gets it. }}
+            {{^hascontinuecourses}}{{^teachingonly}}
             <div class="airpay-dash__section">
                 <h3 class="airpay-dash__section-title"><i class="fa fa-play-circle" aria-hidden="true"></i> {{#str}}dash_continue_learning, theme_sentientia{{/str}}</h3>
                 {{#empty_continue}}
                 {{> theme_sentientia/components/empty_state }}
                 {{/empty_continue}}
             </div>
-            {{/hascontinuecourses}}
+            {{/teachingonly}}{{/hascontinuecourses}}
 
             {{! ═══ TWO-COLUMN: Deadlines + Timeline ═══ }}
             <div class="airpay-dash__two-col">

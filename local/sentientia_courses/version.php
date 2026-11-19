@@ -49,7 +49,12 @@ $plugin->component = 'local_sentientia_courses';
 //                 enrolments (proved per learner-course pair); privacy docblock lists the trail tables. No capability change.
 // 2026100801: Moodle 5.3 compat FX-06: enrolledusers (Enrol user dialog) uses core/modal_save_cancel, the Save button exists again; amd build refreshed. No schema change.
 // 2026110300: user search matches a full name ("Rahul Sharma"), 2026-11-03. No schema change.
-$plugin->version   = 2026111600;  // course_reminder + course_overdue count the deadline from the enrolment date (MAX active ue.timecreated per user and course; was ue.timestart > 0), selection in public get_candidates(), 2026-11-16. No schema change. Was: 2026110300;  // user search matches a full name ("Rahul Sharma"), 2026-11-03
+// 2026111600: course_reminder + course_overdue count the deadline from the enrolment date. No schema change.
+$plugin->version   = 2026111800;  // Browse Airpay Library (V23, 2026-11-18): search by name + 25 rows a page; "Request access" returns to the same search and page; the admin list pages declare their actions column (V19). No schema change. Was: 2026111600;  // course_reminder + course_overdue count the deadline from the enrolment date (MAX active ue.timecreated per user and course; was ue.timestart > 0), selection in public get_candidates(), 2026-11-16. No schema change. Was: 2026110300;  // user search matches a full name ("Rahul Sharma"), 2026-11-03
+// 2026111800 also carries Phase C addendum V8-E (2026-11-19): the dashboard featured-courses widget prints language strings (featured_widget_*, en + hi) instead of hard-coded English.
+// 2026111800 V23 WITHDRAWN 2026-11-19 (verification): the paging bar was painted over by the isolation notice, so
+// browse_airpay.php + browse_airpay.mustache are back to their pre-V23 text (unpaged list, no search). Number kept
+// (a downgrade is refused); the V19 actions column and V8-E stay.
 // 2026092501:  // ADR-031 follow-up: upgrade step rehomes tenant admins' 'All tenants' featured rows; own-roster unenrol; scoped Enrolled column
 // 2026092500:  // ADR-031: course writes, enrolment, featured, list/export tenant-scoped (no schema/cap change)
 // 2026092201:  // real privacy provider: requests + remind_sent (was null_provider)
@@ -57,7 +62,7 @@ $plugin->version   = 2026111600;  // course_reminder + course_overdue count the 
 // 2026090800:
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.14.2';  // 1.14.2: reminder/overdue deadlines count from the enrolment date.  // 1.14.1: full-name user search.  // +ADR-032 enrolments importer: switch off proven-converted BizLMS instances (1.13.0: +course_tags and enrolments importers)
+$plugin->release   = '1.14.3';  // 1.14.3: admin list actions column (V19), featured widget strings (V8-E); Browse Airpay Library search + paging (V23) withdrawn 2026-11-19. 1.14.2: reminder/overdue deadlines count from the enrolment date.  // 1.14.1: full-name user search.  // +ADR-032 enrolments importer: switch off proven-converted BizLMS instances (1.13.0: +course_tags and enrolments importers)
 $plugin->dependencies = [
     'local_sentientia_org' => 2026041600,
     // tenant::is_cross_tenant() / scope_path() / require_same_tenant_user() (ADR-031).

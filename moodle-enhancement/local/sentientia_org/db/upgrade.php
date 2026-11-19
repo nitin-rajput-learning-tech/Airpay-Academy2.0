@@ -43,7 +43,22 @@ function xmldb_local_sentientia_org_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026051100, 'local', 'sentientia_org');
     }
 
-    // ── 2026061700: Revised airpay Brand Book 2026-06 — repaint retired
+    // ── 2026093002: cohort tenant scope table (ADR-032 BizLMS import, feature cohort_scope). ──
+    // The target of the import of local_groups, the tenant satellite BizLMS kept for each core
+    // cohort. Created from install.xml so the two cannot drift; the table_exists guard makes a
+    // re-run (or a site where the table was made by hand) a no-op. Nothing reads the table yet.
+    if ($oldversion < 2026093002) {
+        $table = new xmldb_table('local_sentientia_cohort_scope');
+        if (!$dbman->table_exists($table)) {
+            $dbman->install_one_table_from_xmldb_file(__DIR__ . '/install.xml', 'local_sentientia_cohort_scope');
+        }
+        upgrade_plugin_savepoint(true, 2026093002, 'local', 'sentientia_org');
+    }
+
+    // ── 2026111800 (first written as 2026061700; renumbered 2026-11-18 so sites
+    // already past 2026061700, UAT at 2026101502 among them, run it once; idempotent:
+    // it rewrites only rows that still hold the retired violet).
+    // 2026061700: Revised airpay Brand Book 2026-06 — repaint retired
     // Tailwind violet out of per-tenant brand config. The Public ("external")
     // tenant carried #7c3aed (brand_color/button_color), #5b21b6 (hover) and a
     // violet navbar-shadow rgba(124,58,237) in custom_css — all pre-date the
@@ -51,7 +66,7 @@ function xmldb_local_sentientia_org_upgrade(int $oldversion): bool {
     // install/defaults() are already #0066A7, so this only touches rows that
     // still hold the EXACT retired hexes; it cannot clobber a colour an admin
     // legitimately chose, and re-running matches nothing (idempotent).
-    if ($oldversion < 2026061700) {
+    if ($oldversion < 2026111800) {
         $colmap = [
             'brand_color'  => ['#7c3aed' => '#0066A7'],
             'button_color' => ['#7c3aed' => '#0066A7'],
@@ -82,19 +97,7 @@ function xmldb_local_sentientia_org_upgrade(int $oldversion): bool {
                 mtrace("  sentientia_org: de-violeted navbar-shadow in custom_css on row {$r->id}");
             }
         }
-        upgrade_plugin_savepoint(true, 2026061700, 'local', 'sentientia_org');
-    }
-
-    // ── 2026093002: cohort tenant scope table (ADR-032 BizLMS import, feature cohort_scope). ──
-    // The target of the import of local_groups, the tenant satellite BizLMS kept for each core
-    // cohort. Created from install.xml so the two cannot drift; the table_exists guard makes a
-    // re-run (or a site where the table was made by hand) a no-op. Nothing reads the table yet.
-    if ($oldversion < 2026093002) {
-        $table = new xmldb_table('local_sentientia_cohort_scope');
-        if (!$dbman->table_exists($table)) {
-            $dbman->install_one_table_from_xmldb_file(__DIR__ . '/install.xml', 'local_sentientia_cohort_scope');
-        }
-        upgrade_plugin_savepoint(true, 2026093002, 'local', 'sentientia_org');
+        upgrade_plugin_savepoint(true, 2026111800, 'local', 'sentientia_org');
     }
 
     return true;

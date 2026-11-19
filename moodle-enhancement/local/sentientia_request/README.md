@@ -76,10 +76,13 @@ learner is offered **Request enrolment** when all of these hold:
 - a course `submit()` would accept (visible, in the learner's tenant scope, ADR-031): `request_manager::can_request_course()`.
 
 Self-enrolment is **not** counted as a way in, with or without an enrolment key (fix 2026-10-15, version `2026101503`):
-the theme sends `/enrol/index.php`, where the key form and "Enrol me" render, to `/my` for everyone, so a learner can
-never use a self-enrolment instance and a course with only that would otherwise be a dead end with no button. A keyed
-course such as QA-walk E-01's course 71 therefore offers the request too. The only routes that come before a request
-are the catalogue's own, below. Count self-enrolment as a way in again only once a reachable self-enrol route exists.
+the theme never renders `/enrol/index.php`, where the key form and "Enrol me" render (since 2026-11-18 it sends it to
+the catalogue course page when the viewer may open that course, and to `/my` otherwise; before that, always to `/my`),
+so a learner can never use a self-enrolment instance and a course with only that would otherwise be a dead end with no
+button. A keyed course such as QA-walk E-01's course 71 therefore offers the request too. The only routes that come
+before a request are the catalogue's own, below. Count self-enrolment as a way in again only once a reachable
+self-enrol route exists behind its own flag (a course.php self-enrol button was tried and withdrawn on 2026-11-18:
+no flag).
 
 The catalogue adds its own two routes first (`enrolment::request_state()`): a **paid** course goes to the cart,
 and a **free** course the learner is offered one-click enrolment for

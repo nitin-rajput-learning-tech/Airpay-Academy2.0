@@ -27,11 +27,6 @@
             </li>
             <li>
                 <div class="coursebackup course_extended_menu_itemcontainer">
-                    <a title="User enrolments" class="course_extended_menu_itemlink" href="{{config.wwwroot}}/local/sentientia_courses/enrolledusers.php?id={{courseid}}"><i class="icon fa fa-user-plus fa-fw " aria-hidden="true"></i></a>
-                </div>
-            </li>
-            <li>
-                <div class="coursebackup course_extended_menu_itemcontainer">
                     <a title="{{# str }}enrolledusers, core_enrol {{/ str }}" class="course_extended_menu_itemlink" href="{{config.wwwroot}}/local/sentientia_courses/enrolledusers.php?id={{courseid}}"><i class="icon fa fa-user" aria-hidden="true"></i></a>
                 </div>
             </li>
@@ -39,7 +34,7 @@
 		{{# coursebackup}}
             <li>
             	<div class="coursebackup course_extended_menu_itemcontainer">
-                	<a title="{{# str }} coursebackup {{/ str }}" class="course_extended_menu_itemlink" href="{{config.wwwroot}}/backup/backup.php?id={{courseid}}"><i class="icon fa fa-download" aria-hidden="true"></i></a>
+                	<a title="{{# str }} coursebackup {{/ str }}" class="course_extended_menu_itemlink" href="{{config.wwwroot}}/backup/backup.php?id={{courseid}}"><i class="icon fa fa-archive" aria-hidden="true"></i></a>
                 </div>
             </li>
 		{{/ coursebackup}}
@@ -75,17 +70,19 @@
                     </li>
             {{/ certificate_download }}
             {{^ certificate_download }}
+                {{^ manage }}
                     <li>
                         <div class="editingon course_extended_menu_itemcontainer">
                             <a title="{{# str}} unableto_download_msg, theme_sentientia {{/str}}" class="course_extended_menu_itemlink" href="javascript: void(0)"><i class="icon fa fa-download" aria-hidden="true"></i></a>
                         </div>
                     </li>
+                {{/ manage }}
             {{/ certificate_download }}
         {{/ certificate_exists }}
 		{{# is_courseedit_icon }}
                 <li>
                 	<div class="courseedit course_extended_menu_itemcontainer">
-                        <a title="{{# str }} editcoursesettings {{/ str}}" class="course_extended_menu_itemlink createcoursemodal courseactions" data-action = "createcoursemodal" data-value = {{courseid}} href="javascript:void(0)" onclick="(function(e){ require('local_courses/courseAjaxform').init({contextid:{{categorycontextid}}, component: 'local_courses', callback:'custom_course_form', form_status:0, plugintype:'local', pluginname:'courses', courseid: {{ courseid }} }) })(event)"><i class="icon fa fa-pencil" aria-hidden="true"></i></a>
+                        <a title="{{# str }} editcoursesettings {{/ str}}" class="course_extended_menu_itemlink" href="{{config.wwwroot}}/course/edit.php?id={{courseid}}"><i class="icon fa fa-pencil" aria-hidden="true"></i></a>
                     </div>
                 </li>
 		{{/ is_courseedit_icon }}

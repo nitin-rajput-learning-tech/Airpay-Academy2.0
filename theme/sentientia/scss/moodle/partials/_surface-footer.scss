@@ -84,9 +84,12 @@
     margin: 0 auto;
     flex-wrap: wrap;
 }
+/* 2026-11-18 surface walk V21: brightness(10) turned the blue logo a washed-out cyan, which the Brand Book does not
+   allow (no teal or cyan). The logo PNG is a transparent single-colour image, so brightness(0) invert(1) paints it a
+   plain, readable white on the dark footer, in light and dark mode. */
 .airpay-footer__logo img {
-    height: 32px;
-    filter: brightness(10);
+    height: 40px;
+    filter: brightness(0) invert(1);
 }
 .airpay-footer__links {
     display: flex;
@@ -155,7 +158,7 @@
     }
 
     .airpay-footer__logo img {
-        height: 28px;
+        height: 32px;
     }
 
     .airpay-footer__links {
@@ -289,5 +292,11 @@ body:has(#airpay-assistant) .airpay-footer__product-attribution {
     /* Too narrow to give the space away twice: the band reserves it at the end only. */
     body:has(#airpay-assistant) .airpay-footer__product-attribution {
         padding-inline: var(--ap-space-3) var(--ap-footer-fab-clearance);
+    }
+    /* 2026-11-18 surface walk V21: at 390px the stacked footer rows are narrower than the button's reserved end, so the
+       last line could still end up under the button at the bottom of the page. Leave room below the footer for the
+       button's height plus its gaps, so the page can scroll the last line clear of it. */
+    body:has(#airpay-assistant) .airpay-footer {
+        padding-bottom: calc(var(--ap-footer-fab-size) + var(--ap-space-3) + var(--ap-space-2));
     }
 }

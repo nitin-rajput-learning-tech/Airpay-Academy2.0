@@ -159,7 +159,8 @@ class analytics_manager {
     }
 
     /**
-     * Get engagement funnel: Enrolled → Started → 50% → Completed → Certified.
+     * Get engagement funnel: Enrolled → Started → Completed → Certified
+     * (certified = holds a certificate AND completed at least one course).
      */
     public static function get_funnel(string $orgpath = ''): array {
         global $DB;
@@ -167,7 +168,8 @@ class analytics_manager {
         // Counts only in the shared cache; stage names are added per viewer
         // (funnel_stages()), in the viewer's language.
         $cache = \cache::make('local_sentientia_analytics', 'funnel');
-        $cachekey = 'funnel_v2_' . md5($orgpath ?: 'all');
+        // v3 (11-18, V12): Certified needs a completion too; v2 rows are stale.
+        $cachekey = 'funnel_v3_' . md5($orgpath ?: 'all');
         $cached = $cache->get($cachekey);
         if ($cached !== false) {
             return self::funnel_stages($cached);
@@ -196,9 +198,17 @@ class analytics_manager {
               WHERE cc.timecompleted IS NOT NULL AND u.deleted = 0 $orgfilter", $params);
 
         // tool_certificate may not be installed (see get_kpis()): no certificates then.
+        // Certified = holds a certificate AND completed at least one course.
+        // Imported (BizLMS) certificates carry courseid 0, so they cannot be
+        // matched to the completion of their own course; counting every
+        // certificate holder made the Certified bar taller than Completed
+        // (11-18 surface walk, V12). The funnel is a funnel again.
         $certified = !$DB->get_manager()->table_exists('tool_certificate_issues') ? 0 : $DB->count_records_sql(
             "SELECT COUNT(DISTINCT ci.userid) FROM {tool_certificate_issues} ci
-               JOIN {user} u ON u.id = ci.userid WHERE u.deleted = 0 $orgfilter", $params);
+               JOIN {user} u ON u.id = ci.userid
+              WHERE u.deleted = 0 $orgfilter
+                AND EXISTS (SELECT 1 FROM {course_completions} cc
+                             WHERE cc.userid = ci.userid AND cc.timecompleted IS NOT NULL)", $params);
 
         $max = max($enrolled, 1);
 

@@ -1109,26 +1109,42 @@ class evaluation_manager {
      * Has the user already submitted this evaluation in a way that
      * should block a fresh submission?
      *
-     * Returns false (= "user may submit again") when:
-     *   - the evaluation is anonymous (we don't tie responses to users
-     *     anyway, so re-submission is a no-op for identity), or
-     *   - the evaluation has multiple_submit=1 (P1 #17 — pulse surveys
-     *     explicitly allow re-submission).
+     * Returns false (= "user may submit") when the evaluation does not
+     * exist, when $userid is not a real user (0 or less), or when the
+     * evaluation has multiple_submit=1 (P1 #17 — pulse surveys explicitly
+     * allow re-submission).
      *
-     * Otherwise checks for a SUBMITTED response row. The pending shell the trigger queue writes for an invited user
+     * Named form: checks for a SUBMITTED response row. The pending shell the trigger queue writes for an invited user
      * (timesubmitted 0, see evaluation_engine::process_due_triggers()) is not a response: counting it told every
      * invited user of a named form "you already responded" and made submit_response() throw alreadyresponded
      * before they had answered anything (fixed 2026-10-01).
+     *
+     * Anonymous form: the response row is stored with userid 0, so it cannot say who answered. The per-user marker
+     * is the user's assignment row, which submit_response() marks 'responded' with the real userid
+     * (mark_assignments_responded()). Until 2026-11-18 (V25 of the 11-18 surface walk) an anonymous form returned
+     * false here unconditionally, so an assigned user could answer it again and again, each answer counted.
+     *
+     * Known limit: an anonymous form answered WITHOUT an assignment row (opened from a direct link by someone who was
+     * never assigned) leaves no per-user marker, so that person can still answer it more than once. Recording one
+     * would tie the anonymous answer to a user, which is what anonymity rules out.
+     *
+     * @param int $evaluationid
+     * @param int $userid
+     * @return bool
      */
     public static function has_user_responded(int $evaluationid, int $userid): bool {
         global $DB;
         $eval = self::get($evaluationid);
-        if (!$eval || (int) $eval->anonymous === 1) {
+        if (!$eval || $userid <= 0) {
             return false;
         }
         // P1 #17 — pulse surveys.
         if ((int) ($eval->multiple_submit ?? 0) === 1) {
             return false;
+        }
+        if ((int) $eval->anonymous === 1) {
+            return $DB->record_exists(self::ASSIGN_TABLE,
+                ['evaluationid' => $evaluationid, 'userid' => $userid, 'status' => 'responded']);
         }
         return $DB->record_exists_select(self::RESPONSES_TABLE,
             'evaluationid = :eid AND userid = :uid AND timesubmitted > 0',
@@ -1167,7 +1183,9 @@ class evaluation_manager {
             }
         }
 
-        if ((int) $eval->anonymous !== 1 && $userid > 0) {
+        // Anonymous forms too (V25, 11-18): has_user_responded() reads the
+        // user's assignment row for those, since the response holds userid 0.
+        if ($userid > 0) {
             if (self::has_user_responded($evaluationid, $userid)) {
                 throw new \moodle_exception('alreadyresponded', 'local_sentientia_evaluation');
             }

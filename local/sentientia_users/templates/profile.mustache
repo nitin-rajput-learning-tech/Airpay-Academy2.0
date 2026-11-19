@@ -5,7 +5,7 @@
             <div class="ap-profile__actions">
                 {{#capabilityedit}}
                 <a href="{{{ photo_url }}}"
-                   class="ap-profile__edit-btn" title="Change photo">
+                   class="ap-profile__edit-btn" title="{{#str}}profile_changephoto, local_sentientia_users{{/str}}">
                     <i class="fa fa-camera"></i>
                 </a>
                 {{! ADR-031 2026-09-29: a site admin gets the core editor link; anyone else the Sentientia edit modal. See user_manager::profile_edit_action. }}
@@ -57,7 +57,7 @@
 
     {{#ap_canmanage}}
     {{! Account-management actions (2026-06-01) — edit own profile / change password / preferences. }}
-    <div class="ap-profile__account-actions d-flex flex-wrap gap-2 mt-3 mb-2">
+    <div class="ap-profile__account-actions">
         <a href="{{{ap_editurl}}}" class="btn btn-primary">
             <i class="fa fa-pencil" aria-hidden="true"></i> {{#str}}editprofile, local_sentientia_users{{/str}}
         </a>
@@ -80,8 +80,8 @@
                 <i class="fa fa-trophy"></i>
             </div>
             <div class="ap-profile__enrich-data">
-                <strong>{{total_points}} pts</strong>
-                <small>{{level_name}} · Rank #{{rank}}</small>
+                <strong>{{points_label}}</strong>
+                <small>{{rank_label}}</small>
             </div>
         </div>
         <div class="ap-profile__enrich-card">
@@ -89,8 +89,8 @@
                 <i class="fa fa-certificate"></i>
             </div>
             <div class="ap-profile__enrich-data">
-                <strong>{{badge_count}} badges</strong>
-                <small>{{#has_streak}}{{current_streak}} day streak{{/has_streak}}{{^has_streak}}Start a streak!{{/has_streak}}</small>
+                <strong>{{badge_count_label}}</strong>
+                <small>{{streak_label}}</small>
             </div>
         </div>
         {{/ap_gamification}}
@@ -100,22 +100,23 @@
                 <i class="fa fa-line-chart"></i>
             </div>
             <div class="ap-profile__enrich-data">
-                <strong>{{percentage}}% skill readiness</strong>
-                <small>{{met}}/{{total}} skills met</small>
+                <strong>{{#str}}profile_skill_readiness, local_sentientia_users, {{percentage}}{{/str}}</strong>
+                <small>{{#str}}profile_skills_met, local_sentientia_users, { "met": {{met}}, "total": {{total}} }{{/str}}</small>
             </div>
         </div>
         {{/ap_skills_summary}}
     </div>
 
-    {{! Earned Badges Row }}
+    {{! Earned badges (persona walk 2026-11-18 V6): each badge shows its name, under a heading, not an unlabelled icon. }}
     {{#ap_gamification}}{{#has_badges}}
-    <div class="ap-profile__badges">
-        {{#badges}}
-        <div class="ap-profile__badge" title="{{name}}: {{description}}">
-            <i class="fa {{icon}}"></i>
-        </div>
-        {{/badges}}
-    </div>
+    <section class="ap-profile__earned" aria-labelledby="ap-profile-earned-title">
+        <h2 class="ap-profile__earned-title" id="ap-profile-earned-title">{{#str}}profile_badges_heading, local_sentientia_users{{/str}}</h2>
+        <ul class="ap-profile__earned-list">
+            {{#badges}}
+            <li class="ap-profile__earned-item" title="{{description}}"><span class="ap-profile__earned-icon"><i class="fa {{icon}}" aria-hidden="true"></i></span><span class="ap-profile__earned-name">{{name}}</span></li>
+            {{/badges}}
+        </ul>
+    </section>
     {{/has_badges}}{{/ap_gamification}}
 </div>
 
@@ -133,17 +134,17 @@
     {{! ── Employee / partner_employee — org-tree shape ───────────────── }}
     {{#is_employee}}
     <div class="ap-profile__detail-grid">
-        <div class="ap-profile__detail"><label>Organisation</label><span>{{organisation}}</span></div>
-        <div class="ap-profile__detail"><label>Department</label><span>{{department}}</span></div>
-        <div class="ap-profile__detail"><label>Sub-department</label><span>{{subdepartment}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}organisation, local_sentientia_users{{/str}}</label><span>{{organisation}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}department, local_sentientia_users{{/str}}</label><span>{{department}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}subdepartment, local_sentientia_users{{/str}}</label><span>{{subdepartment}}</span></div>
         <div class="ap-profile__detail"><label>{{#str}}reportingto, local_sentientia_users{{/str}}</label><span>{{supervisorname}}</span></div>
-        <div class="ap-profile__detail"><label>Employee ID</label><span>{{empid}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}employeeid, local_sentientia_users{{/str}}</label><span>{{empid}}</span></div>
         {{! ADR-032 users: the position and domain, from the imported lookups; both lines exist only behind the flag sentientia.users.position_labels. }}
         {{#ap_position}}<div class="ap-profile__detail"><label>{{#str}}position, local_sentientia_users{{/str}}</label><span>{{.}}</span></div>{{/ap_position}}
         {{#ap_domain}}<div class="ap-profile__detail"><label>{{#str}}domain, local_sentientia_users{{/str}}</label><span>{{.}}</span></div>{{/ap_domain}}
-        <div class="ap-profile__detail"><label>Location</label><span>{{location}}</span></div>
-        <div class="ap-profile__detail"><label>Phone</label><span>{{phnumber}}</span></div>
-        <div class="ap-profile__detail"><label>Join Date</label><span>{{joindate}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}location, local_sentientia_users{{/str}}</label><span>{{location}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}phone, local_sentientia_users{{/str}}</label><span>{{phnumber}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}joindate, local_sentientia_users{{/str}}</label><span>{{joindate}}</span></div>
     </div>
     {{/is_employee}}
 
@@ -154,8 +155,8 @@
         <div class="ap-profile__detail"><label>{{#str}}profile_field_partner_job_title, local_sentientia_platform{{/str}}</label><span>{{user_type_extras.partner_job_title}}</span></div>
         <div class="ap-profile__detail"><label>{{#str}}profile_field_partner_manager, local_sentientia_platform{{/str}}</label><span>{{user_type_extras.partner_manager_name}}</span></div>
         <div class="ap-profile__detail"><label>{{#str}}profile_field_partner_employee_id, local_sentientia_platform{{/str}}</label><span>{{user_type_extras.partner_employee_id}}</span></div>
-        <div class="ap-profile__detail"><label>Location</label><span>{{location}}</span></div>
-        <div class="ap-profile__detail"><label>Phone</label><span>{{phnumber}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}location, local_sentientia_users{{/str}}</label><span>{{location}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}phone, local_sentientia_users{{/str}}</label><span>{{phnumber}}</span></div>
         <div class="ap-profile__detail"><label>{{#str}}profile_field_hire_date, local_sentientia_platform{{/str}}</label><span>{{user_type_extras.partner_hire_date_str}}</span></div>
     </div>
     {{/is_partner_employee}}
@@ -201,24 +202,24 @@
         <div class="ap-profile__detail"><label>{{#str}}profile_field_operator_role, local_sentientia_platform{{/str}}</label><span>{{user_type_extras.operator_role}}</span></div>
         <div class="ap-profile__detail"><label>{{#str}}profile_field_contact_phone, local_sentientia_platform{{/str}}</label><span>{{user_type_extras.contact_phone}}</span></div>
         <div class="ap-profile__detail"><label>{{#str}}profile_field_oncall_for, local_sentientia_platform{{/str}}</label><span>{{#user_type_extras.oncall_for}}{{user_type_extras.oncall_for}}{{/user_type_extras.oncall_for}}{{^user_type_extras.oncall_for}}—{{/user_type_extras.oncall_for}}</span></div>
-        <div class="ap-profile__detail"><label>Email</label><span>{{user_email}}</span></div>
-        <div class="ap-profile__detail"><label>Location</label><span>{{location}}</span></div>
-        <div class="ap-profile__detail"><label>Phone</label><span>{{phnumber}}</span></div>
-        <div class="ap-profile__detail"><label>Join Date</label><span>{{joindate}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}email{{/str}}</label><span>{{user_email}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}location, local_sentientia_users{{/str}}</label><span>{{location}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}phone, local_sentientia_users{{/str}}</label><span>{{phnumber}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}joindate, local_sentientia_users{{/str}}</label><span>{{joindate}}</span></div>
     </div>
     {{/is_operator}}
 
     {{! Fallback — if no user_type was set yet (pre-C1.0 user), render the original employee grid. }}
     {{^user_type}}
     <div class="ap-profile__detail-grid">
-        <div class="ap-profile__detail"><label>Organisation</label><span>{{organisation}}</span></div>
-        <div class="ap-profile__detail"><label>Department</label><span>{{department}}</span></div>
-        <div class="ap-profile__detail"><label>Sub-department</label><span>{{subdepartment}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}organisation, local_sentientia_users{{/str}}</label><span>{{organisation}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}department, local_sentientia_users{{/str}}</label><span>{{department}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}subdepartment, local_sentientia_users{{/str}}</label><span>{{subdepartment}}</span></div>
         <div class="ap-profile__detail"><label>{{#str}}reportingto, local_sentientia_users{{/str}}</label><span>{{supervisorname}}</span></div>
-        <div class="ap-profile__detail"><label>Employee ID</label><span>{{empid}}</span></div>
-        <div class="ap-profile__detail"><label>Location</label><span>{{location}}</span></div>
-        <div class="ap-profile__detail"><label>Phone</label><span>{{phnumber}}</span></div>
-        <div class="ap-profile__detail"><label>Join Date</label><span>{{joindate}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}employeeid, local_sentientia_users{{/str}}</label><span>{{empid}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}location, local_sentientia_users{{/str}}</label><span>{{location}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}phone, local_sentientia_users{{/str}}</label><span>{{phnumber}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}joindate, local_sentientia_users{{/str}}</label><span>{{joindate}}</span></div>
     </div>
     {{/user_type}}
 </div>
@@ -451,8 +452,9 @@ require(['local_sentientia_users/user_actions'], function(UserActions) {
     border: 1px solid var(--ap-border, #e3eaf3);
     border-radius: 12px;
 }
+.ap-profile__detail { min-width: 0; }
 .ap-profile__detail label { display: block; font-size: 12px; color: var(--ap-text-muted, #8896a6); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
-.ap-profile__detail span { font-size: 14px; color: var(--ap-text, #1a1a2e); }
+.ap-profile__detail span { font-size: 14px; color: var(--ap-text, #1a1a2e); overflow-wrap: anywhere; }
 body.dark-mode .ap-profile__enrich-card,
 body.dark-mode .ap-profile__detail-grid { background: #1a1d27 !important; border-color: #2d3140 !important; }
 body.dark-mode .ap-profile__enrich-data strong,

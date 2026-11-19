@@ -14,8 +14,9 @@ $context = context_system::instance();
 $PAGE->set_url('/local/sentientia_manager/requests.php');
 $PAGE->set_context($context);
 $PAGE->set_pagelayout('standard');
-$PAGE->set_title('Enrolment Requests');
-$PAGE->set_heading('Enrolment Requests');
+// V15 (2026-11-18): translated page title (was hard-coded English).
+$PAGE->set_title(get_string('enrolmentrequests', 'local_sentientia_manager'));
+$PAGE->set_heading(get_string('enrolmentrequests', 'local_sentientia_manager'));
 
 // B7 (surface walk 2026-11-18): a learner's enrolment request is stored by
 // local_sentientia_request (the catalogue's Request enrolment button, the

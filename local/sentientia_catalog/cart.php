@@ -36,6 +36,17 @@ if ($action === 'clear') {
     redirect(new moodle_url('/local/sentientia_catalog/cart.php'), 'Cart cleared.');
 }
 
+// Persona walk 2026-11-18: "Login to Complete Enrollment" brings the visitor back to this cart. Core
+// login/index.php reads ?wantsurl= only on Behat sites, so set the session's wantsurl (what require_login()
+// does), and only on this click.
+if ($action === 'login') {
+    if (!isloggedin() || isguestuser()) {
+        $SESSION->wantsurl = (new moodle_url('/local/sentientia_catalog/cart.php'))->out(false);
+        redirect(get_login_url());
+    }
+    redirect(new moodle_url('/local/sentientia_catalog/cart.php'));
+}
+
 // Handle "enroll all free" for logged-in users.
 // QA-walk P1 (2026-05-29) — the old loop called core enrol_self() (which
 // silently no-ops on key-gated courses) yet incremented $enrolled anyway,
@@ -105,7 +116,7 @@ echo $OUTPUT->header();
         <i class="fa fa-shopping-cart" style="font-size:3rem; color:#d1d5db; display:block; margin-bottom:16px;"></i>
         <h4 style="color:#5a6070; margin:0 0 8px;">Your cart is empty</h4>
         <p style="color:#9ca3af; margin:0 0 16px;">Browse our course catalog to find courses you'd like to enroll in.</p>
-        <a href="<?php echo (new moodle_url('/local/sentientia_catalog/public.php'))->out(); ?>"
+        <a href="<?php echo \local_sentientia_catalog\catalog_manager::catalog_home_url($USER)->out(); ?>"
            style="padding:10px 24px; border-radius:10px; background:var(--ap-primary,#0066A7); color:#fff; text-decoration:none; font-weight:600;">
             <i class="fa fa-search"></i> Browse Courses
         </a>
@@ -153,7 +164,7 @@ echo $OUTPUT->header();
 
         <?php if (!$is_loggedin): ?>
         <!-- Guest: redirect to login -->
-        <a href="<?php echo (new moodle_url('/login/index.php', ['wantsurl' => $CFG->wwwroot . '/local/sentientia_catalog/cart.php']))->out(); ?>"
+        <a href="<?php echo (new moodle_url('/local/sentientia_catalog/cart.php', ['action' => 'login']))->out(); ?>"
            style="display:flex; align-items:center; justify-content:center; gap:8px;
                   padding:12px 24px; border-radius:10px; font-size:16px; font-weight:700;
                   background:linear-gradient(135deg,#0066a7,#0d5da1); color:#fff; text-decoration:none; width:100%;">
@@ -206,7 +217,7 @@ echo $OUTPUT->header();
             <a href="<?php echo (new moodle_url('/local/sentientia_catalog/cart.php', ['action' => 'clear', 'sesskey' => sesskey()]))->out(); ?>"
                style="font-size:12px; color:#dc2626; text-decoration:none;">Clear Cart</a>
             <span style="color:var(--ap-text-muted); margin:0 8px;">·</span>
-            <a href="<?php echo (new moodle_url('/local/sentientia_catalog/public.php'))->out(); ?>"
+            <a href="<?php echo \local_sentientia_catalog\catalog_manager::catalog_home_url($USER)->out(); ?>"
                style="font-size:12px; color:var(--ap-primary); text-decoration:none;">Continue Browsing</a>
         </div>
     </div>

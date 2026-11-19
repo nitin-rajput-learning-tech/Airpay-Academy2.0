@@ -147,9 +147,13 @@ final class role_detector_test extends \advanced_testcase {
     }
 
     /**
-     * Manager via the `moodle/site:viewreports` system capability.
+     * B6 (Nitin, 2026-11-18): the `moodle/site:viewreports` system capability
+     * alone no longer makes a Manager. Core grants it to every
+     * teacher-archetype role, so every trainer used to get the manager shell
+     * (My Team, Compliance, "Team overview"). A Manager now needs active
+     * direct reports.
      */
-    public function test_manager_via_capability(): void {
+    public function test_viewreports_alone_is_not_a_manager(): void {
         $this->resetAfterTest();
         $user = $this->getDataGenerator()->create_user();
         $context = \context_system::instance();
@@ -166,9 +170,10 @@ final class role_detector_test extends \advanced_testcase {
 
         $this->assertFalse($r['issiteadmin']);
         $this->assertFalse($r['isldadmin']);
-        $this->assertTrue($r['ismanager'],
-            'User with moodle/site:viewreports should be detected as Manager');
-        $this->assertFalse($r['islearner']);
+        $this->assertFalse($r['ismanager'],
+            'moodle/site:viewreports alone must not make a Manager (B6)');
+        $this->assertTrue($r['islearner'],
+            'A report viewer with no direct reports lands in the Learner tier');
     }
 
     /**

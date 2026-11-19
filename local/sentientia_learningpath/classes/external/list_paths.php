@@ -101,12 +101,15 @@ class list_paths extends external_api {
         foreach ($records as $lp) {
             $rows[] = [
                 'id'          => (int) $lp->id,
-                'name'        => format_string($lp->name),
+                // Surface walk 2026-11-18 V19: plain text, because datatable.js escapes the cell itself and
+                // the return type is PARAM_TEXT (escaping here showed "Products &amp; Features").
+                'name'        => format_string($lp->name, true, ['escape' => false]),
                 'courses'     => (int) ($lp->course_count ?? 0),
                 'enrolled'    => (int) ($lp->user_count ?? 0),
                 'created'     => $lp->timecreated ? userdate($lp->timecreated, '%d %b %Y') : '—',
                 'statuslabel' => $statusmap[(int) $lp->status] ?? 'Unknown',
                 'statuscss'   => $cssmap[(int) $lp->status] ?? 'badge-secondary',
+                'statuslabel_class' => $cssmap[(int) $lp->status] ?? 'badge-secondary',
                 'actions'     => '<a href="' . (new \moodle_url('/local/sentientia_learningpath/view.php', ['id' => $lp->id]))->out(false) . '" class="btn btn-sm btn-link p-1" title="View path detail"><i class="fa fa-eye"></i></a>'
                     . ' <a href="#" class="btn btn-sm btn-link p-1" data-action="edit-path" data-pathid="' . (int)$lp->id . '" data-name="' . s($lp->name) . '" title="Edit"><i class="fa fa-pencil"></i></a>'
                     . ' <a href="#" class="btn btn-sm btn-link p-1" data-action="delete-path" data-pathid="' . (int)$lp->id . '" data-name="' . s($lp->name) . '" title="Delete"><i class="fa fa-trash text-danger"></i></a>',
@@ -128,6 +131,7 @@ class list_paths extends external_api {
                     'created'     => new external_value(PARAM_TEXT, ''),
                     'statuslabel' => new external_value(PARAM_TEXT, ''),
                     'statuscss'   => new external_value(PARAM_TEXT, ''),
+                    'statuslabel_class' => new external_value(PARAM_ALPHANUMEXT, 'badge css class'),
                     'actions'     => new external_value(PARAM_RAW,  ''),
                 ])
             ),

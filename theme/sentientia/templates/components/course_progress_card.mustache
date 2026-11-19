@@ -9,9 +9,13 @@
         viewurl       (required) — link to the course view page
         fullname      (required) — course title (escaped)
         progress      (required) — completion percentage 0-100
-        shortname     (optional) — used inside the thumb when no image
-        thumburl      (optional) — real thumbnail URL; falls back to
-                                   brand gradient with shortname text
+        shortname     (optional) — printed inside the thumb when there is
+                                   no image; without it the thumb shows a
+                                   course icon (the dashboard passes none:
+                                   surface walk V5, 2026-11-18)
+        thumburl      (optional) — real thumbnail URL, painted over the
+                                   brand gradient; without it the thumb is
+                                   the brand gradient
         subtitle      (optional) — line under the title (category /
                                    duration / instructor / etc.)
         status        (optional) — "not_started" | "in_progress" |
@@ -38,9 +42,9 @@
    href="{{viewurl}}"
    aria-label="{{{fullname}}}, {{#str}}dash_percent_complete, theme_sentientia, {{progress}}{{/str}}{{#duration}}, {{duration}}{{/duration}}">
     <div class="airpay-course-card__thumb"
-         {{#thumburl}}style="background-image: url('{{thumburl}}');"{{/thumburl}}>
+         {{#thumburl}}style="background-image: url('{{thumburl}}'), var(--ap-gradient-cta);"{{/thumburl}}>
         {{^thumburl}}
-        <span class="airpay-course-card__initial" aria-hidden="true">{{#shortname}}{{shortname}}{{/shortname}}{{^shortname}}{{{fullname}}}{{/shortname}}</span>
+        <span class="airpay-course-card__initial" aria-hidden="true">{{#shortname}}{{shortname}}{{/shortname}}{{^shortname}}<i class="fa fa-graduation-cap fa-2x" aria-hidden="true"></i>{{/shortname}}</span>
         {{/thumburl}}
         {{#status}}
         <span class="airpay-course-card__badge airpay-course-card__badge--{{status}}">

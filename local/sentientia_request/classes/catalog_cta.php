@@ -13,7 +13,7 @@ defined('MOODLE_INTERNAL') || die();
  * [data-action="request-course"][data-courseid][data-coursename] and opens the Request enrolment dialog
  * (FX-06b), but no template or page ever rendered such an element, so a learner had no way to start a request
  * from the catalogue at all: on a course with nothing to enrol through, the card's Enroll link and the detail
- * page's "Enroll Now" led to /enrol/index.php, which the theme redirects to /my.
+ * page's "Enroll Now" led to /enrol/index.php, which the theme then redirected to /my.
  *
  * This class owns the rule for WHEN the button belongs, so the two catalogue surfaces that render it (the
  * course card and course.php, local_sentientia_catalog) share one answer and the catalogue does not
@@ -26,13 +26,12 @@ defined('MOODLE_INTERNAL') || die();
  * and, with the feature flag ON, shows "Request pending" instead of the button while a request of theirs for the
  * course is pending (submit() would refuse a second one).
  *
- * Self-enrolment is deliberately NOT a way in here (fix 2026-10-15, review of 7a). enrol/index.php, where both the
- * enrolment-key form and the "Enrol me" form render, uses the 'incourse' layout, and theme/sentientia sends
- * /enrol/index.php to /my for everyone (core_renderer::custom_secured_redirection(); airpayux does the same from
- * full_header), so a learner can never reach a self-enrolment instance, keyed or not, and a course whose only
- * enabled method is self-enrolment would otherwise be a dead end with no button. The routes that come before a
- * request are the catalogue's own: a paid course goes to the cart, and a free course offered one-click enrolment is
- * enrolled at once. Count self-enrolment as a way in again only once a reachable self-enrol route exists.
+ * Self-enrolment is deliberately NOT a way in here (fix 2026-10-15, review of 7a). theme/sentientia never renders
+ * /enrol/index.php: core_renderer::custom_secured_redirection() sends it to the catalogue's course page when the
+ * viewer may open that course, and to /my otherwise (persona walk 2026-11-18; before that, always /my). The routes
+ * before a request are the catalogue's own: a paid course goes to the cart, and a free course offered one-click
+ * enrolment is enrolled at once. Count self-enrolment as a way in again only once a reachable self-enrol route
+ * exists behind its own flag (a course.php self-enrol button was tried and withdrawn on 2026-11-18: no flag).
  *
  * What the catalogue adds on its side, because only it knows the price and its own one-click policy: a paid
  * course goes to the cart, and a free course the learner is offered one-click enrolment for is enrolled at once

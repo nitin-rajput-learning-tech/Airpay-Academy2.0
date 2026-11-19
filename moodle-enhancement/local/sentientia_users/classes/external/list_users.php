@@ -54,6 +54,16 @@ class list_users extends external_api {
 
         // Compose stable secondary sort to keep paging deterministic.
         $orderby = "u.{$sort} {$sortdir}, u.id ASC";
+        // A name sort puts an account with no first and no last name last in both
+        // directions, so it is no longer the first row of the table (2026-11-18,
+        // V19-USERS-BLANK-ROW). Ordering only: the account is still listed. $sort
+        // comes from the allow-list above, so nothing is interpolated from input.
+        if ($sort === 'lastname' || $sort === 'firstname') {
+            $orderby = "CASE WHEN TRIM(u.firstname) = '' AND TRIM(u.lastname) = '' THEN 1 ELSE 0 END, "
+                . "u.{$sort} {$sortdir}, "
+                . ($sort === 'lastname' ? "u.firstname {$sortdir}, " : '')
+                . 'u.id ASC';
+        }
 
         // ── Filters from client (whitelisted) ──
         // M2 fix: bound size + decode depth so a malicious nested JSON

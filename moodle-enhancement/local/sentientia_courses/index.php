@@ -41,6 +41,9 @@ $columns = [
     ['key' => 'enrolled',    'label' => 'Enrolled',    'sortable' => false],
     ['key' => 'created',     'label' => 'Created',     'sortable' => true,  'sortkey' => 'timecreated'],
     ['key' => 'statuslabel', 'label' => 'Visibility',  'sortable' => true,  'sortkey' => 'visible', 'format' => 'badge'],
+    // Surface walk 2026-11-18 V19: the rows carry 'actions'; declaring the column gives it a header
+    // cell (theme datatable.js WF-023 path), so the blue header spans the table.
+    ['key' => 'actions', 'label' => get_string('actions'), 'sortable' => false, 'format' => 'html'],
 ];
 
 // Phase B0+ — stat_card-compatible tiles.

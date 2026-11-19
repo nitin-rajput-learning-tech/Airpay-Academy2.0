@@ -287,6 +287,20 @@ $string['domain'] = 'Domain';
 // Surface walk 2026-11-18 - profile header chip (roles beyond learning) and the consumer detail grid.
 $string['profile_role_linemanager'] = 'Line manager';
 $string['profile_weekly_goal_value'] = '{$a} h/week';
+// Phase C 2026-11-19 (V6) - profile badge row and stat labels, and two detail-grid labels that were hard-coded English.
+$string['profile_points'] = '{$a} pts';
+$string['profile_level_rank'] = '{$a->level} · Rank #{$a->rank}';
+$string['profile_badges_one'] = '{$a} badge';
+$string['profile_badges_many'] = '{$a} badges';
+$string['profile_streak_days'] = '{$a}-day streak';
+$string['profile_streak_start'] = 'Start a streak!';
+$string['profile_badges_heading'] = 'Badges earned';
+$string['subdepartment'] = 'Sub-department';
+$string['joindate'] = 'Join date';
+// Phase C 2026-11-19 (V8-G): profile first screen, the photo button title and the skill readiness card (were hard-coded English).
+$string['profile_changephoto'] = 'Change photo';
+$string['profile_skill_readiness'] = '{$a}% skill readiness';
+$string['profile_skills_met'] = '{$a->met}/{$a->total} skills met';
 $string['hrms_source_bizlms'] = 'Imported from BizLMS';
 // IDN-07 / XC-IMPORTED-HISTORY-READERS (2026-10-07): who sees an HRMS run's rejected lines, and the imported-history flag.
 $string['hrms_lines_uploader_only'] = 'The rejected lines of this run show an e-mail address, an employee code and a name. They are visible only to the person who uploaded the run and to platform administrators.';

@@ -201,6 +201,29 @@ class user_manager {
     }
 
     /**
+     * The gamification summary with its four profile labels added, as plain text from the language pack.
+     *
+     * Persona walk 2026-11-18 (V6): the profile enrichment cards printed "pts", "badges", "day streak" and
+     * "Rank #" as English literals in the template, and "1 badges" for a single badge.
+     *
+     * @param array $s local_sentientia_gamification_get_summary() output (total_points is already number_format'd)
+     * @return array $s plus badge_count_label, points_label, rank_label and streak_label
+     */
+    public static function gamification_labels(array $s): array {
+        $component = 'local_sentientia_users';
+        $badgecount = (int) ($s['badge_count'] ?? 0);
+        $s['badge_count_label'] = get_string(($badgecount === 1) ? 'profile_badges_one' : 'profile_badges_many',
+            $component, $badgecount);
+        $s['points_label'] = get_string('profile_points', $component, (string) ($s['total_points'] ?? '0'));
+        $s['rank_label'] = get_string('profile_level_rank', $component,
+            (object) ['level' => (string) ($s['level_name'] ?? ''), 'rank' => (string) ($s['rank'] ?? '')]);
+        $s['streak_label'] = !empty($s['has_streak'])
+            ? get_string('profile_streak_days', $component, (int) ($s['current_streak'] ?? 0))
+            : get_string('profile_streak_start', $component);
+        return $s;
+    }
+
+    /**
      * Build profile context array for template rendering.
      *
      * Centralizes the 40+ field context that was in renderer.php.
@@ -223,35 +246,41 @@ class user_manager {
 
         $userimage = $OUTPUT->user_picture($user, ['size' => 35, 'link' => false]);
 
+        // Persona walk 2026-11-18 (V6): an empty HR field read the English "N/A" in every language. It is an em dash
+        // (U+2014) now, and an empty designation is '' (the header's briefcase line is shown only when non-empty).
+        $none = "\u{2014}";
+
         $context = [
             'userid'          => $user->id,
             'username'        => fullname($user),
             'userimage'       => $userimage,
             'rolename'        => $roleinfo,
-            'empid'           => $user->open_employeeid ?: 'N/A',
+            'empid'           => $user->open_employeeid ?: $none,
             'user_email'      => $user->email,
-            'organisation'    => $hierarchy->org ?: 'N/A',
+            'organisation'    => $hierarchy->org ?: $none,
             'department'      => $hierarchy->department ?: 'All',
             'subdepartment'   => $hierarchy->subdepartment ?: 'All',
             'usercu'          => $hierarchy->cu ?: 'All',
             'userterritory'   => $hierarchy->territory ?: 'All',
-            'location'        => $user->city ?: 'N/A',
+            'location'        => $user->city ?: $none,
             'timezone'        => \core_date::get_user_timezone($user->timezone),
-            'address'         => $user->address ?: 'N/A',
-            'designation'     => $user->open_designation ?: 'N/A',
-            'client'          => trim($user->open_client ?? '') ?: 'N/A',
-            'team'            => trim($user->open_team ?? '') ?: 'N/A',
-            'grade'           => trim($user->open_grade ?? '') ?: 'N/A',
-            'hrmrole'         => trim($user->open_hrmsrole ?? '') ?: 'N/A',
-            'zone'            => trim($user->open_zone ?? '') ?: 'N/A',
-            'region'          => trim($user->open_region ?? '') ?: 'N/A',
-            'employment_type' => trim($user->open_employmenttype ?? '') ?: 'N/A',
-            'phnumber'        => $user->phone1 ?: 'N/A',
-            'supervisorname'  => $supervisor ? $supervisor->fullname : 'N/A',
+            'address'         => $user->address ?: $none,
+            'designation'     => $user->open_designation ?: '',
+            'client'          => trim($user->open_client ?? '') ?: $none,
+            'team'            => trim($user->open_team ?? '') ?: $none,
+            'grade'           => trim($user->open_grade ?? '') ?: $none,
+            'hrmrole'         => trim($user->open_hrmsrole ?? '') ?: $none,
+            'zone'            => trim($user->open_zone ?? '') ?: $none,
+            'region'          => trim($user->open_region ?? '') ?: $none,
+            'employment_type' => trim($user->open_employmenttype ?? '') ?: $none,
+            'phnumber'        => $user->phone1 ?: $none,
+            'supervisorname'  => $supervisor ? $supervisor->fullname : $none,
             'badgescount'     => $badgecount,
             'prefix'          => user_fields::prefix_label((int) ($user->open_prefix ?? 0)),
-            'joindate'        => user_fields::format_date((int) ($user->open_joindate ?? 0)),
-            'dateofbirth'     => user_fields::format_date((int) ($user->open_dateofbirth ?? 0)),
+            'joindate'        => ((int) ($user->open_joindate ?? 0) > 0)
+                                    ? user_fields::format_date((int) $user->open_joindate) : $none,
+            'dateofbirth'     => ((int) ($user->open_dateofbirth ?? 0) > 0)
+                                    ? user_fields::format_date((int) $user->open_dateofbirth) : $none,
             // 'editprofile' / 'editmodal' / 'capabilityedit' come from
             // profile_edit_action() below (ADR-031, 2026-09-29).
             // UAT fix 2026-05-09: route through moodle_url so the link
@@ -335,7 +364,7 @@ class user_manager {
         if (file_exists($CFG->dirroot . '/local/sentientia_gamification/lib.php')) {
             try {
                 require_once($CFG->dirroot . '/local/sentientia_gamification/lib.php');
-                $context['ap_gamification'] = local_sentientia_gamification_get_summary($userid);
+                $context['ap_gamification'] = self::gamification_labels(local_sentientia_gamification_get_summary($userid));
             } catch (\Throwable $e) {
                 $context['ap_gamification'] = null;
             }

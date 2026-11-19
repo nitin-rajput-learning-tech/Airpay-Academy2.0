@@ -296,6 +296,102 @@ class core_renderer extends \core_renderer {
     }
 
     /**
+     * The shell topbar's Notifications bell, with an unread-count badge, or '' for a guest or a logged-out visitor.
+     *
+     * Surface walk 2026-11-18 (V20): the bell was a plain link with no count, so a learner with 10 unread
+     * notifications saw the same bell as one with none. The count is core's own popup count
+     * (\message_popup\api::count_unread_popup_notifications(), the figure core's navbar popover shows), read only when
+     * the popup processor is enabled and nothing is pending before the user may use the site
+     * (\core_user::awaiting_action(), the same gate as topbar_messages_link()). A failure to count never breaks the
+     * shell: it is reported at developer level and the bell prints without a badge. No cache: the count is one
+     * indexed query, and it must drop as soon as a notification is read.
+     *
+     * Public and static so the gate and the badge are testable without rendering the shell.
+     *
+     * @return string HTML
+     */
+    public static function topbar_notifications_link(): string {
+        global $CFG, $USER;
+        if (!isloggedin() || isguestuser()) {
+            return '';
+        }
+        $count = 0;
+        if (!\core_user::awaiting_action()) {
+            try {
+                if (\core_message\api::is_processor_enabled('popup')) {
+                    $count = (int) \message_popup\api::count_unread_popup_notifications((int) $USER->id);
+                }
+            } catch (\Throwable $e) {
+                debugging('theme_sentientia: the unread notification count failed: ' . $e->getMessage(), DEBUG_DEVELOPER);
+                $count = 0;
+            }
+        }
+        $label = get_string('notifications');
+        $badge = '';
+        if ($count > 0) {
+            $label .= ': ' . get_string('unreadnotifications', 'message', $count);
+            $badge = '<span class="ap-topbar__badge" aria-hidden="true">' . s(self::topbar_badge_text($count)) . '</span>';
+        }
+        return '<a class="ap-topbar__iconlink" href="' . s($CFG->wwwroot . '/message/output/popup/notifications.php') . '"'
+            . ' title="' . s($label) . '" aria-label="' . s($label) . '">'
+            . '<i class="fa fa-bell" aria-hidden="true"></i>' . $badge . '</a>';
+    }
+
+    /**
+     * The text of the topbar's unread badge: the count, or "99+" above 99 so the badge keeps its size.
+     *
+     * @param int $count unread notifications
+     * @return string
+     */
+    public static function topbar_badge_text(int $count): string {
+        return $count > 99 ? '99+' : (string) $count;
+    }
+
+    /** @var string Body class a page adds to have the shell print its heading as a visible title (surface walk V3). */
+    public const SHELL_TITLE_BODYCLASS = 'ap-page-title';
+
+    /**
+     * Shell pages that print no visible title of their own: page type => the string the shell prints as their title.
+     *
+     * The strings are the sidebar's own labels for these pages, so the title matches the menu item the user clicked.
+     */
+    private const SHELL_TITLE_PAGES = [
+        'local-sentientia_catalog-mycourses' => ['nav_courses', 'theme_sentientia'],
+        'local-sentientia_catalog-index' => ['nav_catalog', 'theme_sentientia'],
+        'local-sentientia_skills-index' => ['nav_myskills', 'theme_sentientia'],
+        'local-sentientia_manager-index' => ['leftmenu_tm_dashboard', 'theme_sentientia'],
+        'local-sentientia_compliance_report-index' => ['nav_compliance', 'theme_sentientia'],
+    ];
+
+    /**
+     * The visible title the shell prints above a page's content, or '' to keep only the screen-reader heading.
+     *
+     * Surface walk 2026-11-18 (V3): My Courses, the catalog, My Skills, My Team and the compliance report printed no
+     * visible title, so the page started straight with a search bar or a filter row. Those five page types get the
+     * sidebar label as their title. Any other page can opt in by adding the body class SHELL_TITLE_BODYCLASS, and the
+     * shell then shows its $PAGE->heading.
+     *
+     * Not in the map, because they print their own title and would show it twice: local_sentientia_analytics,
+     * the certificates page of local_sentientia_pages, the profile of local_sentientia_users, the public storefront
+     * (local_sentientia_catalog public.php), the catalog course page (course.php), the skills admin pages and the
+     * dashboard.
+     *
+     * @param \moodle_page $page
+     * @return string plain text, for s()
+     */
+    public static function shell_visible_title(\moodle_page $page): string {
+        $pagetype = (string) $page->pagetype;
+        if (isset(self::SHELL_TITLE_PAGES[$pagetype])) {
+            [$identifier, $component] = self::SHELL_TITLE_PAGES[$pagetype];
+            return get_string($identifier, $component);
+        }
+        if (in_array(self::SHELL_TITLE_BODYCLASS, explode(' ', (string) $page->bodyclasses), true)) {
+            return self::sr_heading_text($page->heading);
+        }
+        return '';
+    }
+
+    /**
      * Render the sidebar shell opening: sidebar + topbar + content area open tag.
      *
      * Call this from ANY layout template via {{{output.airpay_shell_start}}}.
@@ -362,9 +458,8 @@ class core_renderer extends \core_renderer {
                 // course navbar. Plain links, deliberately not the popover AMD
                 // (that expects boost's navbar output region).
                 . '<div class="ap-topbar__right">'
-                . '<a class="ap-topbar__iconlink" href="' . s($CFG->wwwroot . '/message/output/popup/notifications.php') . '"'
-                . ' title="' . s(get_string('notifications')) . '" aria-label="' . s(get_string('notifications')) . '">'
-                . '<i class="fa fa-bell" aria-hidden="true"></i></a>'
+                // Surface walk 2026-11-18 (V20): the bell now carries the unread count.
+                . self::topbar_notifications_link()
                 . self::topbar_messages_link()
                 . '</div>'
                 . '</header>';
@@ -396,7 +491,9 @@ class core_renderer extends \core_renderer {
         // Privacy & GDPR" arrives as "Data Privacy &amp; GDPR"). format_string() + s() escaped it a second time and
         // screen readers read "amp". Reduce to text once, then escape once.
         $page_title = self::sr_heading_text($this->page->heading) ?: self::sr_heading_text($this->page->title);
-        $h1 = '<h1 class="sr-only">' . s($page_title) . '</h1>';
+        // Surface walk 2026-11-18 (V3): pages that print no title of their own get the h1 as a visible title.
+        $visibletitle = self::shell_visible_title($this->page);
+        $h1 = $visibletitle !== '' ? '<h1 class="ap-shell__title">' . s($visibletitle) . '</h1>' : '<h1 class="sr-only">' . s($page_title) . '</h1>';
 
         // A11Y-9: keep ONE main landmark. The outer ap-shell__content is
         // <main> — that's the single document main. Moodle's inner
@@ -523,7 +620,11 @@ class core_renderer extends \core_renderer {
         var isDark = html.getAttribute('data-theme') === 'dark' || html.classList.contains('dark-mode');
         darkToggle.querySelector('i').className = isDark ? 'fa fa-sun' : 'fa fa-moon';
         var label = darkToggle.querySelector('.ap-sidebar__theme-label');
-        if (label) label.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+        // 11-19 PB-5: localised labels come from the data-label-* attributes in sidebar.mustache
+        // (these lines wrote English literals, so ?lang=hi showed "Dark Mode").
+        var darkText = darkToggle.getAttribute('data-label-dark') || (label ? label.textContent : '');
+        var lightText = darkToggle.getAttribute('data-label-light') || darkText;
+        if (label) label.textContent = isDark ? lightText : darkText;
         darkToggle.addEventListener('click', function() {
             var nowDark = html.getAttribute('data-theme') === 'dark' || html.classList.contains('dark-mode');
             html.setAttribute('data-theme', nowDark ? 'light' : 'dark');
@@ -531,7 +632,7 @@ class core_renderer extends \core_renderer {
             document.body.classList.toggle('dark-mode', !nowDark);
             localStorage.setItem('airpay-theme', nowDark ? 'light' : 'dark');
             darkToggle.querySelector('i').className = nowDark ? 'fa fa-moon' : 'fa fa-sun';
-            if (label) label.textContent = nowDark ? 'Dark Mode' : 'Light Mode';
+            if (label) label.textContent = nowDark ? darkText : lightText;
         });
     }
 
@@ -1127,6 +1228,9 @@ JS;
                 $course_reports =  true;
                 $course_complition = true;
             }
+            // The pencil links to core course/edit.php ($systemcontext is the course context here), so only
+            // show it to a user core lets in: otherwise it would be a link that core refuses.
+            $is_courseedit_icon = $is_courseedit_icon && has_capability('moodle/course:update', $systemcontext);
 
             if((has_capability('moodle/backup:backupcourse',$systemcontext) || is_siteadmin()) && $manage) {
                 $coursebackup = true;

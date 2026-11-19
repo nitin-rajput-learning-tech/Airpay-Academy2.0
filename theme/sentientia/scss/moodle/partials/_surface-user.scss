@@ -156,6 +156,68 @@ body.dark-mode .ap-profile__stat { background: var(--ap-color-bg-surface-alt); }
     .ap-profile__stats { justify-content: center; }
 }
 
+/* ═══ Profile: account actions, initials avatar, earned badges (persona walk 2026-11-18, V6) ═══ */
+/* The account buttons used Bootstrap 5 gap-* utilities, which do not exist in Bootstrap 4.6, so they touched. */
+.ap-profile__account-actions {
+    display: flex; flex-wrap: wrap; align-items: center;
+    gap: var(--ap-space-2);
+    margin: 0 0 var(--ap-space-4);
+}
+.ap-profile__account-actions .btn {
+    display: inline-flex; align-items: center;
+    gap: var(--ap-space-2);
+    margin: 0;
+    min-height: 40px;
+    padding: var(--ap-space-2) var(--ap-space-4);
+    font-size: var(--ap-text-sm); font-weight: 600; line-height: 1.2;
+    border-radius: var(--ap-radius-sm);
+}
+@media (max-width: 590px) {
+    .ap-profile__account-actions { justify-content: center; }
+}
+/* A user with no photo gets core's initials span: it was 35px tall and as wide as its letters. The width needs
+   !important because modules.scss sets .userinitials { width: auto !important; }. */
+.ap-profile__avatar .userinitials {
+    width: 72px !important; height: 72px;
+    margin: 0;
+    font-size: 1.5rem; font-weight: 700;
+    background: var(--ap-color-primary-light);
+    color: var(--ap-color-primary);
+}
+/* Dark mode: primary-light is a deep navy there, and primary blue on it is too faint to read. */
+[data-theme="dark"] .ap-profile__avatar .userinitials { color: var(--ap-color-text-primary); }
+/* Earned badges: each one shows its name, not only an icon with a hover title. */
+.ap-profile__earned { margin: var(--ap-space-4) 0 var(--ap-space-6); }
+.ap-profile__earned-title {
+    font-size: var(--ap-text-xs); font-weight: 600;
+    text-transform: uppercase; letter-spacing: .04em;
+    color: var(--ap-color-text-secondary);
+    margin: 0 0 var(--ap-space-2);
+}
+.ap-profile__earned-list {
+    list-style: none; margin: 0; padding: 0;
+    display: flex; flex-wrap: wrap;
+    gap: var(--ap-space-2);
+}
+.ap-profile__earned-item {
+    display: inline-flex; align-items: center;
+    gap: var(--ap-space-2);
+    padding: var(--ap-space-1) var(--ap-space-3) var(--ap-space-1) var(--ap-space-1);
+    border: 1px solid var(--ap-color-border);
+    border-radius: var(--ap-radius-pill);
+    background: var(--ap-color-bg-surface);
+    color: var(--ap-color-text-primary);
+    font-size: var(--ap-text-sm); font-weight: 600;
+}
+.ap-profile__earned-icon {
+    width: 28px; height: 28px;
+    border-radius: var(--ap-radius-full);
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--ap-color-primary);
+    color: var(--ap-color-text-inverse);
+    font-size: 12px;
+}
+
 /* ═══ Profile Tabs (Modern) ═══ */
 .ap-profile-tabs {
     max-width: 900px;

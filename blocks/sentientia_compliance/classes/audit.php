@@ -21,13 +21,22 @@ use local_sentientia_platform\tenant;
  * Now, mirroring local_sentientia_compliance_report\viewer_scope:
  *
  *   cross-tenant   site admin or :crosstenant holder      every tenant
- *   tenant         moodle/site:viewreports, or the         their own tenant
- *                  BizLMS local/courses:manage where
- *                  that capability is declared
+ *   tenant         whoever the compliance report's         their own tenant
+ *                  viewer_scope admits at LEVEL_TENANT
+ *                  (the BizLMS org-admin role at a
+ *                  category, or the report's :export
+ *                  capability), or the BizLMS
+ *                  local/courses:manage where that
+ *                  capability is declared
  *   team           a line manager (someone reports to     their reporting tree
  *                  them), admitted by that alone           inside their tenant
  *   none           anyone else, and any non-cross-tenant   their own status only
  *                  viewer whose tenant does not resolve
+ *
+ * B6 (Nitin, 2026-11-18): moodle/site:viewreports no longer gives the tenant
+ * level. Core grants it to every teacher-archetype role, so every trainer saw
+ * every employee. It is used only where local_sentientia_compliance_report is
+ * not installed (no viewer_scope to ask).
  *
  * @package    block_sentientia_compliance
  */
@@ -59,9 +68,17 @@ final class audit {
         $sys = \context_system::instance();
         // local/courses:manage is declared only where BizLMS is installed; on
         // a 5.2 stack has_capability() on it raises a debugging notice.
+        // B6 (Nitin, 2026-11-18): moodle/site:viewreports no longer admits to
+        // the tenant matrix (core grants it to every teacher-archetype role, so
+        // every trainer saw every employee). The tenant level follows the
+        // compliance report's own viewer_scope; the old cap is the fallback
+        // only where that plugin is not installed.
         $tenantlevel = (get_capability_info('local/courses:manage')
                 && has_capability('local/courses:manage', $sys, $userid))
-            || has_capability('moodle/site:viewreports', $sys, $userid);
+            || (class_exists('\local_sentientia_compliance_report\viewer_scope')
+                ? \local_sentientia_compliance_report\viewer_scope::level_for($user)
+                    === \local_sentientia_compliance_report\viewer_scope::LEVEL_TENANT
+                : has_capability('moodle/site:viewreports', $sys, $userid));
         if ($tenantlevel) {
             return ['path' => $path, 'userids' => null];
         }

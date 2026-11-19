@@ -176,6 +176,11 @@ $string['browse_state_pending'] = 'मंज़ूरी बाकी';
 $string['browse_state_in_catalog'] = 'आपके कैटलॉग में';
 $string['browse_state_rejected'] = 'अस्वीकृत';
 $string['browse_tenant_fallback'] = 'टेनेंट {$a}';
+// Phase C 2026-11-19 (V8-E): डैशबोर्ड का फ़ीचर्ड-कोर्स विजेट (templates/featured_widget.mustache; पहले हार्ड-कोडेड अंग्रेज़ी था)।
+$string['featured_widget_heading'] = 'आपके लिए चुने गए कोर्स';
+$string['featured_widget_browseall'] = 'सभी कोर्स ब्राउज़ करें';
+$string['featured_widget_enrol'] = 'नामांकन करें';
+$string['featured_widget_preview'] = 'पूर्वावलोकन';
 
 // Privacy metadata (classes/privacy/provider.php, added 2026-09-22).
 // Replaced a null_provider that wrongly asserted this plugin held no

@@ -13,6 +13,11 @@ require_login();
 
 global $DB, $USER, $CFG, $OUTPUT, $PAGE;
 
+// Phase C V8-D (2026-11-18): every word of the wizard is a lang string now (a
+// Hindi-UI learner's first screen was all English), and the product name comes
+// from the theme's customername string instead of a hard-coded 'Airpay Academy'.
+$brand = get_string('customername', 'theme_sentientia');
+
 // Check if onboarding already completed — skip if so.
 $completed = get_user_preferences('airpay_onboarding_complete', 0, $USER->id);
 if ($completed) {
@@ -86,7 +91,7 @@ if ($action === 'complete' && confirm_sesskey()) {
         }
     }
 
-    redirect(new moodle_url('/my/'), 'Welcome to Airpay Academy! Your dashboard is ready.', null,
+    redirect(new moodle_url('/my/'), get_string('onboard_done_notice', 'local_sentientia_pages', $brand), null,
         \core\output\notification::NOTIFY_SUCCESS);
 }
 
@@ -98,7 +103,7 @@ if ($action === 'skip' && confirm_sesskey()) {
 
 $PAGE->set_context(context_system::instance());
 $PAGE->set_url('/local/sentientia_pages/onboarding.php');
-$PAGE->set_title('Welcome to Airpay Academy');
+$PAGE->set_title(get_string('onboard_pagetitle', 'local_sentientia_pages', $brand));
 $PAGE->set_pagelayout('embedded'); // Minimal layout — no navbar clutter.
 
 // ─── Tenant isolation (2026-05-28) ─────────────────────────────────────
@@ -201,6 +206,7 @@ $data = [
     'sesskey'      => sesskey(),
     'actionurl'    => (new moodle_url('/local/sentientia_pages/onboarding.php'))->out(false),
     'logourl'      => (new moodle_url('/theme/sentientia/pix/brand/academy-logo-350.png'))->out(false),
+    'brandname'    => $brand,
 ];
 
 // ── ADR-017 / C1.5.b (2026-05-28) ───────────────────────────────────

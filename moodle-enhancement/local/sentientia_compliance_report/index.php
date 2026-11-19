@@ -150,14 +150,16 @@ foreach ($filter_subdepts as &$item) { $item['selected'] = ($item['id'] == $subd
 unset($item);
 
 // Get data based on active tab — use cache for expensive queries.
-$cache = \cache::make_from_params(\cache_store::MODE_APPLICATION, 'local_sentientia_compliance_report', 'dashboard');
+// The engine purges this cache when the snapshot task runs and on every
+// Configure-tab change (compliance_engine::KPI_CACHE_AREA).
+$cache = $engine::kpi_cache();
 // Keyed on the scope too: two line managers in one tenant share $filterpath,
 // and must not be served each other's figures (or the tenant's).
 $cachekey = $scope->kpi_cache_key($filterpath);
 $kpis = $cache->get($cachekey);
 if ($kpis === false) {
     $kpis = $engine::get_summary_kpis($filterpath, $teamuserids);
-    $cache->set($cachekey, $kpis);  // TTL managed by Moodle cache definition.
+    $cache->set($cachekey, $kpis);
 }
 
 // Phase B0 iter X — derive a stat_card-compatible array from the flat

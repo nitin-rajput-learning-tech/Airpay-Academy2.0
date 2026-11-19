@@ -60,12 +60,13 @@ class sidebar_navigation {
      */
     private $isauthor;
     /**
-     * Goal A audit Bug #11 (2026-05-22) — Compliance Officer / HR / Trainer
-     * tier. Hold `moodle/site:viewreports` system cap without being a higher-
-     * tier role. Joseph Mandapati (Compliance Officer) hit this — he could
-     * load /local/sentientia_compliance_report/ by URL but the sidebar didn't
-     * surface it. The page-layer auth already accepts viewreports, so the
-     * sidebar should reflect that.
+     * Goal A audit Bug #11 (2026-05-22) — Compliance Officer tier. Admitted to
+     * the tenant compliance report without being a higher-tier role. A
+     * Compliance Officer hit this — he could load
+     * /local/sentientia_compliance_report/ by URL but the sidebar didn't
+     * surface it. B6 (2026-11-18): decided by the report's own
+     * viewer_scope::LEVEL_TENANT, no longer by moodle/site:viewreports (core
+     * grants that to every teacher-archetype role, trainers included).
      */
     private $iscomplianceuser;
 
@@ -201,7 +202,8 @@ class sidebar_navigation {
             // 403 on click. Siteadmins are unaffected (capability bypass); full
             // L&D admins keep every link (they hold the caps). Compliance +
             // Analytics stay ungated — Compliance must remain reachable for
-            // compliance officers (its page accepts moodle/site:viewreports).
+            // compliance officers (its page admits the org-admin role at a
+            // category; since B6, 2026-11-18, no longer moodle/site:viewreports).
             $sys = \context_system::instance();
             $items[] = $this->item(get_string('myhome'), 'fa-home', '/my/', $currenturl, null, ['/my/index.php']);
 
@@ -334,21 +336,23 @@ class sidebar_navigation {
         }
 
         // T-02 (QA Walk 2026-05-29): surface Sentientia Live for trainer-role
-        // users who land in the Learner shell (no viewreports cap, no direct
-        // reports, so role_detector returns islearner). Gated by the create
+        // users who land in the Learner shell (no active direct reports, so
+        // role_detector returns islearner; since B6, 2026-11-18, the
+        // viewreports cap no longer changes that). Gated by the create
         // cap — same defensive pattern as the iscomplianceuser link below.
         if ($this->can_create_live_session()) {
             $items[] = $this->item(get_string('nav_livesessions', 'theme_sentientia'), 'fa-bolt',
                 '/local/sentientia_live/trainer/index.php', $currenturl);
         }
 
-        // Goal A audit Bug #11 (2026-05-22) — Compliance Officer / HR /
-        // Trainer can hold `moodle/site:viewreports` without being Site
-        // Admin / L&D Admin / Manager. The page-layer auth already
-        // accepts this cap (see local/sentientia_compliance_report/index.php
-        // line ~34); the sidebar should mirror that so the link is
-        // reachable without typing a URL. Inserted before Certificates
-        // so it sits with the high-value workflow links.
+        // Goal A audit Bug #11 (2026-05-22) — a Compliance Officer can be
+        // admitted to the tenant compliance report without being Site
+        // Admin / L&D Admin / Manager. The sidebar mirrors the report's own
+        // admission (viewer_scope::LEVEL_TENANT, see detect_roles()) so the
+        // link is reachable without typing a URL. B6 (2026-11-18):
+        // moodle/site:viewreports alone no longer qualifies, so trainers no
+        // longer get this link. Inserted before Certificates so it sits with
+        // the high-value workflow links.
         if ($this->iscomplianceuser) {
             $items[] = $this->item(get_string('nav_compliance', 'theme_sentientia'), 'fa-shield',
                 '/local/sentientia_compliance_report/index.php', $currenturl);
@@ -539,9 +543,12 @@ class sidebar_navigation {
         $authoring = [];
 
         // Authoring Studio — GenAI course generation (mock mode by default).
+        // V17 (2026-11-18): the item opens the drafts list (index.php), which
+        // links to the generate form, so an author can find earlier drafts; it
+        // stays active on every studio page (generate, review, templates).
         if ($this->can_use_authoring_studio()) {
             $authoring[] = $this->item(get_string('nav_authoringstudio', 'theme_sentientia'), 'fa-magic',
-                '/local/sentientia_authoring/studio.php', $currenturl);
+                '/local/sentientia_authoring/index.php', $currenturl, null, ['/local/sentientia_authoring/']);
         }
         // AI Quiz — question generation (mock mode by default).
         if ($this->can_use_aiquiz()) {
@@ -678,10 +685,13 @@ class sidebar_navigation {
      * is now the single source of truth — both callers consume it.
      *
      * `iscomplianceuser` stays as a sidebar-only concept: a learner-tier
-     * user who still has report-view cap and should see a Compliance
-     * link inserted in their otherwise-Learner sidebar. The page-layer
-     * (auth at /local/sentientia_compliance_report/index.php) doesn't need
-     * this distinction; only the sidebar does.
+     * user whom the compliance report admits to the tenant view
+     * (viewer_scope::LEVEL_TENANT, e.g. a holder of the report's :export
+     * capability) and who should see a Compliance link inserted in their
+     * otherwise-Learner sidebar. Since B6 (2026-11-18) moodle/site:viewreports
+     * alone no longer qualifies. The page-layer (auth at
+     * /local/sentientia_compliance_report/index.php) doesn't need this
+     * distinction; only the sidebar does.
      */
     private function detect_roles(): void {
         $roles = role_detector::detect();
@@ -691,12 +701,22 @@ class sidebar_navigation {
         $this->isauthor    = $roles['isauthor'];
 
         // Sidebar-only "Compliance officer in a Learner shell" detection:
-        // any non-admin/manager user with report-view cap gets a Compliance
-        // sidebar link before Certificates.
+        // any non-admin/manager user whom the compliance report itself admits
+        // to the tenant view gets a Compliance sidebar link before
+        // Certificates. B6 (2026-11-18): this asks the report's own
+        // viewer_scope instead of moodle/site:viewreports, which core grants
+        // to every teacher-archetype role, so the link no longer points every
+        // trainer at a page that refuses them.
         $this->iscomplianceuser = false;
         if (!$this->issiteadmin && !$this->isldadmin && !$this->ismanager) {
-            $this->iscomplianceuser = has_capability(
-                'moodle/site:viewreports', \context_system::instance());
+            global $USER;
+            try {
+                $this->iscomplianceuser = class_exists('\local_sentientia_compliance_report\viewer_scope')
+                    && \local_sentientia_compliance_report\viewer_scope::level_for($USER)
+                        === \local_sentientia_compliance_report\viewer_scope::LEVEL_TENANT;
+            } catch (\Throwable $e) {
+                $this->iscomplianceuser = false;
+            }
         }
     }
 

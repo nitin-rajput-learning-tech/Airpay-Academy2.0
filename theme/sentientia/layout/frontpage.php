@@ -339,7 +339,7 @@ echo $OUTPUT->doctype();
     .ap-footer { background: var(--ap-footer-bg); color: var(--ap-footer-text); padding: 0; }
     .ap-footer__inner { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
     .ap-footer__compact { display: flex; align-items: center; gap: 24px; padding: 20px 0; flex-wrap: wrap; }
-    .ap-footer__logo img { height: 32px; filter: brightness(10); }
+    .ap-footer__logo img { height: 32px; filter: brightness(0) invert(1); } /* 2026-11-18 surface walk V21: white, not cyan */
     .ap-footer__links { display: flex; gap: 20px; margin-left: auto; }
     .ap-footer__links a { color: var(--ap-footer-text); font-size: 0.8rem; font-weight: 500; transition: color 0.2s; }
     .ap-footer__links a:hover { color: #fff; }

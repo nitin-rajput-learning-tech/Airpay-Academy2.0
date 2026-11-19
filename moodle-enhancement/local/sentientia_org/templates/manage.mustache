@@ -20,6 +20,21 @@
         cursor: pointer;
     }
     [data-region="airpay-org"] .org-tenant-card .tenant-row:hover { background: rgba(0,102,167,0.03); }
+    [data-region="airpay-org"] .tenant-head {
+        display: flex;
+        align-items: center;
+        padding-right: 18px;
+    }
+    [data-region="airpay-org"] .tenant-head > .tenant-row { flex: 1 1 auto; min-width: 0; }
+    [data-region="airpay-org"] .org-tenant-card .org-meta {
+        display: flex; align-items: center; gap: 12px; min-width: 0;
+    }
+    [data-region="airpay-org"] .org-actions {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    [data-region="airpay-org"] .org-actions > * + * { margin-left: 16px; }
     [data-region="airpay-org"] .tenant-icon {
         width: 44px; height: 44px;
         border-radius: 12px;
@@ -93,60 +108,64 @@
 {{#has_tenants}}
 {{#tenants}}
 <div class="org-tenant-card {{^visible}}hidden-org{{/visible}}">
-    <a class="tenant-row text-decoration-none text-reset"
-       data-toggle="collapse" href="#org-{{id}}-children"
-       role="button" aria-expanded="false" aria-controls="org-{{id}}-children">
-        <div class="org-meta">
-            <div class="tenant-icon" style="background: {{#has_brand}}{{brand_color}}{{/has_brand}}{{^has_brand}}var(--ap-color-primary, #0066A7){{/has_brand}};">
-                <i class="fa fa-building"></i>
+    {{! The kebab menu sits next to the collapse link, not inside it: a nested <a> made the parser close the
+        link early and push the meta row under the title. }}
+    <div class="tenant-head">
+        <a class="tenant-row text-decoration-none text-reset"
+           data-toggle="collapse" href="#org-{{id}}-children"
+           role="button" aria-expanded="false" aria-controls="org-{{id}}-children">
+            <div class="org-meta">
+                <div class="tenant-icon" style="background: {{#has_brand}}{{brand_color}}{{/has_brand}}{{^has_brand}}var(--ap-color-primary, #0066A7){{/has_brand}};">
+                    <i class="fa fa-building"></i>
+                </div>
+                <div>
+                    <h5 class="mb-0 fw-bold">
+                        {{fullname}}
+                        {{#has_brand}}<span class="branding-dot" style="background: {{brand_color}};" title="Branded: {{brand_color}}"></span>{{/has_brand}}
+                    </h5>
+                    <span class="text-muted small">{{shortname}} &middot; Path: {{path}}</span>
+                </div>
             </div>
-            <div>
-                <h5 class="mb-0 fw-bold">
-                    {{fullname}}
-                    {{#has_brand}}<span class="branding-dot" style="background: {{brand_color}};" title="Branded: {{brand_color}}"></span>{{/has_brand}}
-                </h5>
-                <span class="text-muted small">{{shortname}} &middot; Path: {{path}}</span>
+            <div class="org-actions">
+                <span class="text-muted small d-none d-md-inline"><i class="fa fa-sitemap fa-fw"></i> {{child_count}} units</span>
+                <span class="text-muted small d-none d-md-inline"><i class="fa fa-users fa-fw"></i> {{user_count}} users</span>
+                <span class="badge {{visiblecss}}">{{visiblelabel}}</span>
+                {{#has_children}}
+                <i class="fa fa-chevron-right toggle-arrow"></i>
+                {{/has_children}}
             </div>
-        </div>
-        <div class="d-flex align-items-center gap-3">
-            <span class="text-muted small d-none d-md-inline"><i class="fa fa-sitemap fa-fw"></i> {{child_count}} units</span>
-            <span class="text-muted small d-none d-md-inline"><i class="fa fa-users fa-fw"></i> {{user_count}} users</span>
-            <span class="badge {{visiblecss}}">{{visiblelabel}}</span>
-            {{#can_manage}}
-            <span class="dropdown" onclick="event.stopPropagation();">
-                <button type="button" class="btn btn-sm btn-link text-muted p-0 dropdown-toggle no-arrow"
-                        data-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
-                    <i class="fa fa-ellipsis-v"></i>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-right">
-                    <li>
-                        <a class="dropdown-item" href="#"
-                           data-action="edit-org" data-orgid="{{id}}" data-name="{{fullname}}">
-                            <i class="fa fa-pencil fa-fw"></i> Edit Settings
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" href="#"
-                           data-action="add-child-org" data-parentid="{{id}}" data-name="{{fullname}}">
-                            <i class="fa fa-plus fa-fw text-success"></i> Add Sub-org
-                        </a>
-                    </li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li>
-                        <a class="dropdown-item" href="#"
-                           data-action="toggle-org" data-orgid="{{id}}" data-name="{{fullname}}" data-visible="{{visible_int}}">
-                            {{#visible}}<i class="fa fa-eye-slash fa-fw text-warning"></i> Hide{{/visible}}
-                            {{^visible}}<i class="fa fa-eye fa-fw text-success"></i> Show{{/visible}}
-                        </a>
-                    </li>
-                </ul>
-            </span>
-            {{/can_manage}}
-            {{#has_children}}
-            <i class="fa fa-chevron-right toggle-arrow"></i>
-            {{/has_children}}
-        </div>
-    </a>
+        </a>
+        {{#can_manage}}
+        <span class="dropdown">
+            <button type="button" class="btn btn-sm btn-link text-muted p-0 dropdown-toggle no-arrow"
+                    data-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
+                <i class="fa fa-ellipsis-v"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-right">
+                <li>
+                    <a class="dropdown-item" href="#"
+                       data-action="edit-org" data-orgid="{{id}}" data-name="{{fullname}}">
+                        <i class="fa fa-pencil fa-fw"></i> Edit Settings
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="#"
+                       data-action="add-child-org" data-parentid="{{id}}" data-name="{{fullname}}">
+                        <i class="fa fa-plus fa-fw text-success"></i> Add Sub-org
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item" href="#"
+                       data-action="toggle-org" data-orgid="{{id}}" data-name="{{fullname}}" data-visible="{{visible_int}}">
+                        {{#visible}}<i class="fa fa-eye-slash fa-fw text-warning"></i> Hide{{/visible}}
+                        {{^visible}}<i class="fa fa-eye fa-fw text-success"></i> Show{{/visible}}
+                    </a>
+                </li>
+            </ul>
+        </span>
+        {{/can_manage}}
+    </div>
 
     {{#has_children}}
     <div class="collapse" id="org-{{id}}-children">

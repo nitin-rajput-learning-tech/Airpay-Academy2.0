@@ -69,13 +69,15 @@ $plugin->component = 'local_sentientia_catalog';
 // two status filters. A parity fix of what a restored database would otherwise show, so no flag; no schema/cap change.
 // Purge local_sentientia_catalog caches on deploy (in_progress, trending, new_courses and categories are cached).
 // 2026101502: visual-pass finding 7 (a): course cards and course.php offer "Request enrolment" (local_sentientia_request, flag sentientia.request.catalog_button, default OFF) where a request is the learner's way in; enrolment::request_state(), catalog_manager::with_request_offers(); no schema/cap change.
-// 2026111800: persona walk 2026-11-18: course.php's free-course fallback no longer links to /enrol/index.php (the theme sends it back to course.php): the course's own key-less self-enrolment where the viewer may use it (enrolment::self_enrol(), BizLMS selfenrol/approvalreqd parity; request_state() offers no request there), otherwise a notice; an inactive enrolment says why instead of "Continue Learning"; +5 lang strings (en + hi); no schema/cap/flag change.
-$plugin->version   = 2026111800;  // was 2026101502 (Request enrolment on cards and course.php, flagged)
+// 2026111800: persona walk 2026-11-18: course.php's free-course fallback no longer links to /enrol/index.php (the theme sends it back to course.php): "Open course" for someone core lets in without an enrolment, otherwise an honest notice and no button; an inactive enrolment says why instead of "Continue Learning"; +5 lang strings (en + hi); no schema/cap/flag change.
+// 2026111801: self-enrol button added and withdrawn the same day: new enrolment path without a flag, against the 2026-05-29 decision that the Public tenant keeps the cart (enrolment::self_enrol(), self_enrol_instance() and bizlms_allows_self_enrol() removed; request_state() is back to its two catalogue routes). A storefront learner on a storefront course gets public.php's own Add to cart; the notices are worded for an employee or a storefront consumer. Course page layout, strings, tenant catalogue back-link (catalog_manager::catalog_home_url()). An enrolment already held is never enrolled again: the enrolnow action opens an active one or returns to course.php for one that is not, and enrol_now() refuses an inactive one and writes nothing. "Log in to access" returns to the course (session wantsurl). Lang strings land with G9 (en + hi); no schema/cap/flag change.
+$plugin->version   = 2026111801;  // was 2026111800 (course.php enrol fallback + inactive-enrolment notice)
+// 2026111801 also carries Phase C addendum V8-B (2026-11-19): catalogue strings (category course count, filter bar, NEW badge, card aria-labels, E-Learning / Classroom type labels; en + hi), and the course-list cache keys (tr_, new_, ip_) end with the current language, since the type chip is language-dependent.
 // 2026100701: cart.price_source: the enrol_fee cost is the price; enrol_now refuses a course the order cart prices; no schema/cap change
 // 2026100102: ADR-032 course_lookups reader fixes + course_type_labels flag (default OFF) and exams: catalog lists ordinary courses only; no schema/cap change
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.11-beta';  // 1.0.11: course.php enrol fallback + inactive-enrolment notice (was 1.0.10: Request enrolment on cards and course.php, flagged)
+$plugin->release   = '1.0.11-beta';  // 1.0.11: course.php honest CTAs + inactive-enrolment notice (was 1.0.10: Request enrolment on cards and course.php, flagged)
 // tenant::is_cross_tenant() arrived in platform 2026092500 (ADR-031).
 $plugin->dependencies = [
     'local_sentientia_platform' => 2026092500,

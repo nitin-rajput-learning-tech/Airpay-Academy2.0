@@ -4,27 +4,27 @@
 }}
 <div class="ap-onboard">
     <div class="ap-onboard__card">
-        <img src="{{logourl}}" alt="Airpay Academy" class="ap-onboard__logo">
+        <img src="{{logourl}}" alt="{{brandname}}" class="ap-onboard__logo">
 
         {{! Step 1: Welcome }}
         <div class="ap-onboard__step ap-onboard__step--active" data-step="1">
             <div class="ap-onboard__emoji">👋</div>
-            <h1 class="ap-onboard__title">Welcome, {{firstname}}!</h1>
-            <p class="ap-onboard__subtitle">Let's set up your learning experience in 30 seconds.</p>
+            <h1 class="ap-onboard__title">{{#str}}onboard_welcome, local_sentientia_pages, {{firstname}}{{/str}}</h1>
+            <p class="ap-onboard__subtitle">{{#str}}onboard_welcome_sub, local_sentientia_pages{{/str}}</p>
             <button class="ap-onboard__btn ap-onboard__btn--primary" onclick="nextStep(2)">
-                Let's Go <i class="fa fa-arrow-right"></i>
+                {{#str}}onboard_letsgo, local_sentientia_pages{{/str}} <i class="fa fa-arrow-right"></i>
             </button>
             <form action="{{actionurl}}" method="post" style="margin-top:12px;">
                 <input type="hidden" name="sesskey" value="{{sesskey}}">
                 <input type="hidden" name="action" value="skip">
-                <button type="submit" class="ap-onboard__btn ap-onboard__btn--skip">Skip for now</button>
+                <button type="submit" class="ap-onboard__btn ap-onboard__btn--skip">{{#str}}onboard_skip, local_sentientia_pages{{/str}}</button>
             </form>
         </div>
 
         {{! Step 2: Pick Interests }}
         <div class="ap-onboard__step" data-step="2" style="display:none;">
-            <h2 class="ap-onboard__title">What do you want to learn?</h2>
-            <p class="ap-onboard__subtitle">Pick topics that interest you. We'll personalize your experience.</p>
+            <h2 class="ap-onboard__title">{{#str}}onboard_interests_title, local_sentientia_pages{{/str}}</h2>
+            <p class="ap-onboard__subtitle">{{#str}}onboard_interests_sub, local_sentientia_pages{{/str}}</p>
             <div class="ap-onboard__interests" id="ap-interests">
                 {{#categories}}
                 <label class="ap-onboard__interest">
@@ -32,53 +32,53 @@
                     <span class="ap-onboard__interest-label">
                         <i class="fa {{icon}}"></i>
                         <span>{{name}}</span>
-                        <small>{{count}} courses</small>
+                        <small>{{#str}}onboard_ncourses, local_sentientia_pages, {{count}}{{/str}}</small>
                     </span>
                 </label>
                 {{/categories}}
             </div>
             <div class="ap-onboard__nav">
                 <button class="ap-onboard__btn ap-onboard__btn--secondary" onclick="nextStep(1)">
-                    <i class="fa fa-arrow-left"></i> Back
+                    <i class="fa fa-arrow-left"></i> {{#str}}back{{/str}}
                 </button>
                 <button class="ap-onboard__btn ap-onboard__btn--primary" onclick="nextStep(3)">
-                    Continue <i class="fa fa-arrow-right"></i>
+                    {{#str}}continue{{/str}} <i class="fa fa-arrow-right"></i>
                 </button>
             </div>
         </div>
 
         {{! Step 3: Set Weekly Goal }}
         <div class="ap-onboard__step" data-step="3" style="display:none;">
-            <h2 class="ap-onboard__title">Set your weekly goal</h2>
-            <p class="ap-onboard__subtitle">How many days per week do you want to learn?</p>
+            <h2 class="ap-onboard__title">{{#str}}onboard_goal_title, local_sentientia_pages{{/str}}</h2>
+            <p class="ap-onboard__subtitle">{{#str}}onboard_goal_sub, local_sentientia_pages{{/str}}</p>
             <div class="ap-onboard__goals">
                 <label class="ap-onboard__goal">
                     <input type="radio" name="weekly_goal" value="2">
-                    <span>🌱 Casual<br><small>2 days/week</small></span>
+                    <span>🌱 {{#str}}onboard_goal_casual, local_sentientia_pages{{/str}}<br><small>{{#str}}onboard_goal_days, local_sentientia_pages, 2{{/str}}</small></span>
                 </label>
                 <label class="ap-onboard__goal">
                     <input type="radio" name="weekly_goal" value="3" checked>
-                    <span>📚 Regular<br><small>3 days/week</small></span>
+                    <span>📚 {{#str}}onboard_goal_regular, local_sentientia_pages{{/str}}<br><small>{{#str}}onboard_goal_days, local_sentientia_pages, 3{{/str}}</small></span>
                 </label>
                 <label class="ap-onboard__goal">
                     <input type="radio" name="weekly_goal" value="5">
-                    <span>🔥 Committed<br><small>5 days/week</small></span>
+                    <span>🔥 {{#str}}onboard_goal_committed, local_sentientia_pages{{/str}}<br><small>{{#str}}onboard_goal_days, local_sentientia_pages, 5{{/str}}</small></span>
                 </label>
             </div>
             <div class="ap-onboard__nav">
                 <button class="ap-onboard__btn ap-onboard__btn--secondary" onclick="nextStep(2)">
-                    <i class="fa fa-arrow-left"></i> Back
+                    <i class="fa fa-arrow-left"></i> {{#str}}back{{/str}}
                 </button>
                 <button class="ap-onboard__btn ap-onboard__btn--primary" onclick="nextStep(4)">
-                    Continue <i class="fa fa-arrow-right"></i>
+                    {{#str}}continue{{/str}} <i class="fa fa-arrow-right"></i>
                 </button>
             </div>
         </div>
 
         {{! Step 4: Recommended Courses + Complete }}
         <div class="ap-onboard__step" data-step="4" style="display:none;">
-            <h2 class="ap-onboard__title">Start with these popular courses</h2>
-            <p class="ap-onboard__subtitle">Recommended for you based on what others in your role are learning.</p>
+            <h2 class="ap-onboard__title">{{#str}}onboard_recs_title, local_sentientia_pages{{/str}}</h2>
+            <p class="ap-onboard__subtitle">{{#str}}onboard_recs_sub, local_sentientia_pages{{/str}}</p>
             {{#has_recommended}}
             <div class="ap-onboard__recs">
                 {{#recommended}}
@@ -86,7 +86,7 @@
                     <div class="ap-onboard__rec-icon"><i class="fa fa-play-circle"></i></div>
                     <div class="ap-onboard__rec-info">
                         <strong>{{fullname}}</strong>
-                        <small><i class="fa fa-users"></i> {{enrolled}} enrolled</small>
+                        <small><i class="fa fa-users"></i> {{#str}}onboard_n_enrolled, local_sentientia_pages, {{enrolled}}{{/str}}</small>
                     </div>
                     <i class="fa fa-external-link ap-onboard__rec-arrow"></i>
                 </a>
@@ -121,24 +121,23 @@
                 }}
                 {{#is_consumer}}
                 <div class="ap-onboard__consents">
-                    <h4 class="ap-onboard__consents__heading">Privacy choices</h4>
+                    <h4 class="ap-onboard__consents__heading">{{#str}}onboard_privacy_heading, local_sentientia_pages{{/str}}</h4>
                     <label class="ap-onboard__consent">
                         <input type="checkbox" name="consent_marketing" value="1">
-                        <span>📧 Send me course recommendations + product updates by email</span>
+                        <span>📧 {{#str}}onboard_consent_marketing, local_sentientia_pages{{/str}}</span>
                     </label>
                     <label class="ap-onboard__consent">
                         <input type="checkbox" name="consent_leaderboard" value="1">
-                        <span>🏆 Show me on the public learner leaderboard (you can opt out anytime)</span>
+                        <span>🏆 {{#str}}onboard_consent_leaderboard, local_sentientia_pages{{/str}}</span>
                     </label>
                     <p class="ap-onboard__consents__hint">
-                        You can change these anytime in your profile.
-                        Neither is required to use Airpay Academy.
+                        {{#str}}onboard_consent_hint, local_sentientia_pages, {{brandname}}{{/str}}
                     </p>
                 </div>
                 {{/is_consumer}}
 
                 <button type="submit" class="ap-onboard__btn ap-onboard__btn--primary ap-onboard__btn--lg">
-                    <i class="fa fa-rocket"></i> Go to My Dashboard
+                    <i class="fa fa-rocket"></i> {{#str}}onboard_finish, local_sentientia_pages{{/str}}
                 </button>
             </form>
         </div>

@@ -2,11 +2,11 @@
     @template local_sentientia_manager/performance
 }}
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">Team performance</h2>
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+        <h2 class="mb-2">{{#str}}teamperformance, local_sentientia_manager{{/str}}</h2>
         <div>
             {{#periods}}
-            <a href="?period={{ days }}" class="btn btn-sm {{#selected}}btn-primary{{/selected}}{{^selected}}btn-outline-secondary{{/selected}}">
+            <a href="?period={{ days }}" class="btn btn-sm mb-1 {{#selected}}btn-primary{{/selected}}{{^selected}}btn-outline-secondary{{/selected}}">
                 {{ label }}
             </a>
             {{/periods}}
@@ -21,6 +21,8 @@
 
 {{#js}}
 require(['core/ajax', 'core/notification'], function(Ajax, Notification) {
+    // V15 (2026-11-18): every web-service value is escaped before it goes into the markup.
+    function esc(v){var d=document.createElement('div');d.textContent=(v===null||v===undefined)?'':String(v);return d.innerHTML;}
     var region = document.querySelector('[data-region="team-performance-table"]');
     if (!region) return;
 
@@ -55,26 +57,26 @@ require(['core/ajax', 'core/notification'], function(Ajax, Notification) {
 
         var html = ''
             + '<div class="row mb-4">'
-            + '  <div class="col-md-3 mb-2"><div class="card border-0 shadow-sm"><div class="card-body text-center py-3">'
+            + '  <div class="col-6 col-md-3 mb-2"><div class="card border-0 shadow-sm"><div class="card-body text-center py-3">'
             + '    <div style="font-size:2rem;font-weight:800;">' + team.length + '</div>'
             + '    <div class="text-muted small text-uppercase">Team size</div>'
             + '  </div></div></div>'
-            + '  <div class="col-md-3 mb-2"><div class="card border-0 shadow-sm"><div class="card-body text-center py-3">'
+            + '  <div class="col-6 col-md-3 mb-2"><div class="card border-0 shadow-sm"><div class="card-body text-center py-3">'
             + '    <div style="font-size:2rem;font-weight:800;color:var(--ap-color-success,#16a34a);">'
             +      activeCount + '</div>'
             + '    <div class="text-muted small text-uppercase">Active in period</div>'
             + '  </div></div></div>'
-            + '  <div class="col-md-3 mb-2"><div class="card border-0 shadow-sm"><div class="card-body text-center py-3">'
+            + '  <div class="col-6 col-md-3 mb-2"><div class="card border-0 shadow-sm"><div class="card-body text-center py-3">'
             + '    <div style="font-size:2rem;font-weight:800;">' + totalCompletions + '</div>'
             + '    <div class="text-muted small text-uppercase">Completions</div>'
             + '  </div></div></div>'
-            + '  <div class="col-md-3 mb-2"><div class="card border-0 shadow-sm"><div class="card-body text-center py-3">'
+            + '  <div class="col-6 col-md-3 mb-2"><div class="card border-0 shadow-sm"><div class="card-body text-center py-3">'
             + '    <div style="font-size:2rem;font-weight:800;">' + avgCompletion.toFixed(1) + '%</div>'
             + '    <div class="text-muted small text-uppercase">Avg completion</div>'
             + '  </div></div></div>'
             + '</div>';
 
-        html += '<table class="table table-hover">'
+        html += '<div class="table-responsive"><table class="table table-hover mb-0">'
             + '<thead><tr><th>Name</th><th>Designation</th>'
             + '<th class="text-center">Active?</th>'
             + '<th class="text-end">Completions (period)</th>'
@@ -85,9 +87,8 @@ require(['core/ajax', 'core/notification'], function(Ajax, Notification) {
 
         team.forEach(function(m) {
             html += '<tr>'
-                + '<td><strong>' + m.fullname + '</strong>'
-                + '  <br><code class="small">' + m.email + '</code></td>'
-                + '<td>' + (m.designation || '—') + '</td>'
+                + '<td><strong>' + esc(m.fullname) + '</strong><div class="small text-muted text-break">' + esc(m.email) + '</div></td>'
+                + '<td>' + esc(m.designation || '—') + '</td>'
                 + '<td class="text-center">'
                 + '  ' + (m.is_active ? '<span class="badge bg-success">Yes</span>' : '<span class="badge bg-secondary">No</span>')
                 + '</td>'
@@ -100,11 +101,11 @@ require(['core/ajax', 'core/notification'], function(Ajax, Notification) {
                 + '  </div>'
                 + '  <span class="small">' + m.completion_pct + '%</span>'
                 + '</td>'
-                + '<td class="small text-muted">' + m.last_access + '</td>'
+                + '<td class="small text-muted">' + esc(m.last_access) + '</td>'
                 + '</tr>';
         });
 
-        html += '</tbody></table>';
+        html += '</tbody></table></div>';
         region.innerHTML = html;
     }).catch(Notification.exception);
 });

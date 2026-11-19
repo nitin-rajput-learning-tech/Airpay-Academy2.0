@@ -219,6 +219,26 @@ class catalog_manager {
     }
 
     /**
+     * The catalogue list page for this viewer. Persona walk 2026-11-18: the same rule as the theme's sidebar
+     * (theme_sentientia\sidebar_navigation::catalog_path()); keep the two in step. The tenant catalogue (index.php)
+     * for a logged-in viewer of any resolved tenant other than the storefront tenant (enrolment::public_tenant_id());
+     * the Public storefront (public.php) for that tenant, a guest, nobody, or a tenant that does not resolve.
+     *
+     * @param \stdClass $user The viewer: needs id and open_path (e.g. $USER).
+     * @return \moodle_url
+     */
+    public static function catalog_home_url(\stdClass $user): \moodle_url {
+        if (empty($user->id) || isguestuser($user)) {
+            return new \moodle_url('/local/sentientia_catalog/public.php');
+        }
+        $root = \local_sentientia_platform\tenant::root_for_user($user);
+        if ($root <= 0 || $root === enrolment::public_tenant_id()) {
+            return new \moodle_url('/local/sentientia_catalog/public.php');
+        }
+        return new \moodle_url('/local/sentientia_catalog/index.php');
+    }
+
+    /**
      * Get courses for the catalog with filters and pagination.
      *
      * @param int    $userid      Current user ID
@@ -351,7 +371,7 @@ class catalog_manager {
         if ($viewer_tenant < 0) {
             return [];  // ADR-031: no resolvable tenant -> nothing (and no '-' in a simple cache key).
         }
-        $cachekey = "tr_{$userid}_{$limit}_t{$viewer_tenant}";
+        $cachekey = "tr_{$userid}_{$limit}_t{$viewer_tenant}_" . current_language(); // V8-B: the type chip is language-dependent.
         $cached = $cache->get($cachekey);
         if ($cached !== false) { return $cached; }
 
@@ -394,7 +414,7 @@ class catalog_manager {
         if ($viewer_tenant < 0) {
             return [];  // ADR-031: no resolvable tenant -> nothing.
         }
-        $cachekey = "new_{$userid}_{$limit}_t{$viewer_tenant}";
+        $cachekey = "new_{$userid}_{$limit}_t{$viewer_tenant}_" . current_language(); // V8-B: the type chip is language-dependent.
         $cached = $cache->get($cachekey);
         if ($cached !== false) { return $cached; }
 
@@ -440,7 +460,7 @@ class catalog_manager {
 
         // Cache: heaviest catalog method (4.2s cold). Per-user key, 5 min TTL.
         $cache = \cache::make('local_sentientia_catalog', 'in_progress');
-        $cachekey = "ip_{$userid}_{$limit}";
+        $cachekey = "ip_{$userid}_{$limit}_" . current_language(); // V8-B: the type chip is language-dependent.
         $cached = $cache->get($cachekey);
         if ($cached !== false) {
             return $cached;
@@ -639,7 +659,15 @@ class catalog_manager {
 
         // Course type. The label of the course's own type(s) when the course_type_labels flag is ON and the course names a
         // known one; otherwise (flag OFF, the default, or no known type) the open_coursetype label as before.
-        $types = [0 => 'E-Learning', 1 => 'E-Learning', 2 => 'Classroom', 3 => 'Exam'];
+        // V8-B (2026-11-19): the labels are strings (en and hi); the Hindi catalogue showed them in English. No code
+        // compares them, and under en they read exactly as the literals did.
+        $elearning = get_string('coursetype_elearning', 'local_sentientia_catalog');
+        $types = [
+            0 => $elearning,
+            1 => $elearning,
+            2 => get_string('coursetype_classroom', 'local_sentientia_catalog'),
+            3 => get_string('coursetype_exam', 'local_sentientia_catalog'),
+        ];
         $typeof = (int) ($course->open_coursetype ?? 0);
         if ($typeof === 1) {
             // CRS-14 (2026-10-07): a BizLMS pseudo-course the learner is enrolled in (the only kind of open_coursetype 1 any
@@ -647,10 +675,10 @@ class catalog_manager {
             $types[1] = match ((string) ($course->open_module ?? '')) {
                 'online_exams' => get_string('coursetype_exam', 'local_sentientia_catalog'),
                 'forum' => get_string('coursetype_forum', 'local_sentientia_catalog'),
-                default => 'E-Learning',
+                default => $elearning,
             };
         }
-        $type = $typelabels[(int) $course->id] ?? ($types[$typeof] ?? 'E-Learning');
+        $type = $typelabels[(int) $course->id] ?? ($types[$typeof] ?? $elearning);
 
         // Time ago for "new" badge.
         $daysold = (time() - $course->timecreated) / 86400;

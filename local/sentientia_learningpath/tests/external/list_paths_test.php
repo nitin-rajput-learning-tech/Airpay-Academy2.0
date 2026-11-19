@@ -15,6 +15,7 @@ defined('MOODLE_INTERNAL') || die();
  * - JSON filter bounds: > 4KB rejected with 'filterstoolong'
  * - Search escapes LIKE wildcards
  * - Tenant scoping for non-siteadmin callers
+ * - Names as plain text, and a badge class per status (surface walk 2026-11-18 V19)
  *
  * @package    local_sentientia_learningpath
  * @category   test
@@ -160,5 +161,33 @@ final class list_paths_test extends \advanced_testcase {
 
         $this->assertSame(1, (int) $result['total']);
         $this->assertSame('Airpay 50%', $result['rows'][0]['name']);
+    }
+
+    /**
+     * Surface walk 2026-11-18 V19: the name comes back as plain text (datatable.js escapes the cell
+     * itself, so an escaped name printed "Products &amp; Features"), and each row carries the badge
+     * class the status column's badge format reads from statuslabel_class.
+     */
+    public function test_name_is_text_and_status_has_badge_class(): void {
+        $this->resetAfterTest();
+        $this->ensure_bizlms_schema();
+
+        $this->seed_path('Products & Features', '/1', 1);
+        $this->seed_path('Old & archived', '/1', 0);
+
+        $this->setAdminUser();
+        $result = list_paths::execute('', 'name', 'asc', 0, 25, '{}');
+        $result = \core_external\external_api::clean_returnvalue(list_paths::execute_returns(), $result);
+
+        $this->assertSame(2, (int) $result['total']);
+        $byname = [];
+        foreach ($result['rows'] as $row) {
+            $byname[$row['name']] = $row;
+        }
+        $this->assertArrayHasKey('Products & Features', $byname, 'the name must carry a single &');
+        $this->assertArrayHasKey('Old & archived', $byname, 'the name must carry a single &');
+        $this->assertSame('badge-success', $byname['Products & Features']['statuslabel_class']);
+        $this->assertSame('badge-secondary', $byname['Old & archived']['statuslabel_class']);
+        $this->assertSame('badge-success', $byname['Products & Features']['statuscss'], 'statuscss is kept');
     }
 }

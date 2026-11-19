@@ -16,9 +16,11 @@ global $OUTPUT, $PAGE;
 $ctx = context_system::instance();
 $PAGE->set_context($ctx);
 $PAGE->set_url(new moodle_url('/local/sentientia_manager/performance.php'));
-$PAGE->set_pagelayout('admin');
-$PAGE->set_title('Team performance');
-$PAGE->set_heading('Team performance');
+// V15 (2026-11-18): the standard layout, as on the other My Team pages, and a
+// translated title (it was hard-coded English).
+$PAGE->set_pagelayout('standard');
+$PAGE->set_title(get_string('teamperformance', 'local_sentientia_manager'));
+$PAGE->set_heading(get_string('teamperformance', 'local_sentientia_manager'));
 // Bug fix 2026-05-22 (Goal A audit) — supervisor-or-capability check.
 \local_sentientia_manager\team_manager::require_manage();
 
@@ -32,9 +34,9 @@ echo $OUTPUT->render_from_template('local_sentientia_manager/performance', [
     'emptytitle'   => get_string('emptyteam_title', 'local_sentientia_manager'),
     'emptymessage' => get_string('emptyteam_message', 'local_sentientia_manager'),
     'periods' => [
-        ['days' => 7,  'label' => '7 days',  'selected' => $period === 7],
-        ['days' => 30, 'label' => '30 days', 'selected' => $period === 30],
-        ['days' => 90, 'label' => '90 days', 'selected' => $period === 90],
+        ['days' => 7,  'label' => get_string('perioddays', 'local_sentientia_manager', 7),  'selected' => $period === 7],
+        ['days' => 30, 'label' => get_string('perioddays', 'local_sentientia_manager', 30), 'selected' => $period === 30],
+        ['days' => 90, 'label' => get_string('perioddays', 'local_sentientia_manager', 90), 'selected' => $period === 90],
     ],
 ]);
 echo $OUTPUT->footer();

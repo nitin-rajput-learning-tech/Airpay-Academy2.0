@@ -24,6 +24,43 @@ class compliance_engine {
     const STATUS_EXEMPTED     = 'exempted';
 
     /**
+     * Area of the report's KPI cache.
+     *
+     * index.php and theme_sentientia\local\dashboard_compliance read and write
+     * this cache, keyed by viewer_scope::kpi_cache_key(). It is an ad-hoc
+     * definition with no TTL, so it is purged here whenever the figures can
+     * change: by the snapshot rebuild and by every Configure-tab change (add or
+     * remove a course, exclude or include a user). Until 2026-11-18 nothing
+     * purged it, so the page served the first KPI row it ever cached until
+     * somebody purged all caches.
+     */
+    public const KPI_CACHE_AREA = 'dashboard';
+
+    /**
+     * The report's KPI cache (see KPI_CACHE_AREA).
+     *
+     * @return \cache
+     */
+    public static function kpi_cache(): \cache {
+        return \cache::make_from_params(\cache_store::MODE_APPLICATION,
+            'local_sentientia_compliance_report', self::KPI_CACHE_AREA);
+    }
+
+    /**
+     * Drop every cached KPI row, for every viewer scope.
+     *
+     * Never throws: a cache failure must not stop the snapshot task or a
+     * configuration change.
+     */
+    public static function purge_kpi_cache(): void {
+        try {
+            self::kpi_cache()->purge();
+        } catch (\Throwable $e) {
+            debugging('Compliance KPI cache purge failed: ' . $e->getMessage(), DEBUG_DEVELOPER);
+        }
+    }
+
+    /**
      * Rebuild the entire compliance snapshot table.
      * Called by cron every hour.
      *
@@ -39,6 +76,7 @@ class compliance_engine {
         // Get active mandatory courses.
         $mandatory = $DB->get_records('local_compliance_courses', ['is_active' => 1], 'sort_order');
         if (empty($mandatory)) {
+            self::purge_kpi_cache();
             return $stats;
         }
 
@@ -179,6 +217,7 @@ class compliance_engine {
             }
         }
 
+        self::purge_kpi_cache();
         return $stats;
     }
 
@@ -439,11 +478,16 @@ class compliance_engine {
         }
         // The page's "Department" column printed the designation until
         // 2026-11-18 (V5 of the 11-18 surface walk); 'department' stays the raw
-        // path for the export, 'department_name' is what the page shows.
+        // org path, 'department_name' is what the page shows and
+        // 'department_name_plain' what the export writes (V11).
         $deptnames = self::department_names(array_map(fn($u) => (string) ($u->open_path ?? ''), $users));
 
         $rows = [];
         foreach ($users as $user) {
+            // The org unit's raw name; escaped for the page, plain for the
+            // export (V11, 11-18: the export wrote the raw org path under
+            // "Department", and "&amp;" where the name has an ampersand).
+            $deptraw = (string) ($deptnames[(string) ($user->open_path ?? '')] ?? '');
             $row = [
                 'userid'       => $user->id,
                 'employee_id'  => $user->open_employeeid ?? '',
@@ -451,7 +495,11 @@ class compliance_engine {
                 'fullname'     => format_string($user->firstname . ' ' . $user->lastname),
                 'designation'  => format_string($user->open_designation ?? ''),
                 'department'   => $user->open_path ?? '',
-                'department_name' => $deptnames[(string) ($user->open_path ?? '')] ?? '',
+                'department_name' => $deptraw === '' ? '' : format_string($deptraw),
+                // For exports and other non-HTML output: not HTML-escaped.
+                'department_name_plain' => $deptraw === '' ? '' : format_string($deptraw, true, ['escape' => false]),
+                'fullname_plain' => format_string($user->firstname . ' ' . $user->lastname, true, ['escape' => false]),
+                'designation_plain' => format_string($user->open_designation ?? '', true, ['escape' => false]),
                 'courses'      => [],
                 'all_completed' => true,
             ];
@@ -491,12 +539,16 @@ class compliance_engine {
     }
 
     /**
-     * Display name of the org unit each user path sits in: the deepest org
-     * unit at or above the path, below the tenant root. A user who sits at
-     * the tenant root itself gets ''.
+     * Name of the org unit each user path sits in: the deepest org unit at
+     * or above the path, below the tenant root. A user who sits at the tenant
+     * root itself gets ''.
+     *
+     * The name is returned RAW (as stored), not format_string()'d: the
+     * matrix escapes it for the page ('department_name') and formats it
+     * without escaping for the export ('department_name_plain').
      *
      * @param string[] $paths user open_path values
-     * @return array path => format_string()'d name
+     * @return array path => raw org unit name ('' when none)
      */
     private static function department_names(array $paths): array {
         global $DB;
@@ -529,7 +581,7 @@ class compliance_engine {
                     $name = $names[$prefix];
                 }
             }
-            $result[$path] = ($name === '') ? '' : format_string($name);
+            $result[$path] = (string) $name;
         }
         return $result;
     }
@@ -1118,6 +1170,7 @@ class compliance_engine {
             'timecreated'   => time(),
             'timemodified'  => time(),
         ]);
+        self::purge_kpi_cache();
     }
 
     /**
@@ -1127,6 +1180,7 @@ class compliance_engine {
         global $DB;
         $DB->set_field('local_compliance_courses', 'is_active', 0, ['id' => $id]);
         $DB->set_field('local_compliance_courses', 'timemodified', time(), ['id' => $id]);
+        self::purge_kpi_cache();
     }
 
     /**
@@ -1180,6 +1234,7 @@ class compliance_engine {
             'is_active'   => 1,
             'timecreated' => time(),
         ]);
+        self::purge_kpi_cache();
     }
 
     /**
@@ -1189,6 +1244,7 @@ class compliance_engine {
         global $DB;
         $DB->set_field('local_compliance_exemptions', 'is_active', 0,
             ['userid' => $userid, 'courseid' => 0]);
+        self::purge_kpi_cache();
     }
 
     /**

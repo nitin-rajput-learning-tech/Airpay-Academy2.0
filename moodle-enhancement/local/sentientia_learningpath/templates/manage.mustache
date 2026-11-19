@@ -35,12 +35,13 @@
     <div class="d-flex flex-wrap align-items-end gap-3">
         {{> theme_sentientia/components/org_cascade_filter }}
         <div>
-            <label class="small text-muted mb-1 d-block">Status</label>
+            {{! Surface walk 2026-11-18 V19: a path is Active (1) or Archived (0) (list_paths.php, ADR-032);
+                status 2 does not exist on a path, so the "Completed" pill always listed nothing. }}
+            <label class="small text-muted mb-1 d-block">{{#str}}status, local_sentientia_learningpath{{/str}}</label>
             <div class="btn-group btn-group-sm" role="group" data-airpay-paths-status>
-                <button type="button" class="btn btn-light active" data-status="all">All</button>
-                <button type="button" class="btn btn-light"        data-status="1">Active</button>
-                <button type="button" class="btn btn-light"        data-status="2">Completed</button>
-                <button type="button" class="btn btn-light"        data-status="0">Cancelled</button>
+                <button type="button" class="btn btn-light active" data-status="all">{{#str}}all{{/str}}</button>
+                <button type="button" class="btn btn-light"        data-status="1">{{#str}}status_active, local_sentientia_learningpath{{/str}}</button>
+                <button type="button" class="btn btn-light"        data-status="0">{{#str}}status_archived, local_sentientia_learningpath{{/str}}</button>
             </div>
         </div>
     </div>

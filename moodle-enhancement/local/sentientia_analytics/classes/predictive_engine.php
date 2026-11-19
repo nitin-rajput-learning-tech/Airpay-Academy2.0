@@ -443,6 +443,9 @@ class predictive_engine {
             unset($td);
         }
 
+        // Names are formatted unescaped: predictive_skillgap.mustache escapes them with {{ }}.
+        // PB-3: format_string's default escaping plus the template printed a literal "&amp;".
+        $syscontext = \context_system::instance();
         $result = [];
         foreach ($teams as $team) {
             $td       = $team_data[$team->path];
@@ -462,12 +465,15 @@ class predictive_engine {
                 $cats = $DB->get_records_select('course_categories', "id $insql", $inparams,
                     'name', 'id, name');
                 foreach ($cats as $cat) {
-                    $skill_gaps[] = ['skill_name' => format_string($cat->name)];
+                    // Formatted once here, escaped once by the template's {{ }} (PB-3).
+                    $skill_gaps[] = ['skill_name' => format_string($cat->name, true,
+                        ['context' => $syscontext, 'escape' => false])];
                 }
             }
 
             $result[] = [
-                'team_name'       => format_string($team->fullname),
+                'team_name'       => format_string($team->fullname, true,
+                    ['context' => $syscontext, 'escape' => false]),
                 'team_path'       => $team->path,
                 'required_skills' => $required,
                 'covered_skills'  => $covered,

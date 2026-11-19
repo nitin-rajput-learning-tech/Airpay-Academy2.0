@@ -224,6 +224,23 @@ if (isloggedin() && !isguestuser()) {
 
             // Leaderboard data.
             $leaderboard = \local_sentientia_gamification\leaderboard::get_template_data($USER->id, 'department', 5);
+            // V9 (Nitin, decision D2 = A, 2026-11-19): the mini-board shows everyone except the viewer as first name
+            // and last initial ("First L."); the viewer's own row keeps the full name. lastname is format_string()
+            // output, so it is decoded before its first character is taken (the template escapes it again). The
+            // initials avatar is unchanged.
+            if (!empty($leaderboard['entries']) && is_array($leaderboard['entries'])) {
+                foreach ($leaderboard['entries'] as &$lbentry) {
+                    if (!is_array($lbentry) || !empty($lbentry['is_current_user'])) {
+                        continue;
+                    }
+                    $lblastname = trim(html_entity_decode((string) ($lbentry['lastname'] ?? ''),
+                        ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                    if ($lblastname !== '') {
+                        $lbentry['lastname'] = \core_text::substr($lblastname, 0, 1) . '.';
+                    }
+                }
+                unset($lbentry);
+            }
             $airpay_dashboard['leaderboard'] = $leaderboard;
             $airpay_dashboard['hasleaderboard'] = $leaderboard['has_entries'] ?? false;
 
@@ -252,7 +269,8 @@ if (isloggedin() && !isguestuser()) {
                 'longest_streak' => $streak->longest_streak ?? 0,
             ];
             $airpay_dashboard['hasstreakcalendar'] = true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            debugging('Dashboard gamification skipped: ' . $e->getMessage(), DEBUG_DEVELOPER);
             $airpay_dashboard['hasgamification'] = false;
         }
     }
@@ -513,70 +531,7 @@ if (isloggedin() && !isguestuser()) {
             $airpay_dashboard['chart_distribution_table'] = $pieTable;
             $airpay_dashboard['hascharts'] = true;
 
-            // Quick navigation links with tenant-scoped live stats.
-            // $activeusers already computed above with tenant filter — don't overwrite.
-            $inactiveusers = max(0, $totalusers - $activeusers);
-            $classroomcount = 0;
-            $examcount = 0;
-            try {
-                // The Sentientia classroom table, scoped to the admin's tenant (ADR-031: no tenant, no count).
-                // This used to read the BizLMS {local_classroom} table.
-                if (class_exists('\\local_sentientia_classroom\\session_manager')) {
-                    $classroomcount = $scope->is_unrestricted()
-                        ? \local_sentientia_classroom\session_manager::count_classrooms('')
-                        : ($scope->is_unresolved()
-                            ? 0
-                            : \local_sentientia_classroom\session_manager::count_classrooms($scope->root()));
-                }
-            } catch (Exception $e) {}
-            try { $examcount = $DB->count_records('local_onlineexams'); } catch (Exception $e) {}
-
-            $airpay_dashboard['admin_quicknav'] = [
-                ['label' => get_string('nav_manageusers', 'theme_sentientia'), 'icon' => 'users', 'url' => (new moodle_url('/local/sentientia_users/index.php'))->out(false), 'color' => '#0066A7',
-                 'hasstats' => true, 'stats' => [
-                    ['statval' => $totalusers, 'statlabel' => get_string('kpi_total', 'theme_sentientia')],
-                    ['statval' => $activeusers, 'statlabel' => get_string('kpi_active', 'theme_sentientia')],
-                    ['statval' => $inactiveusers, 'statlabel' => get_string('kpi_inactive', 'theme_sentientia')],
-                ]],
-                ['label' => get_string('nav_managecourses', 'theme_sentientia'), 'icon' => 'book', 'url' => (new moodle_url('/local/sentientia_courses/index.php'))->out(false), 'color' => '#1985DD',
-                 'hasstats' => true, 'stats' => [
-                    ['statval' => $totalcourses, 'statlabel' => get_string('kpi_total', 'theme_sentientia')],
-                    ['statval' => number_format($totalenrolments), 'statlabel' => get_string('kpi_enrolments', 'theme_sentientia')],
-                    ['statval' => number_format($totalcompleted), 'statlabel' => get_string('kpi_completions', 'theme_sentientia')],
-                ]],
-                ['label' => get_string('dash_qa_reports', 'theme_sentientia'), 'icon' => 'bar-chart', 'url' => (new moodle_url('/blocks/learnerscript/managereport.php'))->out(false), 'color' => '#6d58a5'],
-                ['label' => get_string('nav_onlineexams', 'theme_sentientia'), 'icon' => 'pencil-square-o', 'url' => (new moodle_url('/local/sentientia_exams/index.php'))->out(false), 'color' => '#d97706'],
-                ['label' => get_string('nav_classrooms', 'theme_sentientia'), 'icon' => 'calendar', 'url' => (new moodle_url('/local/sentientia_classroom/index.php'))->out(false), 'color' => '#dc2626',
-                 'hasstats' => ($classroomcount > 0), 'stats' => [
-                    ['statval' => $classroomcount, 'statlabel' => get_string('kpi_total', 'theme_sentientia')],
-                ]],
-                ['label' => get_string('nav_compliance', 'theme_sentientia'), 'icon' => 'shield', 'url' => (new moodle_url('/local/sentientia_compliance_report/index.php'))->out(false), 'color' => '#16a34a',
-                 'hasstats' => true, 'stats' => (function() use ($DB, $tenantjoin_course, $tenantjoinparams_course, $tenantjoin_user, $tenantjoinparams_user) {
-                    try {
-                        $mandatory = $DB->count_records_sql(
-                            "SELECT COUNT(cc.id) FROM {local_compliance_courses} cc
-                             JOIN {course} c ON c.id = cc.courseid WHERE 1=1{$tenantjoin_course}", $tenantjoinparams_course);
-                        $overdue = $DB->count_records_sql(
-                            "SELECT COUNT(s.id) FROM {local_compliance_snapshot} s
-                             JOIN {user} u ON u.id = s.userid WHERE s.status = 'overdue'{$tenantjoin_user}", $tenantjoinparams_user);
-                        return [
-                            ['statval' => $mandatory, 'statlabel' => get_string('kpi_mandatory', 'theme_sentientia')],
-                            ['statval' => $overdue, 'statlabel' => get_string('kpi_overdue', 'theme_sentientia')],
-                        ];
-                    } catch (Exception $e) { return []; }
-                 })()],
-                ['label' => get_string('dash_qa_privacy_dpdp', 'theme_sentientia'), 'icon' => 'lock', 'url' => (new moodle_url('/local/sentientia_privacy/index.php'))->out(false), 'color' => '#6d58a5',
-                 'hasstats' => true, 'stats' => (function() use ($DB, $tenantjoin_user, $tenantjoinparams_user) {
-                    try {
-                        $pending = $DB->count_records_sql(
-                            "SELECT COUNT(r.id) FROM {local_privacy_requests} r
-                             JOIN {user} u ON u.id = r.userid WHERE r.status = 'pending'{$tenantjoin_user}", $tenantjoinparams_user);
-                        return [['statval' => $pending, 'statlabel' => get_string('kpi_pending', 'theme_sentientia')]];
-                    } catch (Exception $e) { return []; }
-                 })()],
-                ['label' => get_string('dash_qa_site_settings', 'theme_sentientia'), 'icon' => 'cog', 'url' => (new moodle_url('/admin/index.php'))->out(false), 'color' => '#6b7280'],
-            ];
-            $airpay_dashboard['hasquicknav'] = true;
+            // Quick navigation removed 2026-11-18: the template stopped printing it when the sidebar took over, but its tiles were still counted on every admin /my/ load.
 
             // --- System Health ---
             $cronlast = $DB->get_field_sql("SELECT MAX(lastruntime) FROM {task_scheduled} WHERE lastruntime > 0");
@@ -660,10 +615,10 @@ if (isloggedin() && !isguestuser()) {
             ];
             $airpay_dashboard['hasuseranalytics'] = true;
 
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+            debugging('Dashboard admin widgets skipped: ' . $e->getMessage(), DEBUG_DEVELOPER);
             $airpay_dashboard['hasadminkpis'] = false;
             $airpay_dashboard['hascharts'] = false;
-            $airpay_dashboard['hasquicknav'] = false;
             $airpay_dashboard['hasactivityfeed'] = false;
         }
     } else {
@@ -671,15 +626,47 @@ if (isloggedin() && !isguestuser()) {
     // LEARNER DASHBOARD — courses, progress, deadlines, achievements
     // ═══════════════════════════════════════════════════════════
 
+    // V16 (11-18 surface walk; Nitin, D3: a bug fix, no flag). The courses the user teaches
+    // (theme_sentientia\local\teaching_courses) are listed under "Courses you teach" and left out of the learner
+    // figures: trainers and authors on UAT are enrolled only as editingteacher, and their courses showed as
+    // "Not started 0%" cards and a "0 of 1" ring. It only regroups courses already on the dashboard. A user who
+    // teaches nothing gets $teachingids = [] and $learningcourses = $enrolledcourses, so their dashboard is as before;
+    // so does everyone when the class is missing or the lookup fails.
+    $teachingonly = false;
+
     // Get enrolled courses with progress
     try {
         $enrolledcourses = enrol_get_all_users_courses($USER->id, true);
+        $teachingids = [];
+        if (class_exists('\\theme_sentientia\\local\\teaching_courses')) {
+            try {
+                $teachingids = \theme_sentientia\local\teaching_courses::course_ids(
+                    (int) $USER->id, array_keys($enrolledcourses));
+            } catch (\Throwable $e) {
+                debugging('Dashboard teaching courses skipped: ' . $e->getMessage(), DEBUG_DEVELOPER);
+                $teachingids = [];
+            }
+        }
+        $learningcourses = $enrolledcourses;
+        $teachingcourses = [];
+        foreach ($teachingids as $tid) {
+            if (!isset($enrolledcourses[$tid])) {
+                continue;
+            }
+            if (count($teachingcourses) < 6) {
+                $teachingcourses[] = [
+                    'name' => format_string($enrolledcourses[$tid]->fullname),
+                    'url' => (new moodle_url('/course/view.php', ['id' => $tid]))->out(false),
+                ];
+            }
+            unset($learningcourses[$tid]);
+        }
         $completed = 0;
         $inprogress = 0;
         $notstarted = 0;
         $continuecourses = [];
 
-        foreach ($enrolledcourses as $course) {
+        foreach ($learningcourses as $course) {
             $completion = new completion_info($course);
             $progress = \core_completion\progress::get_course_progress_percentage($course, $USER->id);
 
@@ -695,7 +682,6 @@ if (isloggedin() && !isguestuser()) {
                 $continuecourses[] = [
                     'id' => $course->id,
                     'fullname' => format_string($course->fullname),
-                    'shortname' => format_string($course->shortname),
                     'progress' => round($progress),
                     'viewurl' => (new moodle_url('/course/view.php', ['id' => $course->id]))->out(false),
                     'status' => $is_overdue ? 'overdue' : 'in_progress',
@@ -708,7 +694,6 @@ if (isloggedin() && !isguestuser()) {
                     $continuecourses[] = [
                         'id' => $course->id,
                         'fullname' => format_string($course->fullname),
-                        'shortname' => format_string($course->shortname),
                         'progress' => 0,
                         'viewurl' => (new moodle_url('/course/view.php', ['id' => $course->id]))->out(false),
                         'status' => 'not_started',
@@ -721,8 +706,21 @@ if (isloggedin() && !isguestuser()) {
         // Limit to 6 courses for the dashboard
         $airpay_dashboard['continuecourses'] = array_slice($continuecourses, 0, 6);
         $airpay_dashboard['hascontinuecourses'] = count($continuecourses) > 0;
+        // V5 (11-18 surface walk): the card thumb printed the course shortname ("VP_JOURNEY_FREE", "API001") when
+        // there was no image. Each card gets the course image when there is one; otherwise the partial paints the
+        // brand gradient with a course icon.
+        foreach ($airpay_dashboard['continuecourses'] as &$card) {
+            $card['thumburl'] = '';
+            try {
+                $img = \core_course\external\course_summary_exporter::get_course_image($enrolledcourses[$card['id']]);
+                $card['thumburl'] = $img ?: '';
+            } catch (\Throwable $e) {
+                debugging('Dashboard course image skipped: ' . $e->getMessage(), DEBUG_DEVELOPER);
+            }
+        }
+        unset($card);
         $airpay_dashboard['stats'] = [
-            'enrolled' => count($enrolledcourses),
+            'enrolled' => count($learningcourses),
             'inprogress' => $inprogress,
             'completed' => $completed,
             'notstarted' => $notstarted,
@@ -730,7 +728,7 @@ if (isloggedin() && !isguestuser()) {
         $airpay_dashboard['hasstats'] = true;
 
         // Progress ring data for completion percentage.
-        $totalenrolled = count($enrolledcourses);
+        $totalenrolled = count($learningcourses);
         $completionpct = ($totalenrolled > 0) ? round(($completed / $totalenrolled) * 100) : 0;
         // SVG circle: radius=36, circumference=2*pi*36=226.19
         $circumference = 226.19;
@@ -744,8 +742,19 @@ if (isloggedin() && !isguestuser()) {
         ];
         $airpay_dashboard['has_progress_ring'] = true;
 
-    } catch (Exception $e) {
-        // Silently fail — dashboard still renders without our additions
+        // V16: a user who only teaches has no learning of their own to measure, so no ring and no learner KPI tiles
+        // (haslearnerkpis below), and no "Continue Learning" empty state under "Courses you teach" (the template
+        // reads teachingonly). Always false for a user who teaches nothing ($teachingcourses is then empty), so a
+        // learner with no courses still gets the empty state.
+        $teachingonly = empty($learningcourses) && !empty($teachingcourses);
+        $airpay_dashboard['has_progress_ring'] = !$teachingonly;
+        $airpay_dashboard['teachingcourses'] = $teachingcourses;
+        $airpay_dashboard['hasteachingcourses'] = !empty($teachingcourses);
+        $airpay_dashboard['teachingonly'] = $teachingonly;
+
+    } catch (\Throwable $e) {
+        debugging('Dashboard learner courses skipped: ' . $e->getMessage(), DEBUG_DEVELOPER);
+        // The dashboard still renders without our additions.
         $airpay_dashboard['hasstats'] = false;
         $airpay_dashboard['hascontinuecourses'] = false;
     }
@@ -754,7 +763,8 @@ if (isloggedin() && !isguestuser()) {
     try {
         $certcount = $DB->count_records('tool_certificate_issues', ['userid' => $USER->id]);
         $airpay_dashboard['stats']['certificates'] = $certcount;
-    } catch (Exception $e) {
+    } catch (\Throwable $e) {
+        debugging('Dashboard certificate count skipped: ' . $e->getMessage(), DEBUG_DEVELOPER);
         $airpay_dashboard['stats']['certificates'] = 0;
     }
 
@@ -799,7 +809,7 @@ if (isloggedin() && !isguestuser()) {
             'color' => 'warning',
         ],
     ];
-    $airpay_dashboard['haslearnerkpis'] = !empty($airpay_dashboard['hasstats']);
+    $airpay_dashboard['haslearnerkpis'] = !empty($airpay_dashboard['hasstats']) && empty($teachingonly);
 
     // --- Section: Manager Team Overview (only for managers) ---
     // Uses local_sentientia_manager\team_manager — batches 4 aggregate queries
@@ -845,17 +855,22 @@ if (isloggedin() && !isguestuser()) {
             $airpay_dashboard['hasmanagerkpis']  = count($teammembers) > 0;
             $airpay_dashboard['teamcompliance']  = $teamcompliancelist;
             $airpay_dashboard['hasteamcompliance'] = count($teamcompliancelist) > 0;
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+            debugging('Dashboard team overview skipped: ' . $e->getMessage(), DEBUG_DEVELOPER);
             $airpay_dashboard['hasmanagerkpis']    = false;
             $airpay_dashboard['hasteamcompliance'] = false;
         }
     }
+    // The manager greeting. V16: only for a manager with a team, so a trainer the role detector counts as a manager
+    // but who has no direct reports gets the learner greeting.
+    $airpay_dashboard['showmanagerheader'] = $ismanager && !empty($airpay_dashboard['hasmanagerkpis']);
 
     // --- Section: Upcoming Deadlines ---
     try {
         $deadlines = [];
         $now = time();
-        $enrolledids = array_keys($enrolledcourses ?? []);
+        // V16: taught courses are not the user's own deadlines ($learningcourses is $enrolledcourses for a non-teacher).
+        $enrolledids = array_keys($learningcourses ?? ($enrolledcourses ?? []));
         if (!empty($enrolledids)) {
             [$insql, $params] = $DB->get_in_or_equal($enrolledids, SQL_PARAMS_NAMED, 'cid');
             $params['uid'] = $USER->id;
@@ -912,7 +927,8 @@ if (isloggedin() && !isguestuser()) {
         }
         $airpay_dashboard['deadlines'] = $deadlines;
         $airpay_dashboard['hasdeadlines'] = count($deadlines) > 0;
-    } catch (Exception $e) {
+    } catch (\Throwable $e) {
+        debugging('Dashboard deadlines skipped: ' . $e->getMessage(), DEBUG_DEVELOPER);
         $airpay_dashboard['hasdeadlines'] = false;
     }
 
@@ -943,7 +959,8 @@ if (isloggedin() && !isguestuser()) {
         usort($achievements, function($a, $b) { return $b['timestamp'] - $a['timestamp']; });
         $airpay_dashboard['achievements'] = array_slice($achievements, 0, 5);
         $airpay_dashboard['hasachievements'] = count($achievements) > 0;
-    } catch (Exception $e) {
+    } catch (\Throwable $e) {
+        debugging('Dashboard achievements skipped: ' . $e->getMessage(), DEBUG_DEVELOPER);
         $airpay_dashboard['hasachievements'] = false;
     }
 
@@ -1008,7 +1025,8 @@ if (isloggedin() && !isguestuser()) {
         }
         $airpay_dashboard['timeline'] = $timeline;
         $airpay_dashboard['hastimeline'] = count($timeline) > 0;
-    } catch (Exception $e) {
+    } catch (\Throwable $e) {
+        debugging('Dashboard activity timeline skipped: ' . $e->getMessage(), DEBUG_DEVELOPER);
         $airpay_dashboard['hastimeline'] = false;
     }
 
@@ -1177,13 +1195,15 @@ if (file_exists($sentientia_courses_lib)) {
 }
 
 // Topbar context.
-// messageslink: the shell topbar's Messages link (core_renderer::airpay_shell_start() prints the same), '' when the
-// user may not use messaging. The dashboard paints its own topbar, which had no bell and no Messages link (11-18
-// surface walk V4); dashboard.mustache prints the bell itself.
+// The dashboard paints its own topbar, which had no bell and no Messages link (11-18 surface walk V4). It prints the
+// shell topbar's own two links, the ones core_renderer::airpay_shell_start() prints on every other shell page:
+// notificationhtml: the Notifications bell with its unread-count badge (surface walk V20), '' for a guest.
+// messageslink: the Messages link, '' when the user may not use messaging.
 $templatecontext['topbar'] = [
     'wwwroot' => $CFG->wwwroot,
     'breadcrumbs' => $OUTPUT->navbar(),
-    'notificationhtml' => '',
+    'notificationhtml' => method_exists(\theme_sentientia\output\core_renderer::class, 'topbar_notifications_link')
+        ? \theme_sentientia\output\core_renderer::topbar_notifications_link() : '',
     'usermenu' => $OUTPUT->user_menu($USER, ''),
     'messageslink' => method_exists(\theme_sentientia\output\core_renderer::class, 'topbar_messages_link')
         ? \theme_sentientia\output\core_renderer::topbar_messages_link() : '',

@@ -90,14 +90,17 @@ if (trim($map_raw) !== '') {
 }
 
 // ── Read templates + live issue counts (READ-ONLY) ─────────────────
+// Surface walk 2026-11-18 V19: elementcount marks a template with no elements (it issues a blank
+// certificate), and the id tie-break keeps templates that share a name in a stable order.
 $templates = $DB->get_records_sql(
     "SELECT t.id, t.name,
-            COUNT(i.id) AS issued
+            (SELECT COUNT(1) FROM {tool_certificate_issues} i
+              WHERE i.templateid = t.id AND i.archived = 0) AS issued,
+            (SELECT COUNT(1) FROM {tool_certificate_pages} p
+               JOIN {tool_certificate_elements} e ON e.pageid = p.id
+              WHERE p.templateid = t.id) AS elementcount
        FROM {tool_certificate_templates} t
-  LEFT JOIN {tool_certificate_issues} i
-            ON i.templateid = t.id AND i.archived = 0
-   GROUP BY t.id, t.name
-   ORDER BY t.name ASC");
+   ORDER BY t.name ASC, t.id ASC");
 
 echo $OUTPUT->header();
 
@@ -152,8 +155,18 @@ foreach ($templates as $t) {
     $edit_url = new moodle_url('/admin/tool/certificate/template.php',
         ['id' => $t->id]);
 
+    // Surface walk 2026-11-18 V19: templates can share a name, so each row shows its ID, and a
+    // template with no elements carries an "Empty template" badge.
+    $namecell = format_string($t->name) . ' '
+        . html_writer::span(s(get_string('cert_tpl_id', 'local_sentientia_pages', (int) $t->id)),
+            'text-muted small');
+    if ((int) $t->elementcount === 0) {
+        $namecell .= ' ' . html_writer::span(s(get_string('cert_tpl_empty', 'local_sentientia_pages')),
+            'badge bg-warning text-dark');
+    }
+
     $table->data[] = [
-        format_string($t->name),
+        $namecell,
         html_writer::tag('span', s($scope_label),
             ['class' => 'badge ' . $badge_class]),
         number_format((int) $t->issued),

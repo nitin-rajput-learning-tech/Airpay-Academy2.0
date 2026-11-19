@@ -21,10 +21,13 @@ $string['sentientia_authoring:manage_all'] = 'Manage all drafts and templates ac
 // Navigation.
 $string['nav_studio'] = 'Authoring Studio';
 $string['nav_templates'] = 'Design templates';
+// Phase C 2026-11-19 (V17): the drafts list and the studio link to each other.
+$string['nav_drafts'] = 'My drafts';
+$string['nav_generate'] = 'Generate a module';
 
 // Mode badges.
 $string['mode_disabled_badge'] = 'Authoring Studio is disabled — turn on the sentientia.authoring.enabled feature flag.';
-$string['mode_mock_badge'] = 'MOCK MODE — generation returns deterministic placeholder content. No Anthropic call is made and nothing is charged.';
+$string['mode_mock_badge'] = 'Preview mode: the studio creates sample content so you can try the full workflow. No AI service is called and there is no cost.';
 $string['mode_no_apikey_badge'] = 'Live API flag is ON but no Anthropic API key is configured — generation will run in mock mode until a key is set.';
 $string['mode_live_badge'] = 'LIVE MODE — generation will call Anthropic. Each run is billed per token.';
 
@@ -39,6 +42,13 @@ $string['index_col_questions'] = 'Questions';
 $string['index_col_created'] = 'Created';
 $string['index_col_actions'] = 'Actions';
 $string['index_review_link'] = 'Review';
+// Phase C 2026-11-19 (V17): the Status column shows a label, not the raw status code.
+$string['draft_status_pending'] = 'Generating';
+$string['draft_status_generated'] = 'Ready for review';
+$string['draft_status_approved'] = 'Approved';
+$string['draft_status_published'] = 'Published';
+$string['draft_status_rejected'] = 'Rejected';
+$string['draft_status_failed'] = 'Failed';
 
 // Studio (generate) page.
 $string['studio_page_title'] = 'Authoring Studio — generate';
@@ -57,8 +67,8 @@ $string['studio_form_numcards'] = 'Number of cards';
 $string['studio_form_numq'] = 'Number of questions';
 $string['studio_form_mastery'] = 'Mastery score (%)';
 $string['studio_form_model'] = 'Model';
-$string['studio_confirm_label'] = 'I confirm I want to run this generation. (In live mode this calls Anthropic and is billed per token.)';
-$string['studio_confirm_help'] = 'This [CONFIRM] gate is required for every generation, including mock-mode runs, so the workflow is identical in both modes.';
+$string['studio_confirm_label'] = 'I confirm I want to generate this module.';
+$string['studio_confirm_help'] = 'In live mode each generation uses paid AI capacity, so every run asks for this confirmation, in preview mode too.';
 $string['studio_submit'] = 'Generate draft';
 
 $string['sourcetype_prompt'] = 'Prompt';
@@ -68,7 +78,7 @@ $string['language_en'] = 'English';
 $string['language_hi'] = 'Hindi (हिन्दी)';
 $string['template_builtin_suffix'] = '(built-in)';
 
-$string['tokens_used_today'] = 'Tokens used today: {$a->used} of {$a->cap}.';
+$string['tokens_used_today'] = 'AI usage today: {$a->used} of {$a->cap} tokens.';
 $string['source_word_count'] = '{$a} words';
 
 // Review page.

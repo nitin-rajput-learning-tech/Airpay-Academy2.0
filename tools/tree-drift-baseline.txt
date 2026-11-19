@@ -27,9 +27,7 @@ CONTENT sentientia_leaderboard/classes/external/list_boards.php
 CONTENT sentientia_leaderboard/classes/external/set_optout.php
 CONTENT sentientia_leaderboard/db/feature_flags.php
 CONTENT sentientia_notifications/templates/prefs.mustache
-CONTENT sentientia_pages/onboarding.php
 CONTENT sentientia_pages/templates/certificate_celebration.mustache
-CONTENT sentientia_pages/templates/onboarding.mustache
 CONTENT sentientia_platform/cli/mint_session.php
 CONTENT sentientia_pwa/mock_receiver.php
 CONTENT sentientia_whatsapp/lang/en/local_sentientia_whatsapp.php
