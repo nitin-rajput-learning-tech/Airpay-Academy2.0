@@ -1,7 +1,7 @@
 # State Card — `theme_airpayux`
 
 **Component:** `theme_airpayux`
-**Version:** `2026111900` / `1.0.71-beta` (was `2026111802` / `1.0.70-beta`)
+**Version:** `2026111901` / `1.0.72-beta` (was `2026111900` / `1.0.71-beta`)
 **Maturity:** `MATURITY_BETA`
 **Status:** Live theme on airpay.academy. Standalone fork (`$THEME->parents = []`).
 **Last refreshed:** 2026-09-08 (P3 i18n parity — dashboard body strings via get_string, en+hi 281/281 — integrated onto gap-integration; stale AMD bundles rebuilt the same day)
@@ -52,6 +52,12 @@
 > padding kept in a separate 2-id rule so the dark-mode bg override still
 > wins. The real split-screen login is excluded by the `:has()` guard
 > (verified untouched). Evidence: `docs/visual-evidence/2026-05-29/signup-*.png`.
+
+---
+
+## 2026-11-19 — certificate verification page noindex (2026111901 / 1.0.72-beta; not deployed; PHPUnit not run)
+
+`classes/output/core_renderer.php`: new `robots_noindex_meta($pagetype)`; `standard_head_html()` appends `<meta name="robots" content="noindex, nofollow" />` for the page type `admin-tool-certificate-index` (admin/tool/certificate/index.php) only, because since D32 a verification link shows the holder's full name on arrival. No other page gets the tag (core still adds its own `noindex` when `allowindexing` asks for it). Theme only; Nitin approved 2026-11-19 15:05. Link previews still fetch the page. Test: `tests/certificate_verify_noindex_test.php`. Companion vendor hunk (escaping the result cells): `moodle-enhancement/docs/core-mods/2026-11-19-tool-certificate-verify-result-escaping.md`.
 
 ---
 

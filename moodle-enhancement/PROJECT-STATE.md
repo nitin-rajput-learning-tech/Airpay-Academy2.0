@@ -1,5 +1,6 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-11-19 09:20 (**Walk fixes A+B+C DEPLOYED TO UAT at 09:06-09:12 on Nitin's go (`b757187a9` code, docs `53b249a16`, `production` fast-forwarded); all checks green; PHPUnit not run. See the 2026-11-19 09:20 entry.**)
+**Updated:** 2026-11-19 16:00 (**Post-demo: Nitin decided D1-D32 (plan 6a); 5 quick wins + certificate verify-on-arrival (D32) DEPLOYED TO UAT 15:15 (`fe94e7c97`); D32 extras (noindex, escaping, ADR-041 accepted) committed, not deployed; mobile = Flutter recommended pending spike. See the 2026-11-19 16:00 entry.**)
+**Before that, 2026-11-19 09:20** (**Walk fixes A+B+C DEPLOYED TO UAT at 09:06-09:12 on Nitin's go (`b757187a9` code, docs `53b249a16`, `production` fast-forwarded); all checks green; PHPUnit not run. See the 2026-11-19 09:20 entry.**)
 **Before that, 2026-11-19 08:30** (**Walk fixes Phase A+B (`56d822061`) and Phase C built and verified locally, NOT on UAT yet; V23 reverted; PHPUnit not run. See the 2026-11-19 entry.**)
 **Before that, 2026-11-18 12:35** (**Midday: three demo fixes on UAT (`bc2227c20`, theme 2026111800 + certificate redesign); see the 2026-11-18 midday entry.** Earlier, ~01:00: **C-suite demo MOVED UP to Wednesday 18 November, morning; everything developed so far goes to UAT first thing (Nitin, over his VPN, per `docs/cutover/UAT-DEPLOY-RUNBOOK-2026-11-18.md`). Committed tonight: the fresh-install fixes (`cdd4fc310`) and the compliance_report security + exclusions fix (`0706fdadf`, 2026111702). New C-suite deck: what Academy 2.0 adds over today's airpay.academy, no operational detail. See the 2026-11-17/18 entry.**)
 **Before that, 2026-11-16** (**Demo week. Theme 2026111600-02, reminder tasks (courses 2026111600) and Option A privacy committed; CI green. See the 2026-11-16 entry.**)
@@ -10,6 +11,30 @@
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
 
 ---
+
+## 2026-11-19 16:00 - Post-demo feedback: decisions, quick wins on UAT, plans (Opus 5.5)
+
+- **Nitin's feedback at 10:43 after the C-suite demo:** course edit parity with BizLMS, assessment cheating/proctoring, a Training Program structure (pre-assessment, pre-read, Teams/Zoom/classroom sessions, post-assessment, feedback for training and trainer), external trainers, learning-path changes after enrolment, Programs, analytics (Skill Gap, ROI), Skills UI spacing, surveys like Microsoft Forms, certificate verification, email preview errors, native mobile apps.
+- **Plan:** `docs/plans/2026-11-19-POST-DEMO-PLAN.md`.
+  - Nitin answered D1-D32 in chat (section 6a); 13 differ from the recommendation (section 6b).
+  - Revised schedule: LMS track about 100-120 days, mobile track about 59-79 days.
+  - New docs: `2026-11-19-MOBILE-APP-BENCHMARK-AND-ARCHITECTURE.md` (benchmark against LinkedIn Learning, Disprz, Coursera, Udemy; Nitin wants KMP or Flutter, **Flutter recommended**, after a 3-day spike on a 2 GB Android 9 phone).
+  - `2026-11-19-APP-STORE-PAPERWORK-PACK.md`: for CTO review; D29 in-app browser to Airpay PG carries a store-policy risk, section 2A.
+  - `2026-11-19-SURVEYS-SCOPE.md`.
+- **UAT deploy 2, at 15:15 on Nitin's go:**
+  - Range `c7ab20d53..fe94e7c97`, 43 files. Quick wins `b1ceecb58`: email previews (the 20-template whitelist; edited templates keep their partials), certificate verify page, ROI and Skill Gap cards, Skills spacing, modal form labels. D32 tool_certificate verify-on-arrival core-mod `fe94e7c97`.
+  - Checks: hashes 43/43; theme, analytics, emails and skills at 2026111900; flags unchanged; smoke green.
+  - D32 checked server-side: a valid code shows the result on arrival, an invalid code shows "Not verified", and the page has one code input.
+  - Backup TS `20261119-151556`.
+- **Committed, not deployed:**
+  - D32 extras: noindex on the verify page (theme 2026111901 / 1.0.72-beta) and escaping of the holder and certificate names (second tool_certificate record). Includes a tagged `MOODLE_INTERNAL` guard hunk, because the pre-commit hook requires one.
+  - ADR-041 accepted.
+- **Findings:**
+  - The repo's vendored tool_certificate is 4.5.7 but UAT runs 5.0.12: re-vendor it.
+  - UAT compliance auto-enrol is safe: 4 active courses, all tenant-scoped, 0 cross-tenant enrolments. Local data has all-tenant rows (D4 fix in session 1).
+  - Proctoring does not work end to end, and learning-path learners never complete; both are in the plan.
+  - Course completion certificates may not be issued on Sentientia; check this in session 1b.
+- **Not run:** PHPUnit, for any of today's work (the local test DB re-init needs about 3 h).
 
 ## 2026-11-19 09:20 - Walk fixes A+B+C deployed to UAT (Opus 5.5)
 

@@ -121,6 +121,7 @@ Moodle 5.3; 5.2 stays the fallback target and keeps its notes.
 | `2026-10-08-tool-certificate-duration-defaultunit.md` | `defaulunit` typo fix (vendor patch; throws on 5.3) | Required on 5.3 |
 | `2026-10-08-learnerscript-modal-factory-port.md` | learnerscript report modals ported off the removed modal factory (vendor patch) | Required on 5.2 and 5.3 |
 | `2026-11-19-tool-certificate-verify-on-arrival.md` | tool_certificate `index.php`: verification links show the result on arrival; form posts to the bare URL (vendor patch, decision D32; rules in ADR-041) | Version independent (bug fix) |
+| `2026-11-19-tool-certificate-verify-result-escaping.md` | tool_certificate `classes/output/verify_certificate_result.php`: the verification result escapes the holder's name (`s()`) and the certificate name (`format_string()` in the template's context) (vendor patch, Nitin 2026-11-19; rules in ADR-041) | Version independent (bug fix) |
 
 ## Decision criteria
 

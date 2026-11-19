@@ -74,6 +74,29 @@ class core_renderer extends \core_renderer {
         return trim(html_entity_decode(strip_tags($text), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
     }
 
+    /**
+     * Page types that ask search engines not to index them or follow their links.
+     *
+     * admin-tool-certificate-index is the certificate verification page (admin/tool/certificate/index.php). Since
+     * 2026-11-19 a verification link (certificate QR code, gallery "Verify", LinkedIn) shows the result on arrival,
+     * the holder's full name included (decision D32), so a crawler that follows a shared link would index the name.
+     * Nitin approved noindex for this page only, from the theme, on 2026-11-19.
+     */
+    private const NOINDEX_PAGETYPES = ['admin-tool-certificate-index'];
+
+    /**
+     * The robots meta tag for a page type: "noindex, nofollow" for the page types above, otherwise nothing.
+     *
+     * @param string $pagetype A page type, e.g. $PAGE->pagetype.
+     * @return string The tag and a newline, or ''.
+     */
+    public static function robots_noindex_meta(string $pagetype): string {
+        if (!in_array($pagetype, self::NOINDEX_PAGETYPES, true)) {
+            return '';
+        }
+        return html_writer::empty_tag('meta', ['name' => 'robots', 'content' => 'noindex, nofollow']) . "\n";
+    }
+
 
     // Phase 9.5 — decomposition started. Each trait is a self-contained
     // group of renderer methods extracted from this previously 2,339-line
@@ -218,6 +241,10 @@ class core_renderer extends \core_renderer {
                     . "\n";
             }
         }
+
+        // 2026-11-19 (Nitin): the certificate verification page is not indexed and its links are not followed.
+        // Theme only, no vendor change; see robots_noindex_meta().
+        $output .= self::robots_noindex_meta($this->page->pagetype);
 
         return $output;
     }

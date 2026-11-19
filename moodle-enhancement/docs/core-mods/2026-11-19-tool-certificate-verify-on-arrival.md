@@ -112,7 +112,8 @@ Unchanged on purpose:
   field value is escaped by the form element template. The result is rendered by the same renderables and templates
   as a submitted check. Pre-existing and not changed here: upstream's result partial prints `{{{table}}}`, built by
   `html_writer::table()` from the issue's stored full name and the template name without `s()`. Those values come
-  from the user record at issue time and from admins; see "Risks".
+  from the user record at issue time and from admins; see "Risks". Fixed the same day by a separate vendor hunk:
+  `2026-11-19-tool-certificate-verify-result-escaping.md`.
 - **Enumeration.** No easier than before: the POST path never had a rate limit, and anyone can get a sesskey from the
   page. Codes are 10 random digits plus the holder's initials.
 
@@ -138,7 +139,9 @@ would also add a hunk to `version.php`, which every vendor release changes, and 
 
 ## Tests (written, not run)
 
-- `admin/tool/certificate/tests/sentientia_verify_on_arrival_test.php` (PHPUnit, `--group tool_certificate`):
+- `admin/tool/certificate/tests/sentientia_verify_on_arrival_test.php` (PHPUnit, `--group tool_certificate`; the
+  group is a `#[Group]` attribute since 2026-11-19, because PHPUnit 11 ignored the class's `@group` doc comment beside
+  its attributes, see the escaping record):
   1. `test_verification_link_form_has_one_code_field`: the form built with the link URL renders two `code` inputs
      (the defect); built with the bare URL and `set_data()`, one, holding the code; and it is not "submitted".
   2. `test_verify_on_arrival_is_read_only`: as a visitor who is not logged in, `permission::can_verify()` is true, a
@@ -174,7 +177,7 @@ PHPUnit site is initialised; then the existing `--group tool_certificate` suite.
 - Upstream contribution: the change is generic, so it is a candidate pull request to the plugin's upstream project.
   Not filed.
 
-## The four tool_certificate vendor patches
+## The five tool_certificate vendor patches
 
 | Record | File | Status |
 |---|---|---|
@@ -182,6 +185,7 @@ PHPUnit site is initialised; then the existing `--group tool_certificate` suite.
 | `2026-09-03-tool-certificate-5.2-reset-caches.md` | `classes/customfield/issue_handler.php`: `reset_caches(): void` | Required on 5.2 and 5.3 |
 | `2026-10-08-tool-certificate-duration-defaultunit.md` | `classes/certificate.php`: `defaultunit` | Required on 5.3 |
 | this record | `index.php`: verify on arrival, bare form action | Version independent (bug fix) |
+| `2026-11-19-tool-certificate-verify-result-escaping.md` | `classes/output/verify_certificate_result.php`: escape the holder and certificate names | Version independent (bug fix) |
 
 ## Risks
 
@@ -189,12 +193,17 @@ PHPUnit site is initialised; then the existing `--group tool_certificate` suite.
    result page, including the holder's full name. The holder shares the link on purpose (LinkedIn) or prints it on
    the certificate, and anyone holding the code could always see the same result. But a search engine that crawls a
    public LinkedIn post may index the page. Open question for Nitin (raised in the step's return): add
-   `noindex` for this page only, from the theme.
+   `noindex` for this page only, from the theme. **Resolved 2026-11-19:** Nitin approved it (15:05); the theme's
+   `core_renderer::standard_head_html()` adds `<meta name="robots" content="noindex, nofollow" />` for the page type
+   `admin-tool-certificate-index` only (`robots_noindex_meta()`, theme 2026111901 / 1.0.72-beta, test
+   `theme/sentientia/tests/certificate_verify_noindex_test.php`). No vendor change. Link previews still show the
+   result: noindex keeps the page out of search results, it does not stop a fetch.
 2. **Log noise.** Each fetch of a valid code by a person or a bot adds one `certificate_verified` log row. The
    plugins checked above do not count these rows.
 3. **Unescaped table cells (pre-existing).** Upstream's result table prints the stored full name and the template
    name without `s()`. The patch does not change that, but the table now renders on a plain GET. Open question for
-   Nitin: escape the two cells in a further vendor hunk, or in the theme.
+   Nitin: escape the two cells in a further vendor hunk, or in the theme. **Resolved 2026-11-19:** Nitin chose the
+   vendor hunk (15:05); see `2026-11-19-tool-certificate-verify-result-escaping.md`.
 4. **Mechanism of the false "Required"** is read from the QuickForm source. No automated test shows it in a browser:
    the Behat `@javascript` scenario covers the submit path, which the duplicate input never blocked. Step 5 of "How
    to verify" checks it by hand (edit the code and leave the field: no "Required" appears).

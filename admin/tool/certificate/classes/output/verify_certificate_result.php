@@ -32,6 +32,11 @@ use renderable;
 use templatable;
 use tool_certificate\template;
 
+// SENTIENTIA-CORE-MOD: MOODLE_INTERNAL guard required by the project pre-commit hook (CHECK 2) for every patched PHP file;
+// harmless in a namespaced class file. See moodle-enhancement/docs/core-mods/2026-11-19-tool-certificate-verify-result-escaping.md
+defined('MOODLE_INTERNAL') || die();
+// END SENTIENTIA-CORE-MOD
+
 /**
  * Class to prepare a verification result for display.
  *
@@ -89,8 +94,13 @@ class verify_certificate_result implements templatable, renderable {
     public function __construct($issue) {
         $this->viewurl = template::view_url($issue->code);
         $this->userprofileurl = new \moodle_url('/user/view.php', ['id' => $issue->userid]);
-        $this->userfullname = @json_decode($issue->data, true)['userfullname'];
-        $this->certificatename = $issue->certificatename;
+        // SENTIENTIA-CORE-MOD: escape the holder's name and the certificate name, which export_for_template() puts in
+        // html_table_cell()s that html_writer::table() prints as HTML. The template's context drives format_string().
+        // See moodle-enhancement/docs/core-mods/2026-11-19-tool-certificate-verify-result-escaping.md
+        $this->userfullname = s(@json_decode($issue->data, true)['userfullname']);
+        $this->certificatename = format_string($issue->certificatename, true,
+            ['context' => \context::instance_by_id($issue->contextid, IGNORE_MISSING) ?: \context_system::instance()]);
+        // END SENTIENTIA-CORE-MOD
         $strftimedatetime = get_string("strftimedatetime", "langconfig");
         $this->timecreated = userdate($issue->timecreated, $strftimedatetime);
         $this->expires = $issue->expires > 0

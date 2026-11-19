@@ -562,7 +562,184 @@ TypeScript):
 
 ---
 
-## 5. Proposed session schedule
+## 5. Proposed session schedule (revised 19 Nov, after your answers in 6a)
+
+Same rules as before: one session = one deliverable, with tests, both plugin trees in sync, en + hi strings,
+a state card, screenshots for UI work and a PROJECT-STATE update. Everything is built and verified locally.
+UAT deploys are bundled and happen on your call. Rows marked **changed** or **new** differ from the original
+schedule, which is kept below as 5.0. All day counts are estimates.
+
+**What changed and why**
+- **D5 / D6:** course settings split into 3a (types, catalogue categories and levels admin) and 3b (every
+  BizLMS course field with data, tags, enrolment policy and price).
+- **D2:** location joins the audience model (session 6).
+- **D18:** learning-path revisions reopen completed learners when a required course is added (20-22).
+- **D20 / D21 / D22:** ROI v2 is a full build (26a-26c) plus the manager department view (26d).
+- **D23 / D24:** survey reach sessions 11b, 28, 29a, 29b and 30 (`2026-11-19-SURVEYS-SCOPE.md`).
+- **D32:** the certificate core-mod moves into session 0.
+- **D28 / D29 / D30 / D31 (mobile):** offline SCORM in v1 with a 3-day spike first; no commerce in the app
+  (redirecting to Airpay's gateway is not store-compliant in India); store approval before cutover, release on
+  cutover day; we build it (`2026-11-19-MOBILE-APP-BENCHMARK-AND-ARCHITECTURE.md`,
+  `2026-11-19-APP-STORE-PAPERWORK-PACK.md`).
+
+**Three findings from the re-scope that change priorities** (counts from the 6 April 2026 production backup,
+aggregate only):
+1. **Course completion certificates may not be issued on Sentientia.** BizLMS issues the course's template
+   certificate on every completion (`admin/tool/certificate/classes/observer.php:61-67` in the BizLMS backup).
+   Sentientia's copy of `tool_certificate` registers only the `course_content_deleted` observer, and none of the
+   9 `course_completed` observers in `moodle-enhancement/local` issues one. 388 of 411 courses have a template.
+   This would be a regression at cutover. Verify locally first (Q9, session 1b).
+2. **Location data is not where the code looks.** `open_location` and `city` are empty for all 1,407 active
+   users. The work city is in `open_region` (83% of Airpay employees, about 237 distinct values, 110 say just
+   "India"). The learning-path audience filter matches location on `open_location`, so it matches nobody today.
+3. **Grade is empty in production** (0 of 735 Airpay users), so the "grade" audience dimension matches nobody
+   until HR sends it.
+
+### 5.1 Track 1: LMS (revised)
+
+| # | Session | Delivers | Days | Needs first |
+|---|---|---|---|---|
+| 0 | Land today's quick wins (**changed**) | Local deploy + upgrade, PHPUnit, screenshots, commit; **plus the D32 `tool_certificate` verify-on-arrival core-mod** (ADR-041); UAT on your go | 1.5 | XAMPP free (another workflow is deploying) |
+| 1 | Defect sweep | A1 compliance guard, G1 email security, 2.4 quick wins, B0 guide, external-trainer runbook | 1.5 | D4 (answered) |
+| 1b | Course certificate issuer (**new**) | Confirm the gap; issue the course's template certificate on completion (idempotent, no back-issue) | 1-1.5 | Q9 |
+| 2 | Surveys quick wins | F0, including survey defects E2 and E4 (and an interim E1 guard if SV24 = yes) | 0.5 (+0.25) | none |
+| 3a | Course lookups admin (**new**, D6) | Course types, catalogue categories and levels on one shared admin component; seeded product defaults | 3-3.5 | Q10-Q13 |
+| 3b | Course settings v2 (**changed**, D5) | A2 with every BizLMS field that has data, tags, core course custom fields, **A6 enrolment policy + price** | 4-5 | 3a, Q4-Q8 |
+| 4 | Proctoring foundation | B1 | 3-4 | ADR-038, D8 |
+| 5 | External trainer accounts | C6 | 2.5 | ADR-036, D14, D15 |
+| 6 | Course audience model (**changed**, D2) | A3 + one location helper, per-tenant alias table and alias admin page | 4-4.5 | ADR-037 (amended), Q1-Q3 |
+| 7 | Secure assessment mode | B2 | 3-5 | 4, D11 |
+| 8 | Learning-path completion engine | D1, storing frozen completed revisions for D18 | 2-2.5 | none |
+| 9 | Safe Exam Browser preset | B3 | 2-3 | 4 |
+| 10 | Training Program stages + companion course | C1 (+ Certification Programs relabel, D13) | 3 | ADR-036, D12, D13 |
+| 11 | Feedback binding + distribution (**changed**) | C2 + F1, **plus survey defect E1 (response context checked on the server) and E3 (notices to owner and tenant L&D)** | 3.5-5 | ADR-036, D23, D25 |
+| 11b | External form links (**new**, D23) | Launch with token, privacy notice, self-attest, optional signed callback, setup guide, reports | 3-3.5 | 11, ADR-043, SV1-SV4 |
+| 12 | Standing course assignment + compliance source | A4 | 2 | 6, D3 |
+| 13 | Course page admin (**changed**) | A5 only (A6 moved to 3b) | 1.5 | D7 |
+| 14 | Training learner journey + nomination | C3 | 3 | 10 |
+| 15 | Webcam record and review | B4 | 5-8 | 4, D9, D10, budget |
+| 16 | Training completion + reminders | C4 | 2 | 14 |
+| 17 | Hiring candidate flow | B5 | 3-4 | 9, D9 |
+| 18 | Training and trainer reports (**changed**) | C5 + pre/post uplift and ratings fed to ROI as evidence | 2-2.5 | 16, 11 |
+| 19 | Training blueprints | C7 | 2 | 16 |
+| 20-22 | Learning-path revisions (**changed**, D18) | D2-D5 with always-reopen rules, "Reopened" status, reopen notice (en + hi) | 9-10.5 | 8, ADR-039 (amended), Q14-Q19 |
+| 23 | Programs hardening + My programs | E1 + E2 | 2.5 | D16 |
+| 24 | Survey question types v2 (+ AN1 Skill Gap v2) | F2 + per-question settings (+ AN1) | 2-3 (+2-3) | 11 (AN2 data) |
+| 25 | Survey sections and branching | F3 | 2-3 | 24 |
+| 26 | Survey results v2 (**changed**) | F4 (AN3 moved to 26a-26c) | 2 | 11 |
+| 26a | ROI v2, part 1 (**new**, D20 / D21) | Cost, benefit and assumption tables; cost entry (annual baseline, per-training costs, impact entries, assumptions, CSV import); privacy | 3-3.5 | ADR-042, Q20-Q27, Finance figures |
+| 26b | ROI v2, part 2 (**new**) | v2 engine (proration, no double counting, compliance list, participant time), rollups per training, department and tenant, monthly snapshots | 3-3.5 | 26a |
+| 26c | ROI v2, part 3 (**new**) | "How this is calculated" panels, drill-downs, Excel and printable ROI statement, en + hi | 2-3 | 26b |
+| 26d | Manager department view (**new**, D22 / AN5) | Reuses the compliance team scope | 2 | 26b |
+| 27 | Email: Hindi drafts, delivered subjects, editor | G2-G4 | 3.5 | Hindi reviewer |
+| 28 | File-upload question, logged-in users (**new**, D24) | Question type, file serving, permissions, antivirus, retention, privacy | 2-2.5 | 24, SV10-SV13, IT: ClamAV |
+| 29a | Public no-login links, anonymous (**new**, D24) | Link admin + QR, public page, reCAPTCHA, honeypot, rate limiter, cap, moderation, audit | 3 | 25, 11, ADR-043, SV5, SV7, SV8, SV22, reCAPTCHA keys |
+| 29b | Public links, identified (**new**, D24) | Consent + DPDP notice, erase by e-mail, retention purge (public uploads only if SV10 = b) | 2-2.5 | 29a, 28, SV6, SV9, SV21 |
+| 30 | Form look and limits (**new**) | Header image + accent colour, response cap, shuffle and numbering toggles | 1-1.5 | 25, SV15, SV16 |
+| later | Teams/Zoom API (C8), Program typed items (E3) | | | IT, ADR-036 |
+
+Track 1 is about **100 to 120 developer days** (was 75 to 90): about 5 to 6 months with one session stream,
+about 3.5 months with two. These groups can run side by side: assessments (4, 7, 9, 15, 17); training (10, 11,
+14, 16, 18, 19); ROI (26a-26d; 26a needs no code first, only Finance's figures); surveys (11b, 24-30).
+
+### 5.2 Track 2: Mobile (revised; we build it, Airpay teams support)
+
+| # | Session | Delivers | Days | Needs first |
+|---|---|---|---|---|
+| M0a | Store paperwork pack (D27) | **Drafted 19 Nov** (`2026-11-19-APP-STORE-PAPERWORK-PACK.md`); support the CTO review, then Airpay starts enrolments | 0.5 | none |
+| M0b | Store payment rules + D30 options | **Done 19 Nov** (paperwork pack section 2; benchmark section 5) | 0 | none |
+| M0c | Competitor research + architecture (D28) | **Done 19 Nov** (`2026-11-19-MOBILE-APP-BENCHMARK-AND-ARCHITECTURE.md`) | 0 | none |
+| M0d | Team and tooling setup (D31) | Accounts in place, CI skeleton, test devices, VPN or allow-listed UAT host, signing custody | 1-2 (+ IT lead time) | D31-a to D31-f, CTO review of M0a |
+| M0e | Offline SCORM spike (**new**) | Go/no-go: the largest (387.7 MB) and a typical (about 27 MB) SCORM 1.2 package offline on a 2 GB Android 9 phone in a Capacitor 8 test shell; cold start, memory, playback, sync | 3 | D28-c, the package files (local file store is empty), a test phone |
+| M1 | ADR-040 + API contract + flag registry (**changed**) | Plus spike result, offline engine design, Apache-2.0 / MIT attribution, no-commerce rule, approve-and-hold release, app host, Moodle-app fork as Plan B | 1-2 | M0e, D28, D29, D30 |
+| M2 | Dashboard logic out of the theme; site config, home, my-learning services | as before | 5-6 | M1 |
+| M3 | Catalogue, certificates, evaluations, token revoke, capability review | as before | 4-5 | M2 |
+| M4 | Push output (FCM HTTP v1), device registry, preferences | as before | 4-5 | M1, Firebase (D27) |
+| M5 | Theme app mode, logged-in content view (**changed**) | Plus prices, cart and buy buttons hidden in app mode; cart and checkout routes blocked | 2-3 | M1 |
+| M6 | Capacitor 8 rebuild (**changed**) | Replaces the Capacitor 5 scaffold (target API 36, bundled screens); login (password + Azure AD SSO), secure storage, navigation | 5-6 | M0d, M1 |
+| M7 | Home, my learning, course outline, online SCORM player, proctored-quiz guard | Low-end phone performance budget | 6-8 | M6, M2 |
+| M8 | Catalogue (free + assigned only), certificates, inbox + push + deep links, profile (en / hi / sw) | as before, scope adjusted | 5-6 | M7, M3, M4 |
+| M8b | Offline v1 (**new**, D28-e) | Download manager (resume, Wi-Fi-only default, size and free-space checks), app-private storage with wipe, SCORM 1.2 offline runtime, sync queue, "completed offline" time on the server (D28-d), storage manager | 12-18 | M7, spike go |
+| M8c | Store compliance (**changed**: was "purchase redirect") | No commerce in the app; commerce messages filtered from inbox and push; iOS hides consumer courses bought on the web; in-app account deletion for self-registered accounts | 2-3 | M8, D29-a to D29-e |
+| M9 | CI/CD with Fastlane, signing, TestFlight / Play internal and closed testing on UAT (test accounts only) | as before | 3-4 | M8, D27-g |
+| M10 | Store readiness + submission (**changed**) | Privacy manifest, Data safety, labels, screenshots, review tenant + reviewer accounts, security test, device QA; submit 2-3 weeks before cutover and hold | 5-7 | M9, D31-c, D30-a, app host |
+| (M-BZ) | Live BizLMS adaptor | Only if D30-a = C (not recommended): throwaway code against 4.1.2 | 10-15 | D30-a |
+
+Track 2 is about **59 to 79 developer days from today** (was 45 to 55): about 9 to 12 weeks elapsed with two
+session streams (app side, and Moodle side M2-M5), plus 1 to 2 weeks store review.
+
+### 5.3 ADRs needed (revised)
+
+| ADR | Decision it records | Before session |
+|---|---|---|
+| ADR-036 Training Programs | as in 5.0 | 5, 10 |
+| ADR-037 Course audience (**amended**) | + location source (`open_location`, else normalised `open_region`, else country), alias table, dimensions shown only when the tenant has data | 6 |
+| ADR-038 Assessment integrity levels | as in 5.0 | 4 |
+| ADR-039 Learning-path revisions (**amended**) | + always-reopen rules; imported BizLMS completions become frozen records (amends ADR-032 for status only) | 20 |
+| ADR-040 Native mobile app (**amended**) | Capacitor 8 + bundled Ionic React screens; offline engine; Apache-2.0 / MIT porting; Moodle-app fork as Plan B; no commerce in the app (D29); approve-and-hold release with an app host (D30); we-build team model (D31); one developer account per future customer | M1 |
+| ADR-041 Patching vendored plugins | exists; used by D32 | 0 |
+| ADR-042 ROI model v2 (**new**) | Cost ledger, formulas, rollups, explainability, financial year | 26a |
+| ADR-043 Survey reach (**new**) | External form links, public no-login links, non-user personal data, files and retention | 11b |
+
+### 5.4 What can start this week (20 to 22 Nov)
+
+**No local deploy needed:**
+1. CTO review of the paperwork pack; Airpay Legal / Finance looks up the D-U-N-S number (same day if one exists).
+2. IT asks: app host DNS and TLS (D30-b), Mac or macOS CI (D31-a), test phones (D31-d), VPN or allow-listed UAT
+   host for phones (D31-e), Azure AD registration for the app, ClamAV on UAT and the new server (SV12),
+   reCAPTCHA keys check (SV7).
+3. ADR drafts: 037 (amended), 039 (amended), 040, 042, 043.
+4. Location values export for L&D / HR: distinct `open_region` values with counts only (Q2).
+5. Finance request: annual L&D baseline by category, FY 2025-26 and FY 2026-27, per tenant (Q20, Q21).
+6. L&D: AN2 skill mapping for the top 10 designations.
+7. Mobile spike M0e, as soon as a 2 GB Android phone and the two SCORM package files are available.
+
+**Needs XAMPP, once the other workflow finishes:** session 0 (quick wins + D32), session 1 (defect sweep), the
+session 1b check (complete a course that has a template and see whether a certificate is issued, Q9), session 2
+(survey quick wins), then session 3a once Q10-Q13 are answered.
+
+UAT stays untouched until you say go.
+
+### 5.5 Questions the revised LMS schedule needs (choose and approve)
+
+Mobile, store and survey decisions are in their own documents: **D28-a to D28-k, D30-a to D30-d, D31-a to
+D31-f** (benchmark), **D27-a to D27-h, D29-a to D29-e** (paperwork pack), **SV1 to SV24** (surveys). Earlier draft
+questions on D28 research timing, the purchase redirect, survey scoping and store release timing are answered
+there.
+
+| ID | Question | Recommended | Alternative | Before |
+|---|---|---|---|---|
+| Q1 | Which field is "location"? | `open_location`, else normalised `open_region`, else core `country` (one helper) | `open_region` only; or wait for the Keka sync to fill `open_location` | 6 |
+| Q2 | Who cleans the ~230 rare values and "India"? | L&D / HR map them once in an alias page (values and counts exported this week); HR fixes the source file | Leave raw values as typed | 6 |
+| Q3 | Grade is empty. Keep it in the picker? | Keep, shown only when the tenant has data; HR to send grade | Remove grade until data exists | 6 |
+| Q4 | Keep BizLMS catalogue categories next to Moodle categories? | Yes, with a picker and an admin page (session 3a) | Moodle categories only | 3a |
+| Q5 | Fields with no data (points, cost, secure course, old audience fields) | Drop from the UI, keep the columns; cost goes to the ROI ledger, audience to A3 | Show them all, as BizLMS did | 3b |
+| Q6 | Customer-defined extra course fields | Render core course custom fields in the pop-up (+0.5 d) | Fixed field set | 3b |
+| Q7 | Duration, prerequisites, enrolment window | Seeded custom field / core completion rules / enrolment dates | New Sentientia columns | 3b |
+| Q8 | Tags / keywords | Core course tags; tenant-scoped catalogue filter; core tag index hidden from learners | Our own tag table | 3b |
+| Q9 | Course certificates on completion | Verify locally; if missing, add an issuer in a Sentientia plugin with **no flag** (restores today's live BizLMS behaviour); no back-issue | Behind a default-OFF flag | 1b |
+| Q10 | Who manages course types | Tenant L&D admins for their tenant; global types by platform admins | Platform admins only | 3a |
+| Q11 | Deleting a type in use | Not allowed: disable, or merge into another (logged) | Delete and clear it from courses | 3a |
+| Q12 | Defaults for a new customer | Seed 5 product types; Airpay keeps its imported 7 | Empty list | 3a |
+| Q13 | Catalogue-category and level admin pages in the same session | Yes (3a, 3 to 3.5 d) | Types only now (1.5 to 2 d) | 3a |
+| Q14 | Learner already completed the added course | Stays completed; the course counts as met | Reopen anyway | 20 |
+| Q15 | Due date after reopening | Reopen date + 30 days (per-path setting) | Path's original rule; no due date | 20 |
+| Q16 | Reopen imported BizLMS completions too | Yes, keeping the BizLMS completion as the frozen record | Native learners only | 20 |
+| Q17 | Path certificate on re-completion | New certificate, new code; the old one stays valid | Re-issue the same code | 20 |
+| Q18 | Tell managers | "Reopened" in the team view; no manager e-mail in v1 | Manager e-mail digest | 20 |
+| Q19 | Undo | "Revert revision" for 7 days while no reopened learner has progressed | No undo | 20 |
+| Q20 | Financial year | April to March, configurable per customer | Calendar year | 26a |
+| Q21 | Baseline cost categories | L&D staff, platform, content licences, vendor retainers, other | Your own list | 26a |
+| Q22 | Count participant time as a cost | Yes, as its own line, with an "L&D spend only" switch | Exclude | 26b |
+| Q23 | Share annual overhead into per-training ROI | Yes, by learner-hours share, shown separately | Direct costs only | 26b |
+| Q24 | Benefit sources | Productivity (assumed, per-course override), compliance (list x penalty x likelihood), measured impact entries; uplift and ratings as evidence only | Also turn uplift into money | 26b |
+| Q25 | Who enters costs | Tenant L&D admins; platform admins see all | Platform admins only | 26a |
+| Q26 | BizLMS classroom costs at Stage B | Import as cost lines if Stage B finds rows (April had none) | Leave in the legacy table | Stage B |
+| Q27 | Who sees ROI | L&D admins and leadership; manager department view shows value and cost only where the tenant enables it (default off) | Managers always | 26c |
+
+### 5.0 Original schedule (superseded 19 Nov)
+
+> Kept for reference. Do not plan from it: sections 5.1 to 5.5 above replace it.
 
 One session = one deliverable, with tests, both plugin trees in sync, en + hi strings, a state card,
 screenshots for UI work and a PROJECT-STATE update. Everything is built and verified locally. UAT deploys
@@ -672,10 +849,10 @@ Each has a recommended answer. "Before" is the session that needs it.
 
 ---
 
-## 6a. Decisions recorded (Nitin, 19 Nov 2026, ~12:15 IST)
+## 6a. Decisions recorded (Nitin, 19 Nov 2026, ~12:15 IST; D28, D29, D32 updated 15:05)
 
 Nitin answered every decision in section 6 in chat. Where his answer differs from the recommendation it is marked **changed**; those
-items need re-scoping before their session (see section 6b).
+items need re-scoping before their session (see section 6b). His 15:05 answers to the follow-up questions are marked **15:05**.
 
 | # | Nitin's answer | vs recommendation |
 |---|---|---|
@@ -706,11 +883,11 @@ items need re-scoping before their session (see section 6b).
 | D25 | Trainers see aggregates for own sessions, minimum 5 responses | as recommended |
 | D26 | Hindi bodies for all 20 emails, L&D reviews wording | as recommended |
 | D27 | Start the store paperwork; **Nitin gets it reviewed by Airpay senior developers / CTO** first | changed: review step |
-| D28 | **Not decided yet**: compare with top learning apps (LinkedIn Learning, Disprz, Coursera, Udemy) on UX, ease of learning, offline access in poor networks, and running on basic smartphones, then recommend | open: research |
-| D29 | Purchases go through **Airpay's own payment gateway (redirect out, like consumer apps)**, not in-app purchase; offline access is a must (Nitin, D28) | changed: verify Apple/Google India rules |
+| D28 | **15:05: Nitin: native-class stack, KMP or else Flutter; Capacitor not chosen.** (12:15: not decided; compare with LinkedIn Learning, Disprz, Coursera, Udemy first.) **Updated recommendation (benchmark doc section 4A): Flutter, not KMP.** `webview_flutter` (Google-maintained) plays SCORM with scorm-again (MIT) inside the WebView. Flutter is conditional on a 3-day go/no-go spike on a 2 GB Android 9 phone, which replaces the Capacitor spike M0e. No-go: Capacitor shell, then a Moodle-app fork. Both stacks meet every must; Flutter meets more with ready packages (background downloads, video, push), costs less glue code and has a larger hiring pool in India. Effort about 74-110 days (KMP about 83-126; Capacitor was 59-79). KMP wins only if Airpay's in-house mobile team builds in Kotlin and will co-own the Android app: ask the CTO office before ADR-040 | changed: Capacitor superseded; Flutter recommended, awaiting Nitin's confirmation. Section 5.2 rows M0e, M1, M6 and the ADR-040 row in 5.3 still name Capacitor; update them once confirmed |
+| D29 | **15:05: Nitin: consumer purchases in the app via an in-app browser to Airpay PG.** (12:15: redirect out to Airpay's gateway, not in-app purchase; offline access is a must.) | changed. Store risk: iOS India treats this like a link-out (rejection risk); Android allows it only under user choice billing with Play Billing alongside. Mitigations and CTO questions: `2026-11-19-APP-STORE-PAPERWORK-PACK.md` section 2A |
 | D30 | **Store release before cutover** | changed |
 | D31 | **We build it**, with technical support from Airpay internal teams | changed |
-| D32 | Patch tool_certificate as a recorded core-mod | as recommended |
+| D32 | Patch tool_certificate as a recorded core-mod. **15:05: extras approved:** `noindex` on the verification page (from the theme), escaping of the holder and certificate names (second core-mod record), ADR-041 accepted | as recommended; extras approved |
 
 D33 is not a decision: Nitin to check certificate code 6342739542AU on live BizLMS.
 
@@ -719,13 +896,13 @@ D33 is not a decision: Nitin to check certificate code 6342739542AU on live BizL
 - **D5/D6:** course settings session (3) grows: every BizLMS course field + tags + a Course types admin page. Re-estimate.
 - **D18:** learning-path revisions must reopen completed learners when a required course is added (notify them; certificates are still never revoked).
 - **D20/D21:** ROI model v2 is a full build with two cost sources (annual baseline + per-training costs); needs a cost-entry UI and per-training rollup.
-- **D23/D24:** surveys scope must cover external form links (Microsoft Forms etc.: link, embed, completion tracking options), public no-login links (token, rate limit, spam, privacy notice) and file uploads (storage, virus scanning, retention) before any build.
-- **D27:** prepare the store paperwork pack for CTO review (accounts, D-U-N-S, legal entity, privacy policy, data safety, support URL).
-- **D28:** research comparison with LinkedIn Learning, Disprz, Coursera, Udemy apps; architecture recommendation follows.
-- **D29:** check Apple App Store and Google Play rules for steering users to an external payment gateway for digital courses in India (in-app purchase requirements, user-choice billing, reader-app rules); the plan must be store-compliant.
-- **D30:** store release before cutover means the app must work against the live BizLMS site (Moodle 4.1.2) or ship pointed at Sentientia only; scope the dependency.
+- **D23/D24:** surveys scope must cover external form links (Microsoft Forms etc.: link, embed, completion tracking options), public no-login links (token, rate limit, spam, privacy notice) and file uploads (storage, virus scanning, retention) before any build. **Done 19 Nov:** `2026-11-19-SURVEYS-SCOPE.md` (questions SV1 to SV24).
+- **D27:** prepare the store paperwork pack for CTO review (accounts, D-U-N-S, legal entity, privacy policy, data safety, support URL). **Drafted 19 Nov:** `2026-11-19-APP-STORE-PAPERWORK-PACK.md` (questions D27-a to D27-h).
+- **D28:** research comparison with LinkedIn Learning, Disprz, Coursera, Udemy apps; architecture recommendation follows. **Done 19 Nov:** recommendation in `2026-11-19-MOBILE-APP-BENCHMARK-AND-ARCHITECTURE.md`. **15:05:** Nitin chose a native-class stack (KMP or else Flutter); KMP vs Flutter evaluation and the Flutter recommendation in section 4A of that doc; awaiting his confirmation of Flutter.
+- **D29:** check Apple App Store and Google Play rules for steering users to an external payment gateway for digital courses in India (in-app purchase requirements, user-choice billing, reader-app rules); the plan must be store-compliant. **Done 19 Nov:** the redirect is not compliant in India; recommended design and questions D29-a to D29-e in `2026-11-19-APP-STORE-PAPERWORK-PACK.md` section 2. **15:05:** Nitin chose in-app browser checkout to Airpay PG; review risk, mitigations and CTO questions in section 2A of the pack; M8c is re-scoped after the CTO answers.
+- **D30:** store release before cutover means the app must work against the live BizLMS site (Moodle 4.1.2) or ship pointed at Sentientia only; scope the dependency. **Done 19 Nov:** approve before cutover, release on cutover day; questions D30-a to D30-d in `2026-11-19-MOBILE-APP-BENCHMARK-AND-ARCHITECTURE.md` section 5.
 - **D31:** we build the app in these sessions; Airpay teams give technical support (accounts, signing, review).
-- **D32:** implement now with the quick wins (core-mod record + tags).
+- **D32:** implement now with the quick wins (core-mod record + tags). **15:05:** extras approved (theme `noindex`, result escaping, ADR-041 accepted).
 
 ---
 

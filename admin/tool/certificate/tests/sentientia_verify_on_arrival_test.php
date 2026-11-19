@@ -33,12 +33,15 @@ use tool_certificate_generator;
  * action URL gives the form one "code" input; verifying is read-only, also for a visitor who is not logged in;
  * and the patch is still in index.php (a tripwire for the next vendor import).
  *
+ * PHPUnit reads no doc-comment metadata from a class that has attributes, so the group is an attribute too
+ * (a "@group" line here was ignored, and --group tool_certificate skipped this file; fixed 2026-11-19).
+ *
  * @package    tool_certificate
- * @group      tool_certificate
  * @category   test
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+#[\PHPUnit\Framework\Attributes\Group('tool_certificate')]
 #[\PHPUnit\Framework\Attributes\CoversClass(certificate::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(verify_certificate_form::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(permission::class)]

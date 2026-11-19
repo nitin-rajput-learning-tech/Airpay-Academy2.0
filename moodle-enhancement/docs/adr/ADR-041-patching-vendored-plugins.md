@@ -1,12 +1,12 @@
 # ADR-041 — Patching vendored plugins: tagged, recorded, tested hunks in third-party code we ship but do not own
 
-- **Status:** Proposed 2026-11-19. Nitin approved the first patch made under these rules as decision D32 of the post-demo plan (`docs/plans/2026-11-19-POST-DEMO-PLAN.md` §6a: "Patch tool_certificate as a recorded core-mod", as recommended); the plan reserved this ADR number for the rules (§5, ADR list). Accepting the rules themselves is Nitin's call.
+- **Status:** Accepted 2026-11-19 (accepted by Nitin in chat, 15:05). Proposed earlier the same day; Nitin approved the first patch made under these rules as decision D32 of the post-demo plan (`docs/plans/2026-11-19-POST-DEMO-PLAN.md` §6a: "Patch tool_certificate as a recorded core-mod", as recommended); the plan reserved this ADR number for the rules (§5, ADR list).
 - **Date:** 2026-11-19
 - **Decision-makers:** Nitin Rajput (Head of L&D, Airpay Payment Services)
 - **Implementer:** Claude
 - **Amends:** nothing. ADR-033 decision 4 (no edits to existing Moodle core files on 5.3) stands: a vendored plugin is not core. This ADR writes down the practice the four tool_certificate records and the learnerscript record already follow, and adds tests and an import procedure.
 - **Related:** ADR-001 (lifts the "never modify core" rule, creates `docs/core-mods/`), ADR-002 (feature flags), ADR-033 (5.3 target; open question 4 on tool_certificate), `docs/core-mods/README.md` (record format, the CI gate, `Core-Mods-Upstream-Sync`).
-- **Evidence:** `docs/core-mods/2026-10-08-tool-certificate-duration-defaultunit.md` (the precedent) and `docs/core-mods/2026-11-19-tool-certificate-verify-on-arrival.md` (the first patch made under this ADR).
+- **Evidence:** `docs/core-mods/2026-10-08-tool-certificate-duration-defaultunit.md` (the precedent), `docs/core-mods/2026-11-19-tool-certificate-verify-on-arrival.md` (the first patch made under this ADR) and `docs/core-mods/2026-11-19-tool-certificate-verify-result-escaping.md` (the second).
 
 ---
 
@@ -16,7 +16,7 @@ Sentientia ships third-party plugins that it does not maintain: `tool_certificat
 declared `supported = [400, 405]`) and the learnerscript family (`blocks/learnerscript/` and its report plugins).
 They break or misbehave on our Moodle versions and in our flows, and some of the fixes can only be made inside them.
 
-Five vendor patches exist so far, each with a record in `docs/core-mods/`:
+Six vendor patches exist so far, each with a record in `docs/core-mods/` (the last two made under this ADR):
 
 | Record | Plugin | Why it could not live elsewhere |
 |---|---|---|
@@ -25,8 +25,9 @@ Five vendor patches exist so far, each with a record in `docs/core-mods/`:
 | `2026-10-08-tool-certificate-duration-defaultunit.md` | tool_certificate | Option key typo throws on 5.3 |
 | `2026-10-08-learnerscript-modal-factory-port.md` | block_learnerscript | Core removed the modal factory |
 | `2026-11-19-tool-certificate-verify-on-arrival.md` | tool_certificate | The decision is inside a page script |
+| `2026-11-19-tool-certificate-verify-result-escaping.md` | tool_certificate | The table reaches the theme as finished HTML |
 
-They were made consistently but under no written rule. The tags differ (`// SENTIENTIA-CORE-MOD (vendor): ...`,
+The four before this ADR were made consistently but under no written rule. The tags differ (`// SENTIENTIA-CORE-MOD (vendor): ...`,
 `// SENTIENTIA-CORE-MOD (2026-05-23): ...`, `// SENTIENTIA-CORE-MOD: ...`), none has a test, and nothing says what to
 do when a vendor release is imported. The core-mods gate (pre-commit CHECK 6 and `tools/ci/check-core-mods.sh`)
 covers `admin/tool/certificate/` because it sits under the guarded `admin/`; it does not cover `blocks/`.
@@ -124,7 +125,11 @@ through `tools/uat/deploy_to_uat.sh` like any other change; with no version bump
 
 1. Done 2026-11-19: `docs/core-mods/2026-11-19-tool-certificate-verify-on-arrival.md`, its two hunks in
    `admin/tool/certificate/index.php`, its PHPUnit and Behat files, and the README index row.
-2. Next tool_certificate import (ADR-033 open question 4): follow D7 for all four tool_certificate records.
+2. Done 2026-11-19: `docs/core-mods/2026-11-19-tool-certificate-verify-result-escaping.md`, its hunk in
+   `admin/tool/certificate/classes/output/verify_certificate_result.php`, its PHPUnit file
+   (`tests/sentientia_verify_result_escaping_test.php`, with a tripwire) and the README index row. The companion
+   noindex for the verification page went into the theme (D1), not the vendor plugin.
+3. Next tool_certificate import (ADR-033 open question 4): follow D7 for all five tool_certificate records.
 
 ---
 
