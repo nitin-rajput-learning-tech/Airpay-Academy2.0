@@ -1,5 +1,10 @@
 # UAT deploy: walk fixes (Phase A+B and Phase C), for 19 Nov 2026
 
+> **STATUS 2026-11-19 09:12: DEPLOYED to UAT** on Nitin's go (08:56), from `b757187a9`: 168 files, 16 components upgraded,
+> all post-deploy checks green (hashes 168/168, versions, flags unchanged, is-pending 0, smoke, empty error log). Backup TS
+> `20261119-091151`. Statements below that say "not deployed" describe the state when this plan was written.
+
+
 **Status: NOTHING IS DEPLOYED TO UAT.** UAT runs `852549a57` + `bc2227c20` (theme 2026111800). Everything below is
 local only (XAMPP) until Nitin gives the go. Deploy and flag flips on UAT are Nitin's call; no flag change is part
 of this deploy.

@@ -1,5 +1,6 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-11-19 08:30 (**Walk fixes Phase A+B (`56d822061`) and Phase C built and verified locally, NOT on UAT yet; V23 reverted; PHPUnit not run. See the 2026-11-19 entry.**)
+**Updated:** 2026-11-19 09:20 (**Walk fixes A+B+C DEPLOYED TO UAT at 09:06-09:12 on Nitin's go (`b757187a9` code, docs `53b249a16`, `production` fast-forwarded); all checks green; PHPUnit not run. See the 2026-11-19 09:20 entry.**)
+**Before that, 2026-11-19 08:30** (**Walk fixes Phase A+B (`56d822061`) and Phase C built and verified locally, NOT on UAT yet; V23 reverted; PHPUnit not run. See the 2026-11-19 entry.**)
 **Before that, 2026-11-18 12:35** (**Midday: three demo fixes on UAT (`bc2227c20`, theme 2026111800 + certificate redesign); see the 2026-11-18 midday entry.** Earlier, ~01:00: **C-suite demo MOVED UP to Wednesday 18 November, morning; everything developed so far goes to UAT first thing (Nitin, over his VPN, per `docs/cutover/UAT-DEPLOY-RUNBOOK-2026-11-18.md`). Committed tonight: the fresh-install fixes (`cdd4fc310`) and the compliance_report security + exclusions fix (`0706fdadf`, 2026111702). New C-suite deck: what Academy 2.0 adds over today's airpay.academy, no operational detail. See the 2026-11-17/18 entry.**)
 **Before that, 2026-11-16** (**Demo week. Theme 2026111600-02, reminder tasks (courses 2026111600) and Option A privacy committed; CI green. See the 2026-11-16 entry.**)
 **Before that, 2026-11-13** (**Nitin's 11-12 decisions carried out; see the 2026-11-12 / 11-13 entry.**
@@ -9,6 +10,29 @@
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
 
 ---
+
+## 2026-11-19 09:20 - Walk fixes A+B+C deployed to UAT (Opus 5.5)
+
+- **Go:** Nitin, in chat at 08:56. Deployed with `tools/uat/deploy_to_uat.sh --yes --prefer-me`.
+  - Source: a `git archive` export of `b757187a9`. Range `bfa2ab9d9..b757187a9`: 168 files, 21 components.
+  - Start: 09:06 (after the hh:00-06 cron window).
+  - Box backup: `/tmp/uat-predeploy-backup-20261119-091151.tgz`.
+  - Upgrade log: `/tmp/uat-upgrade-20261119-091151.log`.
+- **Pre-flight (read-only):**
+  - UAT was at `bfa2ab9d9` code. Four harmless differences: two test files, an evaluation `version.php` comment, and the org hook file this push adds.
+  - `is-pending` 0. 0 stale compliance snapshot rows of 29.
+  - Roles holding `site:viewreports`: manager, editingteacher, teacher, administrator, trainer, complianceofficer.
+  - Roles holding the compliance `:export`: manager, administrator, complianceofficer. After B6 only these see the tenant matrix.
+  - No role holds `block/learnerscript:viewreports`.
+- **After the deploy (runbook steps 4-5, green):**
+  - 168/168 files equal the git blobs.
+  - 16 components show `++ Success`, at their new versions (theme 2026111802; analytics, catalog, compliance_report, manager, pages, users 2026111801; the others 2026111800).
+  - 134 flags unchanged. `is-pending` 0. Login 200, the other pages 303. Apache error log empty.
+  - The org repaint step had nothing to repaint (0 violet rows).
+- **Still to do:** Nitin's browser smoke (VPN off).
+  - Demo-script change: Joseph opens Compliance from his sidebar link. Arjun no longer has Compliance or My Team.
+- **Not done:** PHPUnit (local test DB re-init needs about 3 h).
+- **Rollback:** runbook section 4 (`docs/cutover/UAT-DEPLOY-RUNBOOK-2026-11-18.md`) with `TS=20261119-091151`. Keep the new `version.php` files.
 
 ## 2026-11-19 ~08:30 - Walk fixes Phase A+B and Phase C built and verified locally; NOT on UAT yet (Opus 5.5)
 
