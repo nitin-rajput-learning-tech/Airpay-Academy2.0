@@ -1,10 +1,16 @@
 ﻿# State Card â€” `local_airpay_compliance_report`
 
 **Component:** `local_airpay_compliance_report`
-**Version:** `2026111702` / `1.0.8`
+**Version:** `2026111801` / `1.0.10`
 **Maturity:** `MATURITY_STABLE`
 **Status:** Not live: Sentientia LMS is not in production yet (live airpay.academy is still BizLMS). Compliance training audit + escalation.
 **Last refreshed:** 2026-11-17 (export grant keyed on the org-admin shortname, not role id 9; see the last section)
+
+---
+
+## 2026-11-19 — walk fixes (2026111801 / 1.0.10; local only, not on UAT; PHPUnit not run)
+
+Phase C: KPI-CACHE purge on snapshot/config; V11-EXPORT department = org unit; B6 option 1 viewer_scope (viewreports no longer grants the tenant matrix); PB-2 filter bar stacks at 390. Evidence: `docs/visual-evidence/2026-11-19/phase-c/README.md`.
 
 ---
 

@@ -8,6 +8,12 @@
 
 ---
 
+## 2026-11-19 — walk fixes (2026111800 / 1.0.2-beta; local only, not on UAT; PHPUnit not run)
+
+Phase C B6 option 1 (D1): audit no longer treats moodle/site:viewreports as a tenant-wide viewer. Evidence: `docs/visual-evidence/2026-11-19/phase-c/README.md`.
+
+---
+
 ## What it does
 
 A dashboard block. Learners see the RAG status of their own mandatory courses (courses with an

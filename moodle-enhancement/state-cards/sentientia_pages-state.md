@@ -3,8 +3,14 @@
 **Component:** `local_airpay_pages`
 **Status:** Live on airpay.academy — collection of standalone PHP pages
 **Maturity:** Mixed (per-page, no global version.php)
-**Version:** 2026052900 / 1.1
+**Version:** `2026111801` / `1.2.2`
 **Last refreshed:** 2026-05-29 (dark-mode — `templates/certificate_celebration.mustache` "paper" card name/meta text re-pinned dark so the theme's global dark-mode token flip doesn't invert it to light-on-white)
+
+---
+
+## 2026-11-19 — walk fixes (2026111801 / 1.2.2; local only, not on UAT; PHPUnit not run)
+
+Phase A+B: certificate gallery. Phase C: certificate templates banner, ID and empty-template badge (V19-CERT-TEMPLATES); onboarding strings (V8-D); LinkedIn organisation from customer branding. Evidence: `docs/visual-evidence/2026-11-19/phase-c/README.md`.
 
 ---
 

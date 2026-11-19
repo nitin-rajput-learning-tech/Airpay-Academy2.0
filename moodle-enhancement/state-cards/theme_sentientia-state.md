@@ -1,7 +1,7 @@
 # State Card — `theme_airpayux`
 
 **Component:** `theme_airpayux`
-**Version:** `2026090804` / `1.0.52-beta`
+**Version:** `2026111802` / `1.0.70-beta`
 **Maturity:** `MATURITY_BETA`
 **Status:** Live theme on airpay.academy. Standalone fork (`$THEME->parents = []`).
 **Last refreshed:** 2026-09-08 (P3 i18n parity — dashboard body strings via get_string, en+hi 281/281 — integrated onto gap-integration; stale AMD bundles rebuilt the same day)
@@ -52,6 +52,12 @@
 > padding kept in a separate 2-id rule so the dark-mode bg override still
 > wins. The real split-screen login is excluded by the `:has()` guard
 > (verified untouched). Evidence: `docs/visual-evidence/2026-05-29/signup-*.png`.
+
+---
+
+## 2026-11-19 — walk fixes (2026111802 / 1.0.70-beta; local only, not on UAT; PHPUnit not run)
+
+Phase A+B walk fixes (2026111801), then Phase C: V3 titles, V4 footer, V20 bell, V21 logo, V16 "Courses you teach" without a flag (D3), LB-MASK (D2), B6 role detection, mobile nav/sidebar strings. Evidence: `docs/visual-evidence/2026-11-19/phase-c/README.md`.
 
 ---
 

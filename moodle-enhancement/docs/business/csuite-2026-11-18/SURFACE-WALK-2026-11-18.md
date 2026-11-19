@@ -707,3 +707,72 @@ tests, visual evidence and a commit; deploying after the 13:15 freeze is Nitin's
 **Still open after those:** B1 (legacy templates: `modulename` element, filedir, template 1), B6 (trainer scope),
 B7 (approvals navigation; the snapshot run is data), B9 (UAT check), B10 (two carts), V4, V5, V6 (buttons, badge
 row, plural), V8 (remaining Hindi strings), V9, V15-V25, and the minor list.
+
+## 5. Status after local verification (Phase A+B, checkpoint `56d822061`)
+
+Local XAMPP only, read-only Playwright, 18 Nov 21:00 - 19 Nov 01:20. Stopped after 4 of 10 personas (about 2 h per
+persona on this box); the other personas' checks were folded into Phase C (section 6, Phase B leftovers row). PHPUnit
+not run. Evidence and per-check notes: [walk-fixes README](../../visual-evidence/2026-11-18/walk-fixes/README.md).
+
+| ID (walk) | Status | Evidence |
+|---|---|---|
+| B3 / CAT: sidebar Catalog by tenant | PASS (learner1, manager1, public77) | [learner1](../../visual-evidence/2026-11-18/walk-fixes/vp_learner1/CAT-catalog-index-1440.png), [public77](../../visual-evidence/2026-11-18/walk-fixes/vp_public77/CAT77-public-sidebar-1440.png) |
+| V14 / ENROL: enrol redirect to the catalogue detail page | PASS | [manager1](../../visual-evidence/2026-11-18/walk-fixes/vp_manager1/ENROL-view456-to-catalog-course-1440.png) |
+| B4 / GAMIF, DASH: chart and tile overflow, gamification stacking | PASS | [compliance1](../../visual-evidence/2026-11-18/walk-fixes/vp_compliance1/DASH-dashboard-cards-390.png), [learner1](../../visual-evidence/2026-11-18/walk-fixes/vp_learner1/GAMIF-dash-gamification-390.png) |
+| B8: "Active (30 days)" | PASS | [hi](../../visual-evidence/2026-11-18/walk-fixes/vp_compliance1/DASH-hindi-active30-1440.png) |
+| V13 / RECS: no cross-tenant recommendation | PASS | [public77](../../visual-evidence/2026-11-18/walk-fixes/vp_public77/RECS-dash-recommended-1440.png) |
+| V2 / MSGS: bell only; Messages link only when messaging is on | PASS | [learner1](../../visual-evidence/2026-11-18/walk-fixes/vp_learner1/MSGS-my-topbar-1440.png) |
+| V3 / BAND: empty band under the topbar | PASS (16 px course gap by design) | [learner1](../../visual-evidence/2026-11-18/walk-fixes/vp_learner1/BAND-mycourses-top-1440.png) |
+| /my/ chrome: one footer, bottom nav, JS once | PASS | [manager1](../../visual-evidence/2026-11-18/walk-fixes/vp_manager1/MYCHROME-my-bell-footer-bottomnav-1440.png) |
+| B5 / V11: compliance pager, department column, scorecard tree, rounding | PASS; title and 390 filter FAIL, fixed in Phase C (V3, PB-2) | [scorecard](../../visual-evidence/2026-11-18/walk-fixes/vp_compliance1/SCORE-tree-default-1440.png), [filter](../../visual-evidence/2026-11-18/walk-fixes/vp_compliance1/REPORT-matrix-select-overflow-390.png) |
+| B7 / MGRCOMP, APPROVALS: manager empty states, approvals hand-off | PASS | [manager1](../../visual-evidence/2026-11-18/walk-fixes/vp_manager1/MGRCOMP-matrix-emptystate-1440.png) |
+| V12 / ANALYTICS: heatmap from the compliance source, range pills | PASS; "&amp;" and Hindi label FAIL, fixed in Phase C (PB-3, PB-4) | [rates](../../visual-evidence/2026-11-18/walk-fixes/vp_compliance1/ANALYTICS-dept-rates-1440.png) |
+| V15: "Never" instead of "999d ago" | PASS | [manager1](../../visual-evidence/2026-11-18/walk-fixes/vp_manager1/TEAM-myteam-never-1440.png) |
+| V6: profile role chip, consumer grid | PASS; e-mail overflow fixed in Phase C (PB-1) | [public77](../../visual-evidence/2026-11-18/walk-fixes/vp_public77/PROFILE77-profile-en-1440.png) |
+| V7 / SKILLS: summary hidden without role skills | PASS | [manager1](../../visual-evidence/2026-11-18/walk-fixes/vp_manager1/SKILLS-hi-emptystate-1440.png) |
+| B2 / CERTS: certificate gallery | PASS (empty state; no issued certificate locally) | [learner1](../../visual-evidence/2026-11-18/walk-fixes/vp_learner1/CERTS-certificates-hi-1440.png) |
+| V1 / ICONS: FA shim and FA6 names | PASS | [learner1](../../visual-evidence/2026-11-18/walk-fixes/vp_learner1/ICONS-course448-sidebar-1440.png) |
+| Breadcrumbs ("Preferences /"), leaderboard flag key, contact/DPDP teal | PASS | [crumbs](../../visual-evidence/2026-11-18/walk-fixes/vp_public77/CRUMBS-cart-1440.png), [leaderboard](../../visual-evidence/2026-11-18/walk-fixes/vp_learner1/LEADER-leaderboard-1440.png) |
+
+## 6. Status after Phase C (night of 18-19 Nov)
+
+Local XAMPP only (nothing on UAT yet), 11 personas, read-only. PHPUnit not run (the test DB re-init needs about 3 h).
+Full table, masking rule, decisions and post-demo list: [Phase C README](../../visual-evidence/2026-11-19/phase-c/README.md).
+Deploy: [UAT-DEPLOY-WALK-FIXES.md](UAT-DEPLOY-WALK-FIXES.md).
+
+| ID | Status | Evidence |
+|---|---|---|
+| CAT-1 | PASS (the one-click flag decides whether "Enrol now — free" shows: check UAT) | [learner1](../../visual-evidence/2026-11-19/phase-c/vp_learner1/G1A-course456-oneclick-390.png) |
+| CAT-3, CAT-3c | PASS | [public77](../../visual-evidence/2026-11-19/phase-c/vp_public77/G1B-cart-empty-browse-1440.png) |
+| V5, V8-COURSE | PASS | [448 hi](../../visual-evidence/2026-11-19/phase-c/vp_learner1/G1A-course448-hi-1440.png) |
+| CAT-2, CAT-4b, CAT-4c | BLOCKED (need writes or a login submit; tests not run) | - |
+| V8-MYCOURSES | PASS | [hi](../../visual-evidence/2026-11-19/phase-c/vp_learner1/G1B-mycourses-hi-1440.png) |
+| V21-logo, V4-admin-footer, V3 | PASS | [admin search](../../visual-evidence/2026-11-19/phase-c/vp_siteadmin/G2-adminsearch-footer-1440.png) |
+| V20-bell | PASS (badge drop BLOCKED: DB write) | [bell](../../visual-evidence/2026-11-19/phase-c/vp_public77/G2-V20-bell-light-1440.png) |
+| V15-breadcrumb-mobile | PASS | [390](../../visual-evidence/2026-11-19/phase-c/vp_manager1/G2-V15-member-breadcrumb-390.png) |
+| V21-fab | No visible effect (post-demo) | [390](../../visual-evidence/2026-11-19/phase-c/vp_public77/G2-V21-fab-footer-overlap-390.png) |
+| V20-notifications-page | PARTIAL (heading stays 30px; dark unread rows) | [dark](../../visual-evidence/2026-11-19/phase-c/vp_public77/G2-V20-notifications-page-dark-1440.png) |
+| DASH-QUICKNAV, DASH-THROWABLE, B4-TEAMTABLE, LB-CAPTION, V5-DASH | PASS (/my/ clean) | [team table](../../visual-evidence/2026-11-19/phase-c/vp_manager1/G3-my-team-table-scrolled-390.png) |
+| V16 + V16-UNFLAG (D3, no flag) | PASS | [author1](../../visual-evidence/2026-11-19/phase-c/vp_author1/V16-UNFLAG-my-courses-you-teach-1440.png) |
+| LB-MASK (D2 = A) | PASS | [public77](../../visual-evidence/2026-11-19/phase-c/vp_public77/V16-UNFLAG+LB-MASK-my-leaderboard-1440.png) |
+| V6-buttons, -avatar, -badges, -na | PASS | [learner1](../../visual-evidence/2026-11-19/phase-c/vp_learner1/G4A-profile-en-1440.png) |
+| V17-copy, -model, -drafts | PASS | [studio](../../visual-evidence/2026-11-19/phase-c/vp_author1/G4B-studio-preview-badge-1440.png) |
+| V15-perf, -member, -titles | PASS (re-run 06:21-06:38) | [performance](../../visual-evidence/2026-11-19/phase-c/vp_manager1/G4B-perf-standard-shell-1440.png) |
+| CI-ORG-STEP | Gate PASS; the repaint runs once on UAT (P4) | - |
+| V19-LP-AMP, V19-LP-STATUS | PASS | [paths](../../visual-evidence/2026-11-19/phase-c/vp_admin1/G5-learningpath-table-1440.png) |
+| V19-TABLE-HEADER | PASS (JS errors after dialogs: post-demo) | [users](../../visual-evidence/2026-11-19/phase-c/vp_admin1/G5-users-actions-header-1440.png) |
+| V19-CERT-TEMPLATES | PASS | [en](../../visual-evidence/2026-11-19/phase-c/vp_admin1/G5-G9-certificate-templates-1440.png) |
+| V23 | **REVERTED** (paging bar under the notice) | [after revert](../../visual-evidence/2026-11-19/phase-c/repair/V23-reverted-browse-1440.png) |
+| KPI-CACHE, V25-dup | BLOCKED (DB writes; tests not run) | - |
+| V12 | Data PASS; bar drawing post-demo | [funnel](../../visual-evidence/2026-11-19/phase-c/vp_admin1/G6-analytics-funnel-390.png) |
+| V11-EXPORT | PASS | [KPIs](../../visual-evidence/2026-11-19/phase-c/vp_admin1/G6-compliance-kpis-rate-1440.png) |
+| B6-OPT1 (G7, D1) | PASS (compliance1 learner shell BLOCKED locally: that persona is also org-admin) | [author1 refused](../../visual-evidence/2026-11-19/phase-c/vp_author1/G7-compliance-no-access-1440.png) |
+| V8-F, V8-E, V8-D, V8-B | PASS | [onboarding](../../visual-evidence/2026-11-19/phase-c/vp_report1b/V8-D-onboarding-hi-step1-1440.png) |
+| V8-G | PARTIAL (skill card: no data) | - |
+| LINKEDIN-ORG | BLOCKED (no issued certificate locally) | - |
+| V19-ORG-CARD | PASS at 1440; chevron wraps at 390 | [1440](../../visual-evidence/2026-11-19/phase-c/vp_admin1/V19-ORG-CARD-tenant-card-1440.png) |
+| V19-USERS-BLANK-ROW | PASS default sort; last page BLOCKED | - |
+| V19-COURSE-HEADER, V19-COMPLETION-PILL | PASS | [header](../../visual-evidence/2026-11-19/phase-c/vp_admin1/V19-COURSE-HEADER-course256-1440.png) |
+| PB-1, PB-2, PB-3, PB-4, PB-5 | PASS | [PB-2](../../visual-evidence/2026-11-19/phase-c/vp_compliance1/PB-2-matrix-filterbar-stacked-390.png) |
+| Phase B leftovers (CAT177, RECS177, Z-ADMIN, Z-LSCRIPT, DASHA, ICONSA, BANDA, ANALYTICSA, LEADERADMIN, COMPADMIN) | PASS; LSCRIPT BLOCKED (local env) | [ZEEA /my/](../../visual-evidence/2026-11-19/phase-c/vp_admin177/PhaseB-ZADMIN-my-1440.png) |
+| Classroom page as trainer | FAIL, pre-existing ("nopermissions" modal): avoid in the demo | [classroom](../../visual-evidence/2026-11-19/phase-c/vp_author1/PhaseB-classroom-org-ajax-error-1440.png) |

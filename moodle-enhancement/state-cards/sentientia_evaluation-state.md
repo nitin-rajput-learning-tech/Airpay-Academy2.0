@@ -2,7 +2,7 @@
 
 **Component:** `local_sentientia_evaluation` (was `local_airpay_evaluation`; the rename left the tables, strings and
 capabilities under the new name, and the old name appears nowhere in the code any more)
-**Version:** `2026101900` / `1.17.4` (2026-10-19: the EV-17 repeat step, see "2026-10-19 - EV-17 steps below a shipped version"). Earlier: `2026100702` / `1.17.1` (the EV-17 back-fill and the review fixes of 2026-10-07).
+**Version:** `2026111800` / `1.17.5`
 `local_sentientia_evaluation.evaluationmode` (EV-17), and `importer::REQUIRES_VERSION` stays `2026100701`: it names the version
 that adds the column the importer writes, and the back-fill adds no schema. `2026093001` / `1.16.0` was the ADR-032
 evaluation importer.
@@ -16,6 +16,12 @@ three framework items, then the follow-ups of the data and safety reviews; see t
 evaluation decisions implemented" and "2026-10-07 - review follow-ups". Branch `claude/eval-followups`, PHPUnit NOT run
 there)
 
+
+## 2026-11-19 — walk fixes (2026111800 / 1.17.5; local only, not on UAT; PHPUnit not run)
+
+Phase C V25-dup: an anonymous evaluation cannot be answered twice (test added, not run). Evidence: `docs/visual-evidence/2026-11-19/phase-c/README.md`.
+
+---
 
 ## 2026-10-19 - EV-17 steps below a shipped version
 

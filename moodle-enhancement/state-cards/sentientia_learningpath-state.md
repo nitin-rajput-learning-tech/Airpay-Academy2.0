@@ -9,6 +9,12 @@
 
 ---
 
+## 2026-11-19 — walk fixes (2026111800 / 1.9.3; local only, not on UAT; PHPUnit not run)
+
+Phase C: V19-LP-AMP single "&" in names; V19-LP-STATUS status pills and badges. Evidence: `docs/visual-evidence/2026-11-19/phase-c/README.md`.
+
+---
+
 ## What it does
 
 Replacement for BizLMS `local_learningplan`. Lets an Airpay admin

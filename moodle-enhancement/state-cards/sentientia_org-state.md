@@ -1,9 +1,15 @@
 # State Card — local_airpay_org
 **Component:** `local_airpay_org`
-**Version:** 1.4.1 (2026052001) — Hindi top-up (P1 #54)
+**Version:** `2026111800` / `1.6.2`
 **Status:** STABLE — installed + migrated; supports current production
 **Purpose:** Replaces BizLMS `local_costcenter` — Airpay-owned org hierarchy, tenant management, accesslib, branding
 **Last refreshed:** 2026-05-24 (P1 state-card pass)
+
+---
+
+## 2026-11-19 — walk fixes (2026111800 / 1.6.2; local only, not on UAT; PHPUnit not run)
+
+Phase A+B: WF-016 hook in both trees. Phase C: violet repaint step renumbered to 2026111800 (CI-ORG-STEP; runs once on UAT), V19-ORG-CARD card row and menu. Evidence: `docs/visual-evidence/2026-11-19/phase-c/README.md`.
 
 ---
 

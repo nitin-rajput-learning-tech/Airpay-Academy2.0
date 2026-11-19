@@ -10,6 +10,12 @@
 
 ---
 
+## 2026-11-19 — walk fixes (2026111800 / 0.3.2-alpha; local only, not on UAT; PHPUnit not run)
+
+Phase C V17: preview-mode wording (no "MOCK MODE"/vendor name), Model field only for site:config, drafts link and status labels en/hi. Evidence: `docs/visual-evidence/2026-11-19/phase-c/README.md`.
+
+---
+
 ## Mission
 
 Unify Sentientia's disconnected AI seams (`aiquiz`, `translate`, the Workstream-B

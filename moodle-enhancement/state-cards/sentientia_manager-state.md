@@ -1,10 +1,16 @@
 # State Card — `local_airpay_manager`
 
 **Component:** `local_airpay_manager`
-**Version:** `2026093001` / `1.3.7`  (persona pass D4: team_performance gate + team query; see the 2026-09-30 note)
+**Version:** `2026111801` / `1.3.10`
 **Maturity:** `MATURITY_STABLE`
 **Status:** Live on airpay.academy. Manager (line-manager) dashboard + team workflows.
 **Last refreshed:** 2026-09-30 (persona pass D4 / D14 - Team performance for a line manager)
+
+---
+
+## 2026-11-19 — walk fixes (2026111801 / 1.3.10; local only, not on UAT; PHPUnit not run)
+
+Phase A+B: "Never" not "999d ago", approvals hand-off. Phase C V15: performance/member on the standard shell, titles and labels en/hi. Evidence: `docs/visual-evidence/2026-11-19/phase-c/README.md`.
 
 ---
 

@@ -1,10 +1,16 @@
 # State Card — local_airpay_courses
 **Component:** `local_airpay_courses`
-**Version:** 1.11.4 (2026090800)  — tenant-scoped Manage Courses KPI + category filter
+**Version:** `2026111800` / `1.14.3`
 **Status:** STABLE — admin + learner flows shipped + tested
 **Depends on:** local_airpay_org (Phase 1)
 **Purpose:** Airpay-owned course management, progress tracking, open_* field ownership, **cross-tenant sharing (Sprint C) + pull/request workflow (Sprint D)**
 **Last refreshed:** 2026-09-08 (UAT ZEEA findings #3/#4 — Manage Courses KPI tiles + category filter now tenant-scoped to the datatable's row set)
+
+---
+
+## 2026-11-19 — walk fixes (2026111800 / 1.14.3; local only, not on UAT; PHPUnit not run)
+
+Phase C: admin list Actions column (V19), featured widget strings (V8-E). V23 Browse Airpay search + paging REVERTED 2026-11-19 (version kept; comment records it). Evidence: `docs/visual-evidence/2026-11-19/phase-c/README.md`.
 
 ---
 

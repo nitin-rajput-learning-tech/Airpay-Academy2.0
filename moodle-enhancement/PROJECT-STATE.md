@@ -1,5 +1,6 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-11-18 12:35 (**Midday: three demo fixes on UAT (`bc2227c20`, theme 2026111800 + certificate redesign); see the 2026-11-18 midday entry.** Earlier, ~01:00: **C-suite demo MOVED UP to Wednesday 18 November, morning; everything developed so far goes to UAT first thing (Nitin, over his VPN, per `docs/cutover/UAT-DEPLOY-RUNBOOK-2026-11-18.md`). Committed tonight: the fresh-install fixes (`cdd4fc310`) and the compliance_report security + exclusions fix (`0706fdadf`, 2026111702). New C-suite deck: what Academy 2.0 adds over today's airpay.academy, no operational detail. See the 2026-11-17/18 entry.**)
+**Updated:** 2026-11-19 08:30 (**Walk fixes Phase A+B (`56d822061`) and Phase C built and verified locally, NOT on UAT yet; V23 reverted; PHPUnit not run. See the 2026-11-19 entry.**)
+**Before that, 2026-11-18 12:35** (**Midday: three demo fixes on UAT (`bc2227c20`, theme 2026111800 + certificate redesign); see the 2026-11-18 midday entry.** Earlier, ~01:00: **C-suite demo MOVED UP to Wednesday 18 November, morning; everything developed so far goes to UAT first thing (Nitin, over his VPN, per `docs/cutover/UAT-DEPLOY-RUNBOOK-2026-11-18.md`). Committed tonight: the fresh-install fixes (`cdd4fc310`) and the compliance_report security + exclusions fix (`0706fdadf`, 2026111702). New C-suite deck: what Academy 2.0 adds over today's airpay.academy, no operational detail. See the 2026-11-17/18 entry.**)
 **Before that, 2026-11-16** (**Demo week. Theme 2026111600-02, reminder tasks (courses 2026111600) and Option A privacy committed; CI green. See the 2026-11-16 entry.**)
 **Before that, 2026-11-13** (**Nitin's 11-12 decisions carried out; see the 2026-11-12 / 11-13 entry.**
 - Committed and on `production`: subagent-stall fix, Stage 0-2 tooling, working permission rules, hook and gate fixes, theme A2/A3, A1 (ADR-034 slice 1), A5 (audit events + tenant trail), AI gateway pricing.
@@ -8,6 +9,38 @@
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
 
 ---
+
+## 2026-11-19 ~08:30 - Walk fixes Phase A+B and Phase C built and verified locally; NOT on UAT yet (Opus 5.5)
+
+Demo on UAT Thu 19 Nov 11:00; code freeze 07:00; UAT deploy on Nitin's go after this entry.
+- **Phase A+B** (surface-walk fixes, checkpoint commit `56d822061`, not pushed): catalogue by tenant, enrol redirect,
+  dashboard overflow and stacking, bell-only topbar, empty band, compliance pager/department/scorecard/rounding,
+  manager empty states and approvals hand-off, analytics heatmap, "Never", profile chip and consumer grid, skills
+  empty state, certificate gallery, FA6 icons, breadcrumbs. Local verification stopped after 4 of 10 personas (about
+  2 h per persona); rest folded into Phase C. Evidence: `docs/visual-evidence/2026-11-18/walk-fixes/README.md`;
+  status table: SURFACE-WALK section 5.
+- **Phase C** (night of 18-19 Nov, uncommitted on top of `56d822061`; plan `docs/business/csuite-2026-11-18/
+  PHASE-C-PLAN-2026-11-18.md` + `PHASE-C-ADDENDUM-2026-11-18.md`): groups G1A, G1B, G2, G3, G4A, G4B, G5, G6, G7 (B6
+  option 1), G9 (45 extra strings en+hi, theme 2026111802 / 1.0.70-beta), addendum V8-F/E/D/B/G, V19-ORG-CARD,
+  V19-USERS-BLANK-ROW, LINKEDIN-ORG, V19-COURSE-HEADER, V19-COMPLETION-PILL, LB-MASK, V16-UNFLAG, PB-1..PB-5.
+  **V23 (Browse Airpay search + paging) REVERTED** (paging bar unreachable under the notice).
+- Nitin's decisions (overnight, recommended answers approved): D1 B6 option 1 (done, G7); D2 = A (dashboard
+  mini-leaderboard shows other people as "First L."); D3 = V16 is a bug fix with NO flag (recorded because CLAUDE.md
+  asks for flags on new UI); D4-D12 no code (D7: `refresh_snapshot` once on UAT if a compliance page asks for it).
+- Gates 1-12 PASS (php -l 8.2 and 8.4, tree drift 0 new, lang parity 0 failures, upgrade-step versions 0, path
+  boundary, siteid, layout regions, end-of-body, self_enrol grep, flag grep, conflict markers, pre-commit hook).
+  Stylelint: 33 old errors in untouched `_surface-profile.scss` only.
+- Local XAMPP deploy: 123 files, 12 plugins upgraded, smoke clean, backups `kit-scratch/1119/xampp-backup/`.
+- Visual verification: 11 personas at 1440/390. Most items PASS; V21-fab no visible effect, V20 notifications
+  heading/dark rows partial, V12 bar drawing (old CSS), JS errors after dialogs on admin tables (not reproduced on a
+  clean load) - all left for post-demo. vp_manager1 re-run 06:21-06:38 PASS. Evidence and full table:
+  `docs/visual-evidence/2026-11-19/phase-c/README.md`; status: SURFACE-WALK section 6.
+- **PHPUnit was NOT run** (test DB re-init needs about 3 h on this box). Run the plan section 5 suites after the demo.
+- UAT: `docs/business/csuite-2026-11-18/UAT-DEPLOY-WALK-FIXES.md` (range `bfa2ab9d9..HEAD --prefer-me`, 168 files,
+  16 version bumps, org repaint step runs once, P1-P6, D7, B6 demo-script change, rollback). Nothing deployed.
+- Demo risk: the trainer persona gets a "nopermissions" modal on the Classroom page (pre-existing); avoid it.
+- Index note: 212 files were staged by the paused integrate stage, including `tools/uat/provision_test_users.php`
+  (another session's change; not part of the walk-fix commits).
 
 ## 2026-11-18 midday - three demo fixes on UAT before the 13:15 freeze (Opus 5.5)
 

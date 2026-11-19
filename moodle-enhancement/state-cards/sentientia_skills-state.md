@@ -1,10 +1,16 @@
 # State Card — `local_airpay_skills`
 
 **Component:** `local_airpay_skills`
-**Version:** `2026052003` / `1.6.2`  (+ P1 #32 full Hindi pack)
+**Version:** `2026111800` / `1.7.1`
 **Maturity:** `MATURITY_STABLE`
 **Status:** Live on airpay.academy. Skills catalog + per-user skill history.
 **Last refreshed:** 2026-05-24 (P1 state-card pass)
+
+---
+
+## 2026-11-19 — walk fixes (2026111800 / 1.7.1; local only, not on UAT; PHPUnit not run)
+
+Phase A+B V7: summary ring hidden when the role has no skills; empty state en/hi. Evidence: `docs/visual-evidence/2026-11-18/walk-fixes/README.md`.
 
 ---
 

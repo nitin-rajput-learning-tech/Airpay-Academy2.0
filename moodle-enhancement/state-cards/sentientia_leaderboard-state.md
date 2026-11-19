@@ -2,8 +2,14 @@
 **Plugin status:** Phase L.0 MVP shipped (2026-05-24)
 **Tier:** 2 #7 (Sentientia LMS roadmap)
 **Maturity:** `MATURITY_ALPHA`
-**Version:** 2026052400 / 0.1.0-alpha
+**Version:** `2026111800` / `0.2.3-alpha`
 **Last updated:** 2026-05-28 (C17 seed CLI + F-053..F-056 rename)
+
+## 2026-11-19 — walk fixes (2026111800 / 0.2.3-alpha; local only, not on UAT; PHPUnit not run)
+
+Phase A+B: no flag key shown to learners on the leaderboard page; strings en/hi. Evidence: `docs/visual-evidence/2026-11-18/walk-fixes/README.md`.
+
+---
 
 ## 2026-05-28 updates
 

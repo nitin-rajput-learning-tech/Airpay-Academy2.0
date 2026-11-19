@@ -1,6 +1,6 @@
 # State Card — local_airpay_users
 **Component:** `local_airpay_users`
-**Version:** 2.7.9 (2026092401)  — N1 review follow-up: supervisor label callback bounded, list/export fail closed (see 2026-09-24 below); 2.7.8 = N1 profile reads tenant-bounded via `profile_access`; 2.7.5 = `user_manager::suspend()` uses `destroy_user_sessions()`; 2.7.1 = signup UX fixes (honeypot + success page)
+**Version:** `2026111801` / `2.9.4`
 **Status:** STABLE — installed + live; HRMS importer + bulk + signup + welcome shipped
 **Depends on:** local_airpay_org (Phase 1); local_sentientia_platform (`tenant`, declared ANY_VERSION from 2026092401)
 **Purpose:** Replaces BizLMS `local_users` — Airpay-owned user management, profile rendering, open_* field ownership, signup, HRMS sync
@@ -17,6 +17,12 @@
 > theme fixes (tall-card scroll + login-index notice card) live in
 > `theme_airpayux` `_surface-login.scss` — see its state card. Evidence:
 > `docs/visual-evidence/2026-05-29/signup-*.png`.
+
+---
+
+## 2026-11-19 — walk fixes (2026111801 / 2.9.4; local only, not on UAT; PHPUnit not run)
+
+Phase A+B: profile chip and consumer grid (2.9.3). Phase C V6: buttons, initials avatar, badge names, em dash; V19-USERS-BLANK-ROW; V8-G; PB-1 e-mail wraps. Evidence: `docs/visual-evidence/2026-11-19/phase-c/README.md`.
 
 ---
 

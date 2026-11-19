@@ -1,10 +1,16 @@
-# State Card — `local_airpay_catalog`
+# State Card — `local_sentientia_catalog`
 
-**Component:** `local_airpay_catalog`
-**Version:** `2026052902` / `1.0.2-beta`
+**Component:** `local_sentientia_catalog`
+**Version:** `2026111801` / `1.0.11-beta`
 **Maturity:** `MATURITY_BETA`
-**Status:** Live on airpay.academy. Public + learner course catalog surface.
-**Last refreshed:** 2026-05-29 (E-01 — one-click free self-enrol for internal tenants; course-card poster thumbnails — `catalog_manager::course_poster()` real-image/gradient-fallback fed into `format_course()`, `commerce::get_public_catalog()`, `course_card.mustache` + `catalog.mustache` + `styles.css`; dark-mode regression-walk fix — Enrol/Continue anchor-buttons re-pinned white)
+**Status:** Not live: on UAT (Moodle 5.3); Sentientia replaces BizLMS at cutover. Public + learner course catalog surface.
+**Last refreshed:** 2026-11-19 (persona walk 2026-11-18/19: honest course-page CTAs, one catalogue-home rule, My Courses in Hindi; see the last section)
+
+---
+
+## 2026-11-19 — walk fixes (2026111801 / 1.0.11-beta; local only, not on UAT; PHPUnit not run)
+
+Phase C: CAT-1 unflagged self-enrol fallback removed; CAT-3 one catalogue home per tenant; V5/V8-COURSE course page; V8-MYCOURSES; V8-B strings and language-keyed caches; CAT-2/CAT-4b/CAT-4c. Evidence: `docs/visual-evidence/2026-11-19/phase-c/README.md`.
 
 ---
 
@@ -12,9 +18,9 @@
 
 Course catalog — the public + learner-facing browse surface. Reads from
 core Moodle courses + categories, layered with:
-- `local_airpay_courses`'s tenant-share filter (cross-tenant catalog
+- `local_sentientia_courses`'s tenant-share filter (cross-tenant catalog
   appearance — Sprint C/D)
-- `local_airpay_cart`'s commerce hooks (price + add-to-cart on
+- `local_sentientia_cart`'s commerce hooks (price + add-to-cart on
   paid courses)
 
 The catalog is the home of the "For You" feed (recommendations,
@@ -57,7 +63,7 @@ Consumes:
 ## Key files
 
 ```
-local/airpay_catalog/
+local/sentientia_catalog/
 ├── version.php                                    2026052900 / 1.0.1-beta
 ├── README.md
 ├── lib.php
@@ -77,8 +83,8 @@ local/airpay_catalog/
 │   └── feature_flags.php                           sentientia.catalog.public_lxp.enabled (OFF)
 ├── templates/
 └── lang/
-    ├── en/local_airpay_catalog.php
-    └── hi/local_airpay_catalog.php
+    ├── en/local_sentientia_catalog.php
+    └── hi/local_sentientia_catalog.php
 ```
 
 ## Tests
@@ -86,7 +92,7 @@ local/airpay_catalog/
 - `tests/enrolment_test.php` (8 cases) — E-01 one-click free self-enrol:
   policy (`should_offer_oneclick`) across internal/Public/guest/paid/flag-off,
   and mechanism (`enrol_now` key bypass, idempotency, paid refusal, manual
-  instance self-provision). Uses `local_airpay_core\phpunit\open_path_fixture_trait`.
+  instance self-provision). Uses `local_sentientia_platform\phpunit\open_path_fixture_trait`.
   (Runs in CI — local XAMPP has no `vendor/bin/phpunit`.)
 - `catalog_manager` query correctness is still exercised indirectly by the
   `local_airpay_courses` PHPUnit suite (where the underlying queries live).
@@ -481,3 +487,43 @@ ON, desktop and 590 px, in light and dark mode (the pending chip uses `--ap-colo
 request plugin `2026101503`: an enabled self-enrolment instance, keyed or open, is NOT a way in (the theme redirects
 `/enrol/index.php` to `/my`), so a free course whose only method is self-enrolment now gets the button too; the catalogue's own
 routes (paid to the cart, one-click enrols at once) still come first. No catalogue code change beyond a docblock.
+
+## 2026-11-18/19 persona walk: honest course-page CTAs (version `2026111801` / `1.0.11-beta`, no schema, capability or flag change)
+
+Plan: `moodle-enhancement/docs/business/csuite-2026-11-18/PHASE-C-PLAN-2026-11-18.md`, groups G1A (course page) and G1B
+(catalogue lists and cart). Both plugin trees are byte-identical.
+
+What changed:
+- **The self-enrol path is withdrawn (CAT-1, G1A).** `2026111800` gave course.php a fallback for a free course: the course's own
+  key-less self-enrolment, where the viewer could use it (`enrolment::self_enrol()`, `self_enrol_instance()`,
+  `bizlms_allows_self_enrol()`), behind an "Enrol now" button. It was withdrawn the same day, for two reasons: it was a new
+  enrolment path with no feature flag (CLAUDE.md: no user-visible feature without a flag, default OFF), and it went against the
+  2026-05-29 decision that the Public tenant keeps the cart. Self-enrolment is again not a way in on this theme: the theme never
+  renders `/enrol/index.php`. A storefront learner (`enrolment::public_tenant_id()`) on a storefront course gets the same "Add to
+  cart" action that public.php's card uses. Anyone else whom nothing on the page can enrol gets a notice, worded for an employee
+  or for a storefront consumer. The inactive-enrolment notice (suspended, ended, not started) stays.
+- **One catalogue-home rule (CAT-3, G1B).** New `catalog_manager::catalog_home_url($user)`: index.php (the tenant catalogue) for a
+  logged-in viewer of any resolved tenant other than the storefront tenant; public.php for the storefront tenant, a guest, nobody
+  or a tenant that does not resolve. It is the same rule as `theme_sentientia\sidebar_navigation::catalog_path()`: keep the two
+  in step. Callers: cart.php ("Browse Courses", "Continue Browsing"), the My Courses empty state, and course.php's redirect and
+  back link (CAT-3c, G1A).
+- **My Courses in the viewer's language (V8-MYCOURSES, G1B).** `templates/mycourses.mustache` prints no English of its own: the
+  filter labels, "Done", "% complete", Review / Continue / Start, the pagination label and summary and the empty state all come
+  from `get_string`. A course without an image shows a graduation-cap icon instead of its raw shortname. "Never" is core `never`.
+- **Back to the cart after login (CAT-4b, G1B).** "Login to Complete Enrollment" goes to `cart.php?action=login`, which sets
+  `$SESSION->wantsurl` to the cart and sends the visitor to the login page. Core `login/index.php` reads `?wantsurl=` only on
+  Behat sites, so the old link lost the cart.
+- **Course page (G1A).** Layout classes in styles.css instead of inline styles (V5) and the page's own strings (V8-COURSE). CAT-2
+  (no re-enrolment over an enrolment already held) and CAT-4c (back to the course after login) were lower-priority items: check
+  the Phase C summary for whether they landed.
+
+Tests (written by the implementers, run centrally after the code freeze):
+- new `tests/catalog_home_test.php`: /1/3 and /177 go to index.php; /77/5, an empty open_path, the guest and `id 0` go to
+  public.php; after `public_tenant_id` is set to 177, /177 goes to public.php and /77 to index.php;
+- `tests/enrol_fallback_test.php` keeps only the inactive-enrolment case;
+- `tests/request_offer_test.php`: a free course with an open self-enrolment still offers the request.
+
+Strings (G9, en + hi): `enrolment_managed_public`, `enrolment_suspended_public`, `enrolment_ended_public`, the `course_*` keys of
+the course page and the `mycourses_*` keys of My Courses (plan section 4). Until G9 runs, a missing string shows as `[[key]]`.
+
+Visual evidence: `docs/visual-evidence/2026-11-19/phase-c/` (vp_learner1, vp_public77, vp_learner177; 1440 and 390 px).

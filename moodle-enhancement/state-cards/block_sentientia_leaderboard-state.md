@@ -1,12 +1,18 @@
 # State Card — `block_sentientia_leaderboard`
 
 **Component:** `block_sentientia_leaderboard`
-**Version:** `2026052400` / `0.1.0-alpha`
+**Version:** `2026111800` / `0.1.2-alpha`
 **Maturity:** `MATURITY_ALPHA`
 **Status:** Phase L.0 — shipped alongside `local_sentientia_leaderboard`
 **ADR:** [ADR-014 — Real-time mechanism for `local_sentientia_leaderboard`](../docs/adr/ADR-014-real-time-leaderboards-realtime-mechanism.md)
 **Hard dependency:** `local_sentientia_leaderboard >= 2026052400`
 **Last updated:** 2026-05-24
+
+---
+
+## 2026-11-19 — walk fixes (2026111800 / 0.1.2-alpha; local only, not on UAT; PHPUnit not run)
+
+Phase A+B leaderboard-block fix (checkpoint 56d822061). Evidence: `docs/visual-evidence/2026-11-18/walk-fixes/README.md`.
 
 ---
 

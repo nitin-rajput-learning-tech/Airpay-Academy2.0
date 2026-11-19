@@ -1,10 +1,16 @@
 # State Card — `local_airpay_analytics`
 
 **Component:** `local_sentientia_analytics` (was `local_airpay_analytics`)
-**Version:** `2026111700` / `1.2.4-beta`
+**Version:** `2026111801` / `1.2.6-beta`
 **Maturity:** `MATURITY_BETA`
 **Status:** Built; not live (Sentientia is not live yet: local and UAT only). L&D analytics dashboards.
 **Last refreshed:** 2026-11-17 (CI tenant_isolation gate fix)
+
+---
+
+## 2026-11-19 — walk fixes (2026111801 / 1.2.6-beta; local only, not on UAT; PHPUnit not run)
+
+Phase A+B: heatmap from the compliance source, range pills, translated funnel labels. Phase C: V12 funnel Certified never above Completed; PB-3 no literal "&amp;" in the Skill Gap card; PB-4 Hindi users label not cut. Bar drawing (label max-width) left for post-demo. Evidence: `docs/visual-evidence/2026-11-19/phase-c/README.md`.
 
 ---
 
