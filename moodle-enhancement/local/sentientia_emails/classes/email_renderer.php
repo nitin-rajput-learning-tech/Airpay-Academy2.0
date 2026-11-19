@@ -64,7 +64,9 @@ class email_renderer {
                 // Moodle 5.2+ ships Mustache 3.0 (\Mustache\Engine) and no longer autoloads the
                 // legacy \Mustache_Engine, which is a class-not-found \Error, not an \Exception;
                 // hence the factory and the \Throwable catch (the file fallback below must run).
-                $mustache = mustache_factory::engine();
+                // email_engine() (2026-11-19): the override can include this plugin's partials
+                // (course card, support footer); the plain engine rendered them as nothing.
+                $mustache = mustache_factory::email_engine();
                 return $mustache->render($override->body_html, $context);
             } catch (\Throwable $e) {
                 // Fallback to file if DB template has syntax errors.
@@ -82,12 +84,23 @@ class email_renderer {
      * This reproduces exactly what email_to_user() produces,
      * including the theme's email_html.mustache wrapper.
      *
-     * @param string $templatename content template name
-     * @param array  $context      template variables
-     * @param int    $tenantid     costcenter ID for branding
+     * The body is what that tenant's learners actually receive (2026-11-19): the tenant's active
+     * override, else the global one, else the Mustache file, resolved exactly as render() does
+     * for a real send. It used to be the file only, so an edited template previewed as the
+     * default and the editor's first preview disagreed with the text it was editing.
+     *
+     * @param string   $templatename   content template name
+     * @param array    $context        template variables
+     * @param int      $tenantid       costcenter ID for branding
+     * @param int|null $overridetenant tenant whose override applies (0 = the global override only);
+     *                                 null = the branding tenant
+     * @param string|null $source      out: the body that was actually rendered: 'tenant_override',
+     *                                 'global_override' or 'file' (also 'file' when the override is
+     *                                 broken and the file was rendered instead, as render() delivers it)
      * @return string fully wrapped HTML email
      */
-    public static function render_preview(string $templatename, array $context, int $tenantid = 1): string {
+    public static function render_preview(string $templatename, array $context, int $tenantid = 1,
+                                          ?int $overridetenant = null, ?string &$source = null): string {
         global $PAGE, $CFG, $SITE;
 
         // Render the inner content body.
@@ -103,7 +116,24 @@ class email_renderer {
         $context['support_email']  = 'academy@airpay.co.in';
 
         $renderer = $PAGE->get_renderer('core');
-        $body = $renderer->render_from_template($templatename, $context);
+        $body = null;
+        $source = null;
+        $templatekey = str_replace('local_sentientia_emails/', '', $templatename);
+        $override = template_manager::get_override($templatekey, $overridetenant ?? $tenantid);
+        if ($override && !empty($override->body_html)) {
+            try {
+                $body = mustache_factory::email_engine()->render($override->body_html, $context);
+                $source = $override->source;
+            } catch (\Throwable $e) {
+                // Same fallback as render(): a broken override is not what gets delivered either.
+                debugging('DB template render error: ' . $e->getMessage());
+            }
+        }
+        if ($body === null) {
+            $body = $renderer->render_from_template($templatename, $context);
+            // Set only once the file rendered: a caller must not label a failed render.
+            $source = 'file';
+        }
 
         // Now wrap in the theme's email_html.mustache — same as email_to_user() does.
         $wrappercontext = [
@@ -176,5 +206,50 @@ class email_renderer {
                 ],
             ],
         ];
+    }
+
+    /**
+     * Every template key in the registry (get_template_list()), e.g. 'compliance/welcome_enrolled'.
+     *
+     * @return string[]
+     */
+    public static function template_keys(): array {
+        $keys = [];
+        foreach (self::get_template_list() as $cat) {
+            foreach ($cat['templates'] as $tpl) {
+                $keys[] = $tpl['key'];
+            }
+        }
+        return $keys;
+    }
+
+    /**
+     * The registry key a request names, or '' when it names none (2026-11-19).
+     *
+     * The only gate between a request parameter and a template name, a file path or an override row:
+     * preview.php, editor.php, preview_ajax.php and the template web services all go through it. A key
+     * is accepted only when it is in the registry, never by cleaning it into shape, so nothing outside
+     * the e-mail templates (the plugin's own manage/* page templates, another component, a ../ path)
+     * can be previewed, read or given an override. preview.php used to clean ?template= with
+     * PARAM_ALPHANUMEXT, which drops the "/" every key has ("compliance/welcome_enrolled" became
+     * "compliancewelcome_enrolled": "Template error: Sorry, the requested file could not be found"),
+     * while editor.php and the web services took the raw value.
+     *
+     * Also accepted: the legacy ?tpl= spelling with the "/" written as "_" ("compliance_welcome_enrolled").
+     *
+     * @param string $requested the key as the request gave it
+     * @return string the registry key, or '' when it is not one
+     */
+    public static function known_template_key(string $requested): string {
+        $requested = trim($requested);
+        if ($requested === '') {
+            return '';
+        }
+        foreach (self::template_keys() as $key) {
+            if ($requested === $key || $requested === str_replace('/', '_', $key)) {
+                return $key;
+            }
+        }
+        return '';
     }
 }

@@ -55,6 +55,9 @@ $columns = [
     ['key' => 'max_level', 'label' => 'Max Level',  'sortable' => true,  'sortkey' => 'max_level'],
     ['key' => 'sort',      'label' => 'Sort',       'sortable' => true,  'sortkey' => 'sort_order'],
     ['key' => 'created',   'label' => 'Created',    'sortable' => true,  'sortkey' => 'timecreated'],
+    // WF-023 pattern (as sentientia_users/index.php): declare the actions column, so the header gets its own
+    // "Actions" cell. Without it the datatable appended the row icons as a 6th cell under a 5-cell header.
+    ['key' => 'actions',   'label' => get_string('actions'), 'sortable' => false, 'format' => 'html'],
 ];
 
 // Phase B0+ — stat_card-compatible tiles.

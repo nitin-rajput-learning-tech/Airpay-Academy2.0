@@ -18,6 +18,25 @@ use core_external\external_value;
 
 class template_api extends external_api {
 
+    /**
+     * The registry key, or invalid_parameter_exception (2026-11-19).
+     *
+     * Every function here took the key as PARAM_RAW and used it unchecked: get_template read
+     * templates/{key}.mustache from disk, so a ../ key read any .mustache file of the site, and
+     * save_template stored an override row under any name. Only registry keys are accepted now.
+     *
+     * @param string $templatekey as the caller sent it
+     * @return string the registry key
+     * @throws \invalid_parameter_exception
+     */
+    private static function require_known_key(string $templatekey): string {
+        $key = \local_sentientia_emails\email_renderer::known_template_key($templatekey);
+        if ($key === '') {
+            throw new \invalid_parameter_exception('Unknown e-mail template');
+        }
+        return $key;
+    }
+
     // ── get_template ──
 
     public static function get_template_parameters() {
@@ -42,6 +61,7 @@ class template_api extends external_api {
             // this read had no capability check at all.
             require_capability('local/sentientia_emails:manage_templates', $context);
         }
+        $params['templatekey'] = self::require_known_key($params['templatekey']);
         // ADR-031: a scoped caller reads their own tenant's override only.
         $params['tenantid'] = \local_sentientia_emails\tenant_scope::resolve($params['tenantid']);
 
@@ -102,6 +122,7 @@ class template_api extends external_api {
             self::validate_context($context);
             require_capability('local/sentientia_emails:manage_templates', $context);
         }
+        $params['templatekey'] = self::require_known_key($params['templatekey']);
         // ADR-031: the TARGET tenant must be the caller's own. Tenant 0 is
         // the global override every tenant's learners receive: cross-tenant only.
         \local_sentientia_emails\tenant_scope::require_can_write_tenant($params['tenantid']);
@@ -141,6 +162,7 @@ class template_api extends external_api {
             self::validate_context($context);
             require_capability('local/sentientia_emails:manage_templates', $context);
         }
+        $params['templatekey'] = self::require_known_key($params['templatekey']);
         // ADR-031: reverting deletes that tenant's override - same rule as save.
         \local_sentientia_emails\tenant_scope::require_can_write_tenant($params['tenantid']);
 
@@ -187,6 +209,7 @@ class template_api extends external_api {
             // is not enforced for AJAX calls).
             require_capability('local/sentientia_emails:preview', $context);
         }
+        $params['templatekey'] = self::require_known_key($params['templatekey']);
 
         $samplecontext = \local_sentientia_emails\email_context::get_sample($params['templatekey']);
         $samplecontext['subject'] = $params['subject'] ?: ($samplecontext['subject'] ?? 'Preview');
@@ -195,7 +218,8 @@ class template_api extends external_api {
         if (!empty($params['bodyhtml'])) {
             try {
                 // \Mustache\Engine on Moodle 5.2+, \Mustache_Engine on 5.1 (see mustache_factory).
-                $mustache = \local_sentientia_emails\mustache_factory::engine();
+                // email_engine(): this plugin's partials resolve, as they do in a delivered override.
+                $mustache = \local_sentientia_emails\mustache_factory::email_engine();
                 $body = $mustache->render($params['bodyhtml'], $samplecontext);
             } catch (\Throwable $e) {
                 $body = '<p style="color:#dc2626;">Mustache error: ' . s($e->getMessage()) . '</p>';

@@ -1,10 +1,35 @@
 # State Card — `local_airpay_analytics`
 
 **Component:** `local_sentientia_analytics` (was `local_airpay_analytics`)
-**Version:** `2026111801` / `1.2.6-beta`
+**Version:** `2026111900` / `1.2.7-beta` (working tree, uncommitted, not deployed)
 **Maturity:** `MATURITY_BETA`
 **Status:** Built; not live (Sentientia is not live yet: local and UAT only). L&D analytics dashboards.
-**Last refreshed:** 2026-11-17 (CI tenant_isolation gate fix)
+**Last refreshed:** 2026-11-19 (QW-ROI: Training ROI card + skill-gap counts)
+
+---
+
+## 2026-11-19 — QW-ROI: Training ROI card prints its figures; skill-gap counts (2026111900 / 1.2.7-beta)
+
+Nitin on UAT (`index.php?range=ytd&orgid=0`, admin): the ROI card showed a lone "%" and "Benefits" / "Costs"
+headings with no values; Skill Gap Projection said "No skill gap data".
+
+- **ROI root cause:** `index.php` flattened `compute()` into `roi_roi_pct`, `roi_total_benefit`, ... while
+  `roi_dashboard.mustache` read `roi_pct`, `total_benefit`, `components`, `assumptions`. Nothing matched.
+  Now `roi_calculator::export_for_template()` builds one formatted `roi` object (currency, separators, units,
+  formulas, summary sentence, all 7 assumptions with a "default" marker) in the viewer's language; `compute()`
+  caches numbers only (key `roi_v2_` + the assumptions, so a changed setting shows at once). Honest empty
+  states: no completion in the period, or every cost zero, with a "Set ROI assumptions" link for site admins.
+- **New `settings.php`** (both trees, guarded by `class_exists(roi_calculator)` for the top tree): the 7
+  `roi_*` assumptions the class always read but no page exposed. Defaults = the class constants.
+- **Skill gap:** not gated on skillsai (`skill_gap_provider` exists nowhere; dead branch). Real bugs fixed:
+  rows read with `get_records_sql()` keyed by path kept one category per path (required/covered too low,
+  a debugging notice per path); scope `''` (cross-tenant admin, "All business units") was read as tenant 1;
+  one category query per team; the template repeated the tags section per item (N rows of N tags).
+  Cache key `skillgap_v2_`. The card still measures course categories, not the skills catalogue.
+- Both cards had no CSS at all; rules added to `styles.css` (both trees), dark mode + 768 px.
+- Tests: `tests/roi_calculator_test.php` rewritten (model figures, settings, empty states, template render),
+  3 new skill-gap tests in `tests/predictive_engine_test.php`. **Not run** (no phpunit in this workflow).
+- Pending: local deploy + upgrade, screenshots in `docs/visual-evidence/`, PHPUnit run.
 
 ---
 

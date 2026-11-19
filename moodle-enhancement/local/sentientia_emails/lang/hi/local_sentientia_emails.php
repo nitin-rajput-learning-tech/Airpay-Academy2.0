@@ -130,3 +130,10 @@ $string['task_send_path_enrolments']         = 'लर्निंग-पाथ 
 
 // Message provider (db/messages.php), 2026-10-20.
 $string['messageprovider:notification_alert'] = 'लर्निंग सूचनाएँ और रिमाइंडर';
+
+// QW-EMAIL (2026-11-19): preview.php केवल टेम्पलेट रजिस्ट्री की कुंजी स्वीकार करता है, और बताता है कि कौन-सा संस्करण दिख रहा है।
+$string['template_unknown']               = 'यह ईमेल टेम्पलेट मौजूद नहीं है। सूची से कोई टेम्पलेट चुनें।';
+$string['preview_source_file']            = 'मानक टेम्पलेट दिखाया जा रहा है';
+$string['preview_source_tenant_override'] = 'इस टेनेंट का संपादित संस्करण दिखाया जा रहा है';
+$string['preview_source_global_override'] = 'सभी टेनेंट के लिए उपयोग होने वाला संपादित संस्करण दिखाया जा रहा है';
+$string['preview_source_bizlms']          = 'BizLMS पुराना टेम्पलेट, केवल पढ़ने के लिए';

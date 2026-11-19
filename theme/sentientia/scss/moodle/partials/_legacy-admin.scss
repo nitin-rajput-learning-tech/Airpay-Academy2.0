@@ -978,6 +978,21 @@ body.dark-mode .ap-sp-note--teal {
     border-top: 1px solid #f3f4f6;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   CERTIFICATE VERIFICATION (admin/tool/certificate/index.php)
+   QW-CERT-VERIFY (2026-11-19). The form has one field, and that field
+   already carries the required marker beside its label. Moodle also
+   prints its "(!) Required" legend (.fdescription.required) under the
+   last element, here the Verify button, just above the result alert.
+   On this page the legend read as a red "Required" error. Core marks the
+   legend aria-hidden, so hiding it changes nothing for screen readers.
+   The not-found result is templates/tool_certificate/
+   verify_certificate_results.mustache.
+   ═══════════════════════════════════════════════════════════ */
+#page-admin-tool-certificate-index .mform .fdescription.required {
+    display: none;
+}
+
 /* ═══════════════════════════════════════════════
    Phase 16 UI/UX Audit Fixes (2026-04-08)
    ═══════════════════════════════════════════════ */

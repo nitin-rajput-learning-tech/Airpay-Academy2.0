@@ -1,26 +1,19 @@
 {{!
     Airpay Skills Management — admin view (datatable for skills).
     @template local_sentientia_skills/manage
+
+    Spacing lives in styles.css (.ap-skills-admin__*), on the 8px grid tokens. The theme vendors
+    Bootstrap 4.6, which has no gap-* utilities: the gap-2/gap-3 classes this template used rendered
+    0px, so the header buttons and the category card parts touched (surface walk 2026-11-19).
 }}
-<style>
-    [data-region="airpay-skills"] .ap-filter-bar { background: var(--ap-color-bg-surface, #fff); border: 1px solid var(--ap-color-border, #e2e6ef); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; }
-    [data-region="airpay-skills"] .cat-card { background: var(--ap-color-bg-surface, #fff); border: 1px solid var(--ap-color-border, #e2e6ef); border-radius: 10px; padding: 14px 16px; }
-    [data-region="airpay-skills"] .cat-icon {
-        width: 36px; height: 36px;
-        border-radius: 8px;
-        display: inline-flex; align-items: center; justify-content: center;
-        color: #fff;
-    }
-</style>
+<div data-region="airpay-skills" class="ap-skills-admin">
 
-<div data-region="airpay-skills">
-
-<div class="ap-page-header d-flex justify-content-between align-items-start mb-4">
-    <div>
+<div class="ap-page-header ap-skills-admin__header mb-4">
+    <div class="ap-skills-admin__intro">
         <h2 class="mb-1" style="font-weight: 700;">Skills Management</h2>
         <p class="text-muted mb-0">Define skills, group them into categories, and map to roles.</p>
     </div>
-    <div class="d-flex gap-2 flex-wrap">
+    <div class="ap-skills-admin__actions">
         <a href="{{{ designation_matrix_url }}}" class="btn btn-outline-secondary btn-sm">
             <i class="fa fa-table fa-fw"></i> Designation matrix
         </a>
@@ -50,14 +43,14 @@
 <h5 class="mb-3" style="font-weight: 700;">Categories</h5>
 <div class="row mb-4">
     {{#categories}}
-    <div class="col-md-4 mb-3">
-        <div class="cat-card d-flex align-items-center gap-3">
-            <div class="cat-icon" style="background: {{color}};"><i class="fa {{icon}}"></i></div>
-            <div style="flex: 1;">
-                <div class="fw-semibold">{{name}}</div>
-                <div class="small text-muted">{{skillcount}} skills</div>
+    <div class="col-sm-6 col-xl-4 mb-3">
+        <div class="ap-skills-admin__cat-card">
+            <div class="ap-skills-admin__cat-icon" style="background: {{color}};"><i class="fa {{icon}}" aria-hidden="true"></i></div>
+            <div class="ap-skills-admin__cat-body">
+                <div class="ap-skills-admin__cat-name fw-semibold">{{name}}</div>
+                <div class="ap-skills-admin__cat-count small text-muted">{{skillcount}} skills</div>
             </div>
-            <div>
+            <div class="ap-skills-admin__cat-actions">
                 <a href="#" class="btn btn-sm btn-link text-muted p-1" data-action="edit-category" data-categoryid="{{id}}" data-name="{{name}}" title="Edit"><i class="fa fa-pencil"></i></a>
                 <a href="#" class="btn btn-sm btn-link text-muted p-1" data-action="delete-category" data-categoryid="{{id}}" data-name="{{name}}" title="Delete"><i class="fa fa-trash text-danger"></i></a>
             </div>
@@ -70,16 +63,15 @@
 {{! ─── Skills: datatable ─── }}
 <h5 class="mb-3" style="font-weight: 700;">Skills</h5>
 
-<div class="ap-filter-bar">
-    <div class="d-flex flex-wrap align-items-end gap-3">
+<div class="ap-filter-bar ap-skills-admin__filters">
+    <div class="ap-skills-admin__filter-row">
         {{#has_cat_options}}
-        <div>
+        <div class="ap-skills-admin__filter">
             <label class="small text-muted mb-1 d-block" for="ap-skills-cat-filter">Category</label>
             <select id="ap-skills-cat-filter"
-                    class="form-select form-select-sm"
+                    class="form-select form-select-sm ap-filter-bar__select ap-skills-admin__select"
                     data-airpay-skills-filter="categoryid"
-                    aria-label="Filter skills by category"
-                    style="min-width: 220px;">
+                    aria-label="Filter skills by category">
                 <option value="0">All categories</option>
                 {{#cat_options}}
                 <option value="{{id}}">{{name}}</option>

@@ -398,3 +398,7 @@ $string['login_contact'] = 'संपर्क करें';
 $string['langswitch_label'] = 'भाषा';
 $string['langswitch_disabled'] = 'भाषा बदलने की सुविधा चालू नहीं है।';
 $string['langswitch_invalid'] = 'यह भाषा उपलब्ध नहीं है।';
+
+// Certificate verification, not-found result (QW-CERT-VERIFY, 2026-11-19).
+// Shown by templates/tool_certificate/verify_certificate_results.mustache.
+$string['certverify_notfound'] = 'इस साइट पर इस कोड वाला कोई प्रमाणपत्र जारी नहीं हुआ है। जाँच लें कि कोड प्रमाणपत्र पर छपे कोड से मेल खाता है, फिर दोबारा कोशिश करें। अगर फिर भी मेल न खाए, तो प्रमाणपत्र जारी करने वाले संगठन से संपर्क करें।';

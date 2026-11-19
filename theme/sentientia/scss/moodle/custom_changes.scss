@@ -53,5 +53,9 @@
 // this BS4-based theme did not style (2026-09-04 UI/UX pass).
 @import "partials/bs5-close";
 
+// Modal forms: the label column of a moodleform in a ModalForm dialogue (no first-line indent,
+// icons beside the label, wider labels in large dialogues). QW-MODAL-FORMS, 2026-11-19.
+@import "partials/modal-forms";
+
 // 7. Dark mode (global catch-all — migrate to per-component [data-theme="dark"])
 @import "partials/dark-mode-global";

@@ -218,3 +218,130 @@ body.dark-mode .ap-skills__gap-bar-wrap { background: #2d3140; }
 body.dark-mode .ap-skills__rec-card { border-color: #2d3140; }
 body.dark-mode .ap-skills__rec-card:hover { background: #22252f; }
 body.dark-mode .ap-skills__rec-info h5 { color: #e8eaed; }
+
+/* ═══ Skills Management admin (admin.php, templates/manage.mustache) ═══
+   Surface walk 2026-11-19 ("tight spaces in elements"). The theme vendors Bootstrap 4.6, which has
+   no gap-* utilities, so the gap-2/gap-3 classes the template used rendered 0px: the header buttons
+   touched each other and "New Skill" wrapped alone, and each category card's icon touched its name
+   and its "N skills" line. Spacing is CSS gap on the 8px grid tokens. Every rule is scoped to the
+   .ap-skills-admin root (manage.mustache only): a plugin styles.css is in the theme CSS of every page. */
+.ap-skills-admin .ap-skills-admin__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--ap-space-4, 16px);
+}
+.ap-skills-admin .ap-skills-admin__intro {
+    flex: 1 1 320px;
+    min-width: 0;
+}
+/* The four buttons stay one group: when they do not fit beside the title the whole row moves under it,
+   instead of one button wrapping on its own. */
+.ap-skills-admin .ap-skills-admin__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--ap-space-2, 8px);
+}
+
+/* Category cards: icon | name + count | edit/delete. */
+.ap-skills-admin .ap-skills-admin__cat-card {
+    display: flex;
+    align-items: center;
+    gap: var(--ap-space-3, 12px);
+    height: 100%;
+    padding: var(--ap-space-4, 16px);
+    background: var(--ap-color-bg-surface, #fff);
+    border: 1px solid var(--ap-color-border, #e2e6ef);
+    border-radius: var(--ap-radius-md, 12px);
+}
+.ap-skills-admin .ap-skills-admin__cat-icon {
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--ap-radius-sm, 8px);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ap-color-text-inverse, #fff);
+}
+.ap-skills-admin .ap-skills-admin__cat-body {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.ap-skills-admin .ap-skills-admin__cat-name {
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+.ap-skills-admin .ap-skills-admin__cat-count {
+    margin-top: var(--ap-space-1, 4px);
+}
+.ap-skills-admin .ap-skills-admin__cat-actions {
+    flex: 0 0 auto;
+    display: flex;
+    gap: var(--ap-space-1, 4px);
+}
+
+/* Skills list: filter bar, datatable toolbar and the row action icons. */
+.ap-skills-admin .ap-skills-admin__filters {
+    padding: var(--ap-space-4, 16px);
+    border-radius: var(--ap-radius-md, 12px);
+    margin-bottom: var(--ap-space-4, 16px);
+}
+.ap-skills-admin .ap-skills-admin__filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--ap-space-4, 16px);
+    width: 100%;
+}
+.ap-skills-admin .ap-skills-admin__select {
+    min-width: 220px;
+    max-width: 100%;
+}
+.ap-skills-admin .airpay-datatable__toolbar {
+    gap: var(--ap-space-2, 8px);
+}
+/* The four row icons (view, levels, edit, delete) stay on one line; on a phone the table scrolls sideways
+   inside its .table-responsive wrapper instead of stacking them 2x2. Data rows only (not the empty state). */
+.ap-skills-admin .airpay-datatable tbody tr[data-row-id] td:last-child {
+    white-space: nowrap;
+}
+
+@media (max-width: 590px) {
+    .ap-skills-admin .ap-skills-admin__intro,
+    .ap-skills-admin .ap-skills-admin__actions {
+        flex: 1 1 100%;
+    }
+    /* Phone: the buttons fill their rows (two per row at 390px) instead of a ragged right edge. */
+    .ap-skills-admin .ap-skills-admin__actions .btn {
+        flex: 1 1 auto;
+    }
+    .ap-skills-admin .ap-skills-admin__filter,
+    .ap-skills-admin .ap-skills-admin__select {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+/* Same Bootstrap 4.6 gap-* fix (2026-11-19) on the other skills pages: the My Skills interest chips
+   (dashboard.mustache), the self-rate panel on a skill's page (view.mustache) and the two buttons of the
+   designation matrix (designation_matrix.mustache). */
+.ap-skills__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ap-space-2, 8px);
+}
+.ap-skills-selfrate__body {
+    gap: var(--ap-space-3, 12px);
+}
+.ap-skills-matrix__actions {
+    gap: var(--ap-space-2, 8px);
+}
+@media (max-width: 767.98px) {
+    /* The columns stack below md: keep the buttons off the designation select above them. */
+    .ap-skills-matrix__actions {
+        margin-top: var(--ap-space-2, 8px);
+    }
+}

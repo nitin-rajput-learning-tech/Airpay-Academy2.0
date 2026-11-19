@@ -136,3 +136,10 @@ $string['task_send_path_enrolments']         = 'Send learning-path enrolment e-m
 // Message provider (db/messages.php). Without it every user's notification preferences showed
 // [[messageprovider:notification_alert]] (found by the 2026-10-20 visual pass).
 $string['messageprovider:notification_alert'] = 'Learning notifications and reminders';
+
+// QW-EMAIL (2026-11-19): preview.php only accepts a key from the template registry, and says which version it shows.
+$string['template_unknown']               = 'This e-mail template does not exist. Choose a template from the list.';
+$string['preview_source_file']            = 'Showing the standard template';
+$string['preview_source_tenant_override'] = 'Showing this tenant\'s edited version';
+$string['preview_source_global_override'] = 'Showing the edited version used by all tenants';
+$string['preview_source_bizlms']          = 'BizLMS legacy template, read-only';

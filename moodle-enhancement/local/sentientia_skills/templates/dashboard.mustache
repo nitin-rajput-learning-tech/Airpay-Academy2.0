@@ -84,7 +84,7 @@
     {{#has_interests}}
     <div class="ap-skills__section" data-region="ap-skills-interests">
         <h3 class="ap-skills__section-title"><i class="fa fa-heart-o"></i> {{# str }}interests_title, local_sentientia_skills{{/ str }}</h3>
-        <div class="d-flex flex-wrap gap-2">
+        <div class="ap-skills__chips">
             {{#interests}}
             <a class="badge rounded-pill bg-light text-dark border" href="{{{viewurl}}}">{{name}}</a>
             {{/interests}}

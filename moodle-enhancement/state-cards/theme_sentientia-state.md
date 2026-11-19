@@ -1,7 +1,7 @@
 # State Card — `theme_airpayux`
 
 **Component:** `theme_airpayux`
-**Version:** `2026111802` / `1.0.70-beta`
+**Version:** `2026111900` / `1.0.71-beta` (was `2026111802` / `1.0.70-beta`)
 **Maturity:** `MATURITY_BETA`
 **Status:** Live theme on airpay.academy. Standalone fork (`$THEME->parents = []`).
 **Last refreshed:** 2026-09-08 (P3 i18n parity — dashboard body strings via get_string, en+hi 281/281 — integrated onto gap-integration; stale AMD bundles rebuilt the same day)
@@ -52,6 +52,12 @@
 > padding kept in a separate 2-id rule so the dark-mode bg override still
 > wins. The real split-screen login is excluded by the `:has()` guard
 > (verified untouched). Evidence: `docs/visual-evidence/2026-05-29/signup-*.png`.
+
+---
+
+## 2026-11-19 — quick wins QW-CERT-VERIFY + QW-MODAL-FORMS (2026111900 / 1.0.71-beta; local only, not on UAT; PHPUnit not run)
+
+QW-CERT-VERIFY: on `admin/tool/certificate/index.php` only (`body#page-admin-tool-certificate-index`), the "(!) Required" legend under Verify is hidden (`_legacy-admin.scss`), and a code that matches no certificate gets an explanation under "Not verified" (theme override `templates/tool_certificate/verify_certificate_results.mustache`, new string `certverify_notfound` en + hi). The vendored tool_certificate is not edited by this change. QW-MODAL-FORMS: new partial `scss/moodle/partials/_modal-forms.scss` (imported in `custom_changes.scss`), every selector under `.modal:not(.openLMStransition)`: no 2.5rem first-line label indent in modal forms; in `.modal-lg` / `.modal-xl` dialogues the icons sit beside the label and the columns are 30 / 70 from 992px, labels above fields from 768 to 991px. Rule 2 was first unscoped and broke one-word labels mid-word in default-size dialogues ("Permiss / ion"); it is now limited to large dialogues, and the 768-991px icons sit right after the label text. Tests: `tests/certificate_verify_template_test.php`, `tests/modal_forms_scss_test.php`. Evidence: `docs/visual-evidence/2026-11-19/quick-wins/README.md`.
 
 ---
 

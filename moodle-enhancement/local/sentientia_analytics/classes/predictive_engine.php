@@ -119,7 +119,8 @@ class predictive_engine {
     public static function get_skill_gap_projection(string $orgpath = '',
                                                       bool $refresh = false): array {
         $cache    = \cache::make('local_sentientia_analytics', 'predictive_skillgap');
-        $cachekey = 'skillgap_' . md5($orgpath ?: 'all');
+        // v2 (2026-11-19): every category per path is counted; '' covers every tenant.
+        $cachekey = 'skillgap_v2_' . md5($orgpath ?: 'all');
 
         if (!$refresh) {
             $cached = $cache->get($cachekey);
@@ -370,77 +371,89 @@ class predictive_engine {
     // ── Private: skill-gap heuristic ──────────────────────────────────
 
     /**
-     * Built-in skill-gap heuristic when local_sentientia_skillsai is absent.
+     * Built-in skill-gap heuristic (local_sentientia_skillsai ships no
+     * skill_gap_provider, so this is what the card shows).
      *
      * Uses course categories as a proxy for skill domains. For each
-     * team (depth-3 org node under $orgpath), compute:
-     *   required_categories = distinct categories of enrolled courses
-     *   covered_categories  = distinct categories of completed courses
+     * team (depth-3 org node within $orgpath), compute:
+     *   required_categories = distinct categories of courses members are enrolled in
+     *   covered_categories  = those of them with at least one completion by a member
      *   gap_pct             = (required - covered) / required * 100
      *
-     * All aggregation is done in two queries (no N+1 per team).
+     * $orgpath '' is the whole site (a cross-tenant viewer on "All business
+     * units"). Until 2026-11-19 it was read as tenant 1, so Public and ZEEA
+     * teams were never projected for that viewer.
+     *
+     * Two aggregate queries plus one category-name lookup (no N+1 per team).
+     * They are read as recordsets: a path has one row per category, and
+     * get_records_sql() keys rows by its first column, so it kept only the
+     * last category of every path (with a debugging notice per path) and the
+     * required and covered counts came out too low.
      */
     private static function compute_skill_gap_heuristic(string $orgpath): array {
         global $DB;
 
-        $parts  = explode('/', trim($orgpath ?: '/1', '/'));
-        $toporg = '/' . ($parts[0] ?? '1');
+        $orgpath = rtrim(trim($orgpath), '/');
 
-        // Get teams (depth 3) under the org root.
+        // Teams (depth 3) inside the scope; '' = every tenant.
+        [$teamsql, $teamargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+            $orgpath, 'o', 'path', 'sgteam');
         $teams = $DB->get_records_sql(
-            "SELECT cc.id, cc.fullname, cc.path
-               FROM {local_sentientia_org} cc
-              WHERE cc.path LIKE :pp AND cc.depth = 3
-           ORDER BY cc.fullname",
-            ['pp' => $toporg . '/%']);
+            "SELECT o.id, o.fullname, o.path
+               FROM {local_sentientia_org} o
+              WHERE o.depth = 3 AND $teamsql
+           ORDER BY o.fullname",
+            $teamargs);
 
         if (empty($teams)) {
             return [];
         }
 
-        // Q1: distinct category enrolments per user path.
-        $enrolled_cats = $DB->get_records_sql(
-            "SELECT u.open_path AS p, c.category AS catid
-               FROM {user_enrolments} ue
-               JOIN {enrol} e ON e.id = ue.enrolid
-               JOIN {course} c ON c.id = e.courseid
-               JOIN {user} u ON u.id = ue.userid
-              WHERE u.deleted = 0 AND u.open_path LIKE :prefix
-           GROUP BY u.open_path, c.category",
-            ['prefix' => $toporg . '/%']);
-
-        // Q2: distinct category completions per user path.
-        $completed_cats = $DB->get_records_sql(
-            "SELECT u.open_path AS p, c.category AS catid
-               FROM {course_completions} cc
-               JOIN {course} c ON c.id = cc.course
-               JOIN {user} u ON u.id = cc.userid
-              WHERE u.deleted = 0 AND u.open_path LIKE :prefix
-                AND cc.timecompleted IS NOT NULL
-           GROUP BY u.open_path, c.category",
-            ['prefix' => $toporg . '/%']);
-
-        // Roll up by team path.
         $team_data = [];
         foreach ($teams as $team) {
-            $team_data[$team->path] = ['enrolled' => [], 'completed' => []];
+            $team_data[rtrim((string) $team->path, '/')] = ['enrolled' => [], 'completed' => []];
         }
 
-        foreach ($enrolled_cats as $row) {
-            foreach ($team_data as $tpath => &$td) {
-                if ($row->p === $tpath || str_starts_with($row->p, $tpath . '/')) {
-                    $td['enrolled'][(int) $row->catid] = true;
+        [$usersql, $userargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+            $orgpath, 'u', 'open_path', 'sguser');
+        $sources = [
+            // Q1: distinct category enrolments per user path.
+            'enrolled' => "SELECT u.open_path AS p, c.category AS catid
+                             FROM {user_enrolments} ue
+                             JOIN {enrol} e ON e.id = ue.enrolid
+                             JOIN {course} c ON c.id = e.courseid
+                             JOIN {user} u ON u.id = ue.userid
+                            WHERE u.deleted = 0 AND $usersql
+                         GROUP BY u.open_path, c.category",
+            // Q2: distinct category completions per user path.
+            'completed' => "SELECT u.open_path AS p, c.category AS catid
+                              FROM {course_completions} cc
+                              JOIN {course} c ON c.id = cc.course
+                              JOIN {user} u ON u.id = cc.userid
+                             WHERE u.deleted = 0 AND cc.timecompleted IS NOT NULL AND $usersql
+                          GROUP BY u.open_path, c.category",
+        ];
+        foreach ($sources as $bucket => $sql) {
+            $rs = $DB->get_recordset_sql($sql, $userargs);
+            foreach ($rs as $row) {
+                $teampath = self::team_for_path((string) $row->p, $team_data);
+                if ($teampath !== null) {
+                    $team_data[$teampath][$bucket][(int) $row->catid] = true;
                 }
             }
-            unset($td);
+            $rs->close();
         }
-        foreach ($completed_cats as $row) {
-            foreach ($team_data as $tpath => &$td) {
-                if ($row->p === $tpath || str_starts_with($row->p, $tpath . '/')) {
-                    $td['completed'][(int) $row->catid] = true;
-                }
-            }
-            unset($td);
+
+        // Names of every uncovered category, in one query (was one per team).
+        $uncoveredall = [];
+        foreach ($team_data as $td) {
+            $uncoveredall += array_diff_key($td['enrolled'], $td['completed']);
+        }
+        $catnames = [];
+        if (!empty($uncoveredall)) {
+            [$insql, $inparams] = $DB->get_in_or_equal(array_keys($uncoveredall), SQL_PARAMS_NAMED, 'cat');
+            $catnames = $DB->get_records_select_menu('course_categories', "id $insql", $inparams,
+                'name', 'id, name');
         }
 
         // Names are formatted unescaped: predictive_skillgap.mustache escapes them with {{ }}.
@@ -448,7 +461,7 @@ class predictive_engine {
         $syscontext = \context_system::instance();
         $result = [];
         foreach ($teams as $team) {
-            $td       = $team_data[$team->path];
+            $td       = $team_data[rtrim((string) $team->path, '/')];
             $required = count($td['enrolled']);
             if ($required === 0) {
                 continue;
@@ -457,16 +470,13 @@ class predictive_engine {
             $gap_pct = (int) round((($required - $covered) / $required) * 100);
             $gap_band = self::gap_band($gap_pct);
 
-            // Identify uncovered category ids for the display list.
-            $uncovered_ids = array_keys(array_diff_key($td['enrolled'], $td['completed']));
-            $skill_gaps    = [];
-            if (!empty($uncovered_ids)) {
-                [$insql, $inparams] = $DB->get_in_or_equal($uncovered_ids, SQL_PARAMS_NAMED, 'cat');
-                $cats = $DB->get_records_select('course_categories', "id $insql", $inparams,
-                    'name', 'id, name');
-                foreach ($cats as $cat) {
+            // Uncovered categories for the display list, in name order.
+            $uncovered  = array_diff_key($td['enrolled'], $td['completed']);
+            $skill_gaps = [];
+            foreach ($catnames as $catid => $catname) {
+                if (isset($uncovered[(int) $catid])) {
                     // Formatted once here, escaped once by the template's {{ }} (PB-3).
-                    $skill_gaps[] = ['skill_name' => format_string($cat->name, true,
+                    $skill_gaps[] = ['skill_name' => format_string($catname, true,
                         ['context' => $syscontext, 'escape' => false])];
                 }
             }
@@ -482,6 +492,10 @@ class predictive_engine {
                 'gap_high'        => ($gap_band === 'high'),
                 'gap_med'         => ($gap_band === 'medium'),
                 'gap_low'         => ($gap_band === 'low'),
+                // The template's outer section tests this flag. It used to test
+                // skill_gaps itself, which repeats a section once per item, so
+                // N uncovered categories printed N rows of N tags.
+                'has_skill_gaps'  => !empty($skill_gaps),
                 'skill_gaps'      => $skill_gaps,
             ];
         }
@@ -489,5 +503,28 @@ class predictive_engine {
         // Sort by gap descending.
         usort($result, fn($a, $b) => $b['gap_pct'] <=> $a['gap_pct']);
         return $result;
+    }
+
+    /**
+     * The team a user path belongs to: the path itself or its nearest ancestor
+     * that is a team, by whole segments ('/1/2' is not inside '/1/20').
+     *
+     * @param string $path  A user's open_path, e.g. '/1/2/7/218'
+     * @param array  $teams Keyed by team path without a trailing slash
+     * @return string|null The team path, or null when the path is in no team
+     */
+    private static function team_for_path(string $path, array $teams): ?string {
+        $path = rtrim($path, '/');
+        while ($path !== '') {
+            if (isset($teams[$path])) {
+                return $path;
+            }
+            $cut = strrpos($path, '/');
+            if ($cut === false) {
+                return null;
+            }
+            $path = substr($path, 0, $cut);
+        }
+        return null;
     }
 }

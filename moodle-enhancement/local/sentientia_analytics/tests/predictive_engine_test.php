@@ -332,6 +332,98 @@ final class predictive_engine_test extends \advanced_testcase {
         $this->assertStringNotContainsString('&amp;amp;', $html);
     }
 
+    // ── 11. Every category of a path is counted (QW-ROI, 2026-11-19) ──
+
+    /**
+     * One member enrolled in two courses in two categories, one completed:
+     * required 2, covered 1, gap 50%. get_records_sql() keyed the rows by
+     * path, kept one category per path, and reported required 1.
+     */
+    public function test_skillgap_counts_every_category_of_a_path(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->ensure_bizlms_schema();
+
+        $teampath = '/1/90011/90012';
+        $this->insert_team('Two Category Team', $teampath);
+        $catdone = $this->getDataGenerator()->create_category(['name' => 'Done Category']);
+        $catopen = $this->getDataGenerator()->create_category(['name' => 'Open Category']);
+        $done = $this->getDataGenerator()->create_course(['category' => $catdone->id]);
+        $open = $this->getDataGenerator()->create_course(['category' => $catopen->id]);
+        $user = $this->user_at_path($teampath . '/90013');
+        $this->getDataGenerator()->enrol_user($user->id, $done->id);
+        $this->getDataGenerator()->enrol_user($user->id, $open->id);
+        $DB->insert_record('course_completions', (object) [
+            'userid' => $user->id, 'course' => $done->id, 'timeenrolled' => 0,
+            'timestarted' => 0, 'timecompleted' => time(), 'reaggregate' => 0,
+        ]);
+
+        predictive_engine::invalidate_caches();
+        $rows = array_values(array_filter(predictive_engine::get_skill_gap_projection('/1', true),
+            fn($r) => $r['team_path'] === $teampath));
+
+        $this->assertCount(1, $rows);
+        $this->assertSame(2, $rows[0]['required_skills']);
+        $this->assertSame(1, $rows[0]['covered_skills']);
+        $this->assertSame(50, $rows[0]['gap_pct']);
+        $this->assertTrue($rows[0]['has_skill_gaps']);
+        $this->assertSame(['Open Category'], array_column($rows[0]['skill_gaps'], 'skill_name'));
+    }
+
+    // ── 12. '' scope covers every tenant; a tenant scope only its own ──
+
+    public function test_skillgap_whole_site_scope_includes_every_tenant(): void {
+        $this->resetAfterTest();
+        $this->ensure_bizlms_schema();
+
+        $teampath = '/77/90021/90022';
+        $this->insert_team('Public Tenant Team', $teampath);
+        $course = $this->getDataGenerator()->create_course();
+        $user   = $this->user_at_path($teampath);
+        $this->getDataGenerator()->enrol_user($user->id, $course->id);
+
+        predictive_engine::invalidate_caches();
+        $all  = array_column(predictive_engine::get_skill_gap_projection('', true), 'team_path');
+        $one  = array_column(predictive_engine::get_skill_gap_projection('/1', true), 'team_path');
+        $pub  = array_column(predictive_engine::get_skill_gap_projection('/77', true), 'team_path');
+
+        $this->assertContains($teampath, $all, "'' is the whole site, not tenant 1");
+        $this->assertNotContains($teampath, $one, 'tenant 1 must not see a /77 team');
+        $this->assertContains($teampath, $pub);
+    }
+
+    // ── 13. Uncovered tags print once per category ────────────────────
+
+    /**
+     * The template's outer section tested skill_gaps, which repeats once per
+     * item: two uncovered categories printed two rows of two tags.
+     */
+    public function test_skillgap_template_prints_each_tag_once(): void {
+        $this->resetAfterTest();
+        $html = $this->render_skillgap([[
+            'team_name' => 'T', 'team_path' => '/1/2/3', 'required_skills' => 2,
+            'covered_skills' => 0, 'gap_pct' => 100, 'gap_band' => 'high',
+            'gap_high' => true, 'gap_med' => false, 'gap_low' => false,
+            'has_skill_gaps' => true,
+            'skill_gaps' => [['skill_name' => 'Alpha'], ['skill_name' => 'Beta']],
+        ]]);
+
+        $this->assertSame(1, substr_count($html, 'airpay-analytics__skillgap-tags'));
+        $this->assertSame(2, substr_count($html, 'airpay-analytics__skill-tag"'));
+    }
+
+    /**
+     * Insert a depth-3 org unit (a team).
+     */
+    private function insert_team(string $name, string $path): void {
+        global $DB;
+        $DB->insert_record('local_sentientia_org', (object) [
+            'fullname' => $name, 'shortname' => 'qw' . md5($path),
+            'parentid' => 0, 'path' => $path, 'depth' => 3, 'visible' => 1,
+            'sortorder' => 0, 'timecreated' => time(), 'timemodified' => time(),
+        ]);
+    }
+
     /**
      * Render predictive_skillgap.mustache with the given rows.
      */

@@ -1,12 +1,18 @@
 # State Card — `local_airpay_skills`
 
 **Component:** `local_airpay_skills`
-**Version:** `2026111800` / `1.7.1`
+**Version:** `2026111900` / `1.7.2` (was `2026111800` / `1.7.1`)
 **Maturity:** `MATURITY_STABLE`
 **Status:** Live on airpay.academy. Skills catalog + per-user skill history.
 **Last refreshed:** 2026-05-24 (P1 state-card pass)
 
 ---
+
+## 2026-11-19 — QW-SKILLS-UI spacing (2026111900 / 1.7.2; uncommitted, local only, not on UAT; PHPUnit and browser not run)
+
+The theme vendors Bootstrap 4.6, which has no `gap-*` utilities, so `gap-2` / `gap-3` rendered 0px on Skills Management (header buttons touched; category icon touched its name). `manage.mustache` drops its inline `<style>` and the gap classes for BEM classes under `.ap-skills-admin` (`__header`, `__actions`, `__cat-card`, `__cat-icon`, `__filters`, ...); spacing lives in `styles.css` on the `--ap-space-*` / `--ap-radius-*` tokens, with a 590px breakpoint. Category grid is `col-sm-6 col-xl-4` (2 per row from 768 to 1199px). `admin.php` declares the datatable's Actions column (header had 5 cells over 6 data cells). `dashboard`, `view` and `designation_matrix` templates: one class swap each. No schema, capability, lang, flag or JS change; new test `tests/ui_spacing_test.php`. Both trees byte-identical.
+
+Open: visual evidence (desktop + mobile) still owed in `docs/visual-evidence/2026-11-19/`; `manage.mustache` and `admin.php` still hardcode English labels (needs en + hi strings); other plugins likely share the Bootstrap 5 `gap-*` / `form-select` gap (sweep or a theme-level shim, Nitin's call).
 
 ## 2026-11-19 — walk fixes (2026111800 / 1.7.1; local only, not on UAT; PHPUnit not run)
 

@@ -19,7 +19,8 @@ $plugin->component = 'local_sentientia_skills';
 // 2026100802 - Moodle 5.3 compat FX-20 round 1: skill_actions.js openSelfRateModal() reports a dialog that cannot be built through Notification.exception instead of leaving an unhandled rejection; AMD bundle rebuilt. No schema change.
 // 2026101501 - UI fix (visual pass 2026-10-14): (a) the self-rate dialog shows its "pick a level" warning INSIDE the dialog and stays open (it was a page-level notification hidden behind the backdrop); skill_actions.js + view.mustache, AMD bundle rebuilt. (b) names reached {{ }} templates, the datatable and the radar already HTML-escaped by format_string(), so "Compliance & Risk" printed as "Compliance &amp; Risk": skills_manager::plain() is the text form, used by every template/WS feed; get_gap_analysis/get_gap_courses/get_recommended_courses/get_interest_courses take $plain (the HTML-escaped default stays for the theme's {{{ }}} rail); designation_matrix no longer s()-escapes the designation it sends back. No schema change.
 // 2026101502 - review follow-up: skills_manager::plain() no longer depends on the site's formatstringstriptags being ON (OFF made format_string() return clean_text() HTML, so the double escape came back); the OFF result is reduced to text. Default (ON) behaviour unchanged. No schema change.
-$plugin->version   = 2026111800;  // Surface walk 2026-11-18: My Skills shows its readiness summary only when the designation has role skills (no more "0 of 0 skills met for [blank] · All skills met!" over the empty state); page strings in en+hi. No schema change.
+$plugin->version   = 2026111900;  // Surface walk 2026-11-19 (QW-SKILLS-UI): Skills Management spacing. The theme vendors Bootstrap 4.6 (no gap-* utilities), so gap-2/gap-3 rendered 0px: header buttons touched, category card icon touched its name. Spacing now in styles.css on --ap-space-* tokens (manage, dashboard chips, self-rate panel, designation matrix); skills table declares its Actions column (header had 5 cells over 6). No schema change.
+// 2026111800: Surface walk 2026-11-18: My Skills shows its readiness summary only when the designation has role skills (no more "0 of 0 skills met for [blank] · All skills met!" over the empty state); page strings in en+hi. No schema change.
 // 2026101502: UI fix review follow-up: plain() independent of formatstringstriptags (on top of 2026101501)
 // 2026101501: UI fix: self-rate warning inside the dialog + names escaped once (on top of 2026100802 FX-20 round 1)
 // 2026093001:  // ADR-032 BizLMS import (skills): course_levels + skill_interest tables, idnumber/open_path on categories and skills, names widened to 255, skills importer
@@ -27,7 +28,7 @@ $plugin->version   = 2026111800;  // Surface walk 2026-11-18: My Skills shows it
 // 2026092500:  // ADR-031: :manage has no default grant (+ revoke step); learners/backfill tenant-scoped
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.7.1'; // 1.7.1: My Skills empty state + strings. 1.7.0: ADR-032 BizLMS skills importer (classes/bizlms), learner interests, source labels
+$plugin->release   = '1.7.2'; // 1.7.2: Skills Management spacing (Bootstrap 4.6 gap fix) + Actions column header. 1.7.1: My Skills empty state + strings. 1.7.0: ADR-032 BizLMS skills importer (classes/bizlms), learner interests, source labels
 $plugin->dependencies = [
     'local_sentientia_platform' => 2026093001,  // ADR-032 bizlms framework (importer contract); ADR-031 tenant::is_cross_tenant() / require_same_tenant_user()
 ];

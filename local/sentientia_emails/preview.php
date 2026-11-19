@@ -18,15 +18,22 @@ if (!is_siteadmin()) {
     require_capability('local/sentientia_emails:preview', $context);
 }
 
-// Template key: primary from ?template=, fallback from ?tpl= (underscore→slash).
-// Sanitize BOTH parameters BEFORE use to prevent path traversal.
-$templatekey = preg_replace('/[^a-zA-Z0-9_\/]/', '', optional_param('template', '', PARAM_ALPHANUMEXT));
-if (empty($templatekey)) {
-    $tplraw = preg_replace('/[^a-zA-Z0-9_]/', '', optional_param('tpl', '', PARAM_ALPHANUMEXT));
-    $templatekey = str_replace('_', '/', $tplraw);
+// Template key: from ?template=, or the legacy ?tpl= spelling ("compliance_welcome_enrolled").
+// 2026-11-19: a key is accepted only when it is in the template registry
+// (email_renderer::known_template_key()), never by cleaning it into shape. This used to clean
+// ?template= with PARAM_ALPHANUMEXT, which drops the "/" every key has, so every template in the
+// sidebar previewed as "Template error: Sorry, the requested file could not be found".
+$requested = optional_param('template', '', PARAM_SAFEPATH);
+if ($requested === '') {
+    $requested = optional_param('tpl', '', PARAM_SAFEPATH);
 }
-// Double-check: strip any remaining traversal patterns.
-$templatekey = str_replace(['..', '//'], '', $templatekey);
+$templatekey = \local_sentientia_emails\email_renderer::known_template_key($requested);
+// A BizLMS legacy template ("View" on the manage.php Templates tab): bizlms/<type shortname>_<id>.
+// Read-only; only the numeric id is used, and legacy_bridge scopes it to the caller's tenant.
+$legacyid = 0;
+if ($templatekey === '' && preg_match('~^bizlms/[A-Za-z0-9_-]*_(\d+)$~', $requested, $matches)) {
+    $legacyid = (int) $matches[1];
+}
 
 // Tenant ID with access validation.
 // Audit fix 2026-05-15: previous code queried `mdl_local_costcenter` (the
@@ -64,17 +71,30 @@ $previewhtml = '';
 $previewsource = '';
 $previewplain = '';
 $selectedlabel = '';
+$displaykey = '';   // The "Template:" line.
+$urlkey = '';       // The ?template= value the tenant selector keeps.
+$sourcenote = '';   // Which version the preview shows.
+$unknowntemplate = false;
 
-if (!empty($templatekey)) {
+if ($templatekey !== '') {
     $fulltemplatename = 'local_sentientia_emails/' . $templatekey;
+    $displaykey = $fulltemplatename;
+    $urlkey = $templatekey;
     $samplecontext = \local_sentientia_emails\email_context::get_sample($templatekey);
 
     try {
+        // What this tenant's learners receive: its override, else the global one, else the file.
+        // The note names the body render_preview() actually rendered: a broken override falls back
+        // to the file (as render() does for a real send), and the note must not call it "edited".
+        $rendersource = null;
         $previewhtml = \local_sentientia_emails\email_renderer::render_preview(
-            $fulltemplatename, $samplecontext, $tenantid
+            $fulltemplatename, $samplecontext, $tenantid, $tenantid, $rendersource
         );
         $previewsource = s($previewhtml);
         $previewplain = html_to_text($previewhtml);
+        if (in_array($rendersource, ['file', 'tenant_override', 'global_override'], true)) {
+            $sourcenote = get_string('preview_source_' . $rendersource, 'local_sentientia_emails');
+        }
     } catch (\Exception $e) {
         $previewhtml = '<div style="padding:20px;color:#dc2626;font-family:monospace;">'
                      . 'Template error: ' . s($e->getMessage()) . '</div>';
@@ -89,6 +109,38 @@ if (!empty($templatekey)) {
             }
         }
     }
+} else if ($legacyid > 0) {
+    $legacy = $DB->get_manager()->table_exists('local_notification_info')
+        ? \local_sentientia_emails\legacy_bridge::get_bizlms_template($legacyid) : null;
+    if ($legacy) {
+        $tenantbrand = \local_sentientia_emails\tenant_config::get($tenantid);
+        // Authored in BizLMS: purified like any user HTML, shown as stored ([placeholders] unfilled).
+        $legacybody = format_text((string) ($legacy->body ?? ''), FORMAT_HTML,
+            ['context' => $context, 'filter' => false, 'para' => false]);
+        // Subject and type name unescaped here: {{subject}} in core/email_html and s() on the h2
+        // escape them once ('&' showed as '&amp;' when format_string() escaped them first).
+        $previewhtml = $PAGE->get_renderer('core')->render_from_template('core/email_html', [
+            'body'          => $legacybody,
+            'subject'       => format_string((string) ($legacy->subject ?? ''), true,
+                ['context' => $context, 'escape' => false]),
+            'sitefullname'  => format_string($SITE->fullname),
+            'siteshortname' => format_string($SITE->shortname),
+            'sitewwwroot'   => $CFG->wwwroot,
+            'toname'        => '',
+            'fromname'      => $tenantbrand['name'],
+        ]);
+        $previewsource = s($previewhtml);
+        $previewplain = html_to_text($previewhtml);
+        $selectedlabel = format_string((string) $legacy->type_name, true,
+            ['context' => $context, 'escape' => false]);
+        $displaykey = 'bizlms/' . $legacy->type_shortname . '_' . $legacy->id;
+        $urlkey = $requested;
+        $sourcenote = get_string('preview_source_bizlms', 'local_sentientia_emails');
+    } else {
+        $unknowntemplate = true;
+    }
+} else if ($requested !== '') {
+    $unknowntemplate = true;
 }
 
 // Mark active template in sidebar.
@@ -220,14 +272,15 @@ echo $OUTPUT->header();
 
     <!-- MAIN PREVIEW AREA -->
     <div class="ap-email-main">
-        <?php if (!empty($templatekey) && !empty($previewhtml)): ?>
+        <?php if ($urlkey !== '' && !empty($previewhtml)): ?>
 
             <h2 class="ap-email-title"><?php echo s($selectedlabel); ?></h2>
-            <p class="ap-email-subtitle">Template: <code>local_sentientia_emails/<?php echo s($templatekey); ?></code></p>
+            <p class="ap-email-subtitle">Template: <code><?php echo s($displaykey); ?></code>
+                <?php if ($sourcenote !== ''): ?> &middot; <?php echo s($sourcenote); ?><?php endif; ?></p>
 
             <div class="ap-email-controls">
                 <label style="font-size:13px; color:#5a6070; font-weight:500;">Tenant:</label>
-                <select onchange="window.location='<?php echo (new moodle_url('/local/sentientia_emails/preview.php', ['template' => $templatekey]))->out(false); ?>&tenant='+this.value">
+                <select onchange="window.location='<?php echo s((new moodle_url('/local/sentientia_emails/preview.php', ['template' => $urlkey]))->out(false)); ?>&tenant='+this.value">
                     <?php foreach ($tenants as $t): ?>
                         <option value="<?php echo $t['id']; ?>" <?php echo $t['selected'] ? 'selected' : ''; ?>>
                             <?php echo s($t['name']); ?>
@@ -270,6 +323,10 @@ echo $OUTPUT->header();
             <div id="panel-plain" class="ap-email-plain"
                  style="<?php echo ($viewmode !== 'plain') ? 'display:none;' : ''; ?>"><?php echo s($previewplain); ?></div>
 
+        <?php elseif ($unknowntemplate): ?>
+            <div class="ap-email-empty">
+                <?php echo s(get_string('template_unknown', 'local_sentientia_emails')); ?>
+            </div>
         <?php else: ?>
             <div class="ap-email-empty">
                 <?php echo get_string('no_template_selected', 'local_sentientia_emails'); ?>

@@ -190,20 +190,12 @@ if ($show_predictive) {
 }
 
 if ($show_roi) {
+    // One formatted object for roi_dashboard.mustache. This used to flatten the
+    // raw array to roi_roi_pct, roi_total_benefit, ... keys the template never
+    // read, so the card printed a lone "%" and headings with no figures (QW-ROI).
     $roi = \local_sentientia_analytics\roi_calculator::compute($range, $orgpath);
-    $data['roi']             = $roi;
-    $data['roi_empty']       = empty($roi['completions'] ?? $roi['raw_metrics']['completions'] ?? false);
-    $data['roi_description'] = get_string('roi_description', 'local_sentientia_analytics');
-    // Flatten ROI into data for template convenience.
-    if (!empty($roi)) {
-        foreach ($roi as $k => $v) {
-            if (!is_array($v)) {
-                $data['roi_' . $k] = $v;
-            }
-        }
-        $data['roi_components']   = $roi['components']   ?? [];
-        $data['roi_assumptions']  = $roi['assumptions']  ?? [];
-    }
+    $data['roi'] = \local_sentientia_analytics\roi_calculator::export_for_template($roi,
+        has_capability('moodle/site:config', $systemcontext));
 }
 
 echo $OUTPUT->header();

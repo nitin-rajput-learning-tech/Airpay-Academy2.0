@@ -474,3 +474,7 @@ $string['login_contact'] = 'Contact us';
 $string['langswitch_label'] = 'Language';
 $string['langswitch_disabled'] = 'The language switcher is not turned on.';
 $string['langswitch_invalid'] = 'That language is not available.';
+
+// Certificate verification, not-found result (QW-CERT-VERIFY, 2026-11-19).
+// Shown by templates/tool_certificate/verify_certificate_results.mustache.
+$string['certverify_notfound'] = 'No certificate with this code was issued on this site. Check that the code matches the one printed on the certificate, then try again. If it still does not match, contact the organisation that issued the certificate.';

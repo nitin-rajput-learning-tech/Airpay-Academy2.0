@@ -24,8 +24,10 @@ if (!is_siteadmin() && !has_capability('local/sentientia_emails:manage_templates
     throw new \moodle_exception('nopermissions', 'error', '', 'edit templates');
 }
 
-$templatekey = optional_param('template', '', PARAM_RAW);
-$templatekey = preg_replace('/[^a-zA-Z0-9_\/]/', '', $templatekey);
+// 2026-11-19: only a key from the template registry. The old character filter let any name through
+// (e.g. manage/editor, this plugin's own page template, could be "edited" and given an override row).
+$templatekey = \local_sentientia_emails\email_renderer::known_template_key(
+    optional_param('template', '', PARAM_SAFEPATH));
 // ADR-031: only a cross-tenant caller may pick the tenant, and only they
 // may edit the global override (tenant 0), which every tenant's learners
 // receive. Everyone else edits their own tenant's override, whatever
@@ -87,8 +89,10 @@ if ($override && !empty($override->body_html)) {
 $previewhtml = '';
 try {
     $fulltemplatename = 'local_sentientia_emails/' . $templatekey;
+    // The override being edited (tenant, or global for tenant 0), so the first preview matches the
+    // editor's text; branding falls back to Airpay for the global scope, as before.
     $previewhtml = \local_sentientia_emails\email_renderer::render_preview(
-        $fulltemplatename, $samplecontext, $tenantid ?: 1);
+        $fulltemplatename, $samplecontext, $tenantid ?: 1, $tenantid);
 } catch (\Exception $e) {
     $previewhtml = '<p style="color:red;">Preview error: ' . s($e->getMessage()) . '</p>';
 }

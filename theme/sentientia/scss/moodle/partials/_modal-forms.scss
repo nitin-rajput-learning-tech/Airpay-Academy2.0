@@ -1,0 +1,100 @@
+// ═══════════════════════════════════════════════════════════════════════
+// MODAL FORMS: the label column of a moodleform shown in a modal
+// (QW-MODAL-FORMS, 2026-11-19)
+// ═══════════════════════════════════════════════════════════════════════
+// Seen on UAT in the ModalForm dialogues Manage Courses > Edit course,
+// Classrooms > Add classroom and Programs > Edit program: labels wrapped with
+// the first line pushed in ("    Course full / name", "    Maximum / capacity")
+// and the required/help icons at the end of the second line.
+//
+// Cause: forms.scss carries core Boost 4.x/5.x's
+//   .mform fieldset .fcontainer.collapseable .col-form-label { padding-left: 2.5rem }  (md and up)
+// Core puts .col-form-label on the label COLUMN (<div class="col-md-3 col-form-label d-flex">),
+// so the whole column moves in under the section chevron. This theme overrides
+// core_form/element-template with the older markup, where .col-form-label sits on an
+// INLINE <label class="col-form-label d-inline"> and the icons are a
+// <span class="float-sm-right text-nowrap"> after it. Left padding on an inline box
+// indents only its first line, and in the 25% column of an 800px dialog the label
+// then wraps; the floated icons land on the last line.
+//
+// Fix, for modals only (page forms keep their look; the legacy BizLMS
+// .openLMStransition modals keep their own rules in _moodle-overrides.scss):
+//   1. no first-line indent (every modal);
+//   2. large dialogues (.modal-lg / .modal-xl, the ModalForm default), md and up: the label
+//      column is a flex row, label first (wraps as a block when it must) and the icons beside
+//      it, level with the label's first line;
+//   3. large dialogues: 30 / 70 columns from lg up, where the dialogue is 800px wide;
+//      between md and lg it is only 500px wide, so labels sit above their fields, as they
+//      already do below md, with the icons right after the label text.
+// Default-size dialogues (ModalForm large:false, 500px) get rule 1 only. Their label column
+// is 25% (about 95px): as a flex row the label shrank beside the icons and one-word labels
+// broke mid-word ("Permiss / ion", Roles > Edit capability, verified 2026-11-19). The
+// template's inline label with floated icons copes better there, so it stays.
+// Forms that ask for .full-width-labels keep that layout. In this theme their icons float
+// to the right edge (the template's float-sm-right span); that predates this partial.
+// ═══════════════════════════════════════════════════════════════════════
+
+// 1. No first-line indent on labels inside collapsible sections.
+.modal:not(.openLMStransition) .mform fieldset .fcontainer.collapseable .col-form-label {
+    padding-left: 0;
+}
+
+@include media-breakpoint-up(md) {
+    // 2. Large dialogues: label + icons side by side, icons level with the first line of the label.
+    // Not for default-size dialogues (see the header). Not for .full-width-labels: this selector
+    // would outrank forms.scss `.mform.full-width-labels .fitem.row.femptylabel > .col-md-3
+    // { display: none }` and show the empty label column again.
+    .modal:not(.openLMStransition) .modal-lg .mform:not(.full-width-labels) .fitem.row > .col-md-3:first-child,
+    .modal:not(.openLMStransition) .modal-xl .mform:not(.full-width-labels) .fitem.row > .col-md-3:first-child {
+        display: flex;
+        align-items: flex-start;
+
+        > .col-form-label {
+            flex: 0 1 auto;
+            min-width: 0;
+            overflow-wrap: break-word;
+        }
+
+        > .text-nowrap {
+            flex: 0 0 auto;
+            margin-left: auto;
+            padding-left: 0.25rem;
+            // Same top offset as .col-form-label, so the icons line up with the label text.
+            padding-top: add($input-padding-y, $input-border-width);
+        }
+    }
+}
+
+// 3a. Large dialogue between md and lg (500px wide): labels above their fields, and the icons
+// right after the label text (margin-left: auto from rule 2 would push them to the far edge
+// of the now full-width label column).
+@include media-breakpoint-only(md) {
+    .modal:not(.openLMStransition) .modal-lg .mform:not(.full-width-labels) .fitem.row,
+    .modal:not(.openLMStransition) .modal-xl .mform:not(.full-width-labels) .fitem.row {
+        > .col-md-3,
+        > .col-md-9 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+
+        > .col-md-3:first-child > .text-nowrap {
+            margin-left: 0;
+        }
+    }
+}
+
+// 3b. Large dialogue from lg up (800px wide): a wider label column, 30 / 70.
+@include media-breakpoint-up(lg) {
+    .modal:not(.openLMStransition) .modal-lg .mform:not(.full-width-labels) .fitem.row,
+    .modal:not(.openLMStransition) .modal-xl .mform:not(.full-width-labels) .fitem.row {
+        > .col-md-3 {
+            flex: 0 0 30%;
+            max-width: 30%;
+        }
+
+        > .col-md-9 {
+            flex: 0 0 70%;
+            max-width: 70%;
+        }
+    }
+}

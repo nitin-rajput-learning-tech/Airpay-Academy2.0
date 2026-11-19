@@ -70,4 +70,21 @@ class mustache_factory {
         }
         return new \Mustache\Engine($options);
     }
+
+    /**
+     * The engine for an edited (DB override) e-mail body: engine() plus this plugin's e-mail partials.
+     *
+     * Every file template, and so every body the Design Studio opens for editing, includes
+     * {{> local_sentientia_emails/partials/course_info_box}} and {{> .../footer_note}}, and the studio's
+     * "Course Card" and "Support Footer" blocks insert them. engine() has no partials loader, so Mustache
+     * rendered each of them as an empty string: saving a template without changing a word took the course
+     * card and the support footer out of every e-mail sent from it (found 2026-11-19). Only
+     * local_sentientia_emails/partials/* resolve (see partials_loader); any other partial still renders
+     * as nothing, as before.
+     *
+     * @return \Mustache\Engine|\Mustache_Engine
+     */
+    public static function email_engine() {
+        return self::engine(['partials_loader' => new partials_loader()]);
+    }
 }

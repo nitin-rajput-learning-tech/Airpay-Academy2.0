@@ -15,6 +15,7 @@
           .gap_high              - bool
           .gap_med               - bool
           .gap_low               - bool
+          .has_skill_gaps        - bool (the outer section; testing skill_gaps there repeated it per item)
           .skill_gaps[]          - array of uncovered skill rows
             .skill_name          - string
         has_skillgaps            - bool
@@ -55,14 +56,14 @@
                      aria-valuemax="100"
                      aria-label="Skill gap {{gap_pct}}%"></div>
             </div>
-            {{#skill_gaps}}
+            {{#has_skill_gaps}}
             <div class="airpay-analytics__skillgap-tags">
                 {{# str }}uncovered_skills, local_sentientia_analytics{{/ str }}:
                 {{#skill_gaps}}
                 <span class="airpay-analytics__skill-tag">{{skill_name}}</span>
                 {{/skill_gaps}}
             </div>
-            {{/skill_gaps}}
+            {{/has_skill_gaps}}
         </div>
         {{/skillgaps}}
     </div>

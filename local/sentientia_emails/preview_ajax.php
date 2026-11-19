@@ -19,8 +19,13 @@ if (!is_siteadmin() && !has_capability('local/sentientia_emails:manage_templates
 
 $bodyhtml    = required_param('bodyhtml', PARAM_RAW);
 $subject     = optional_param('subject', '', PARAM_RAW);
-$templatekey = optional_param('template', '', PARAM_RAW);
+// 2026-11-19: only a key from the template registry (was PARAM_RAW, used unchecked).
+$templatekey = \local_sentientia_emails\email_renderer::known_template_key(
+    optional_param('template', '', PARAM_SAFEPATH));
 $tenantid    = optional_param('tenant', 1, PARAM_INT);
+if ($templatekey === '') {
+    throw new \invalid_parameter_exception('Unknown e-mail template');
+}
 
 // Get sample context for the template.
 $samplecontext = \local_sentientia_emails\email_context::get_sample($templatekey);
@@ -29,7 +34,8 @@ $samplecontext['subject'] = $subject ?: ($samplecontext['subject'] ?? 'Preview')
 // Render the custom body HTML through Mustache engine.
 try {
     // \Mustache\Engine on Moodle 5.2+, \Mustache_Engine on 5.1 (see mustache_factory).
-    $mustache = \local_sentientia_emails\mustache_factory::engine();
+    // email_engine(): the body may include this plugin's partials, exactly as a delivered override can.
+    $mustache = \local_sentientia_emails\mustache_factory::email_engine();
     $body = $mustache->render($bodyhtml, $samplecontext);
 } catch (\Throwable $e) {
     $body = '<p style="color:#dc2626; font-family:monospace; padding:16px;">'

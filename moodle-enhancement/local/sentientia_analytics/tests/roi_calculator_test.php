@@ -10,23 +10,18 @@ defined('MOODLE_INTERNAL') || die();
  * PHPUnit tests for roi_calculator.
  *
  * Coverage:
- *  1. ROI formula: positive ROI when benefits > costs
- *  2. ROI formula: negative ROI when costs > benefits
- *  3. ROI = 0 when benefit == cost
- *  4. Currency symbol string is returned
- *  5. Assumptions array is non-empty and contains expected keys
- *  6. Components array has both benefits and costs sub-arrays
- *  7. Summary sentence reflects sign (positive / negative)
- *  8. Cache hit on repeat call
- *  9. Cache invalidation triggers re-compute
- * 10. Tenant isolation — costs/benefits are not cross-contaminated
- *     between org scopes (verified via raw_metrics)
- * 11. Flag-OFF no-op pattern (same guard test as predictive)
- *
- * Note: roi_calculator relies on live Moodle DB tables (completions,
- * enrolments, courses). Tests seed minimal data and verify structural
- * guarantees, not exact currency amounts (which depend on configurable
- * assumptions).
+ *  1. model(): exact figures with the default assumptions
+ *  2. model(): no cost gives a null ROI, not a division by zero
+ *  3. compute(): numbers-only shape (cache holds nothing language-specific)
+ *  4. compute(): a changed setting is used at once (it is part of the cache key)
+ *  5. compute(): an empty, non-numeric or negative setting falls back to the default
+ *  6. Cache hit on repeat call / re-compute after invalidation
+ *  7. Tenant isolation — /9999 has no completions
+ *  8. export_for_template(): every figure is formatted, all 7 assumptions listed
+ *  9. export_for_template(): empty states (no completions, no cost) and the settings link
+ * 10. format_money(): separators, sign, decimals
+ * 11. roi_dashboard.mustache prints the figures (QW-ROI: it printed a lone "%")
+ * 12. Flag-OFF no-op pattern
  *
  * @package    local_sentientia_analytics
  * @category   test
@@ -37,175 +32,268 @@ final class roi_calculator_test extends \advanced_testcase {
 
     use \local_sentientia_org\test\bizlms_fixture;
 
-    // ── 1. Positive ROI ───────────────────────────────────────────────
+    /** Metrics used by the model tests: every figure below follows from these. */
+    private const METRICS = [
+        'completions'      => 10,
+        'mandatory_ontime' => 4,
+        'active_courses'   => 2,
+        'active_learners'  => 5,
+    ];
+
+    // ── 1. model() arithmetic ─────────────────────────────────────────
 
     /**
-     * When benefits > costs, roi_pct must be > 0.
-     * We seed enough completions to make the productivity gain outweigh
-     * the default platform cost.
+     * Defaults: 2 h saved, ₹500/h, ₹1,000 penalty, 40 h per course,
+     * ₹50,000 platform, ₹50 per learner-hour, 3 h per course.
+     *   productivity 10 × 2 × 500 = 10,000; compliance 4 × 1,000 = 4,000
+     *   L&D 2 × 40 × 500 = 40,000; platform 50,000; content 5 × 3 × 50 = 750
+     *   benefit 14,000; cost 90,750; net -76,750; ROI round(-84.57) = -85
      */
-    public function test_positive_roi_when_benefits_exceed_costs(): void {
-        $this->resetAfterTest();
-        $this->ensure_bizlms_schema();
+    public function test_model_figures_with_defaults(): void {
+        $r = roi_calculator::model(self::METRICS, roi_calculator::defaults());
 
-        // Override assumptions to create a predictable positive ROI.
-        // Benefits: 1000 completions × 2h × ₹500 = ₹1,000,000
-        // Costs:    10 courses × 40h × ₹500 + ₹50,000 + (100 × 3h × ₹50)
-        //         = ₹200,000 + ₹50,000 + ₹15,000 = ₹265,000
-        // ROI = (1,000,000 - 265,000) / 265,000 * 100 ≈ 277%
-        // To avoid seeding 1000 real completions we test the math directly.
-        $benefits = 1000 * 2.0 * 500.0;  // 1,000,000
-        $costs    = (10 * 40.0 * 500.0) + 50000.0 + (100 * 3.0 * 50.0);  // 265,000
-        $net      = $benefits - $costs;
-        $roi_pct  = (int) round(($net / $costs) * 100);
-
-        $this->assertGreaterThan(0, $roi_pct, 'Positive ROI expected');
-        $this->assertGreaterThan(0, $net,     'Net benefit should be positive');
+        $this->assertEquals(10000.0, $r['lines']['productivity']);
+        $this->assertEquals(4000.0, $r['lines']['compliance']);
+        $this->assertEquals(40000.0, $r['lines']['ld_staff']);
+        $this->assertEquals(50000.0, $r['lines']['platform']);
+        $this->assertEquals(750.0, $r['lines']['content']);
+        $this->assertEquals(14000.0, $r['total_benefit']);
+        $this->assertEquals(90750.0, $r['total_cost']);
+        $this->assertEquals(-76750.0, $r['net_benefit']);
+        $this->assertSame(-85, $r['roi_pct']);
     }
 
-    // ── 2. Negative ROI ───────────────────────────────────────────────
-
-    public function test_negative_roi_when_costs_exceed_benefits(): void {
-        $benefits = 100.0;     // tiny benefit
-        $costs    = 500000.0;  // large cost
-        $net      = $benefits - $costs;
-        $roi_pct  = (int) round(($net / $costs) * 100);
-
-        $this->assertLessThan(0, $roi_pct, 'Negative ROI expected when costs dominate');
-        $this->assertLessThan(0, $net,     'Net benefit should be negative');
+    public function test_model_positive_roi(): void {
+        $r = roi_calculator::model(['completions' => 1000] + self::METRICS, roi_calculator::defaults());
+        // Benefit 1,000,000 + 4,000; cost 90,750.
+        $this->assertGreaterThan(0, $r['roi_pct']);
+        $this->assertGreaterThan(0, $r['net_benefit']);
     }
 
-    // ── 3. ROI == 0 when equal ────────────────────────────────────────
+    // ── 2. No cost ────────────────────────────────────────────────────
 
-    public function test_roi_zero_when_benefit_equals_cost(): void {
-        $costs   = 100000.0;
-        $net     = 0.0;
-        $roi_pct = (int) round(($net / $costs) * 100);
-        $this->assertSame(0, $roi_pct, 'ROI must be 0 when benefit equals cost');
+    public function test_model_zero_cost_gives_null_roi(): void {
+        $cfg = ['platform_cost' => 0.0, 'course_dev_hours' => 0.0, 'cost_per_learner_hour' => 0.0]
+            + roi_calculator::defaults();
+        $r = roi_calculator::model(self::METRICS, $cfg);
+        $this->assertEquals(0.0, $r['total_cost']);
+        $this->assertNull($r['roi_pct']);
     }
 
-    // ── 4. compute() structural shape ────────────────────────────────
+    // ── 3. compute() shape ────────────────────────────────────────────
 
-    /**
-     * compute() should return a well-formed array even with no data.
-     */
     public function test_compute_returns_required_keys(): void {
         $this->resetAfterTest();
         $this->ensure_bizlms_schema();
-
         roi_calculator::invalidate_caches();
 
-        $result = roi_calculator::compute('30d', '/9999', true);
+        $result = roi_calculator::compute('ytd', '/9999', true);
 
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('roi_pct',           $result);
-        $this->assertArrayHasKey('total_benefit',     $result);
-        $this->assertArrayHasKey('total_cost',        $result);
-        $this->assertArrayHasKey('net_benefit',       $result);
-        $this->assertArrayHasKey('currency_symbol',   $result);
-        $this->assertArrayHasKey('components',        $result);
-        $this->assertArrayHasKey('assumptions',       $result);
-        $this->assertArrayHasKey('summary_sentence',  $result);
-        $this->assertArrayHasKey('raw_metrics',       $result);
-    }
-
-    // ── 5. Currency symbol ────────────────────────────────────────────
-
-    public function test_compute_returns_currency_symbol(): void {
-        $this->resetAfterTest();
-        $this->ensure_bizlms_schema();
-
-        roi_calculator::invalidate_caches();
-        $result = roi_calculator::compute('30d', '', true);
-
-        $this->assertNotEmpty($result['currency_symbol'],
-            'currency_symbol must not be empty');
-    }
-
-    // ── 6. Assumptions non-empty ──────────────────────────────────────
-
-    public function test_assumptions_are_present(): void {
-        $this->resetAfterTest();
-        $this->ensure_bizlms_schema();
-
-        roi_calculator::invalidate_caches();
-        $result = roi_calculator::compute('30d', '', true);
-
-        $this->assertNotEmpty($result['assumptions'],
-            'assumptions array must not be empty');
-
-        // Each assumption should have label + value.
-        foreach ($result['assumptions'] as $assm) {
-            $this->assertArrayHasKey('assumption_label', $assm);
-            $this->assertArrayHasKey('assumption_value', $assm);
+        foreach (['roi_pct', 'total_benefit', 'total_cost', 'net_benefit', 'lines',
+                  'raw_metrics', 'cfg', 'range'] as $key) {
+            $this->assertArrayHasKey($key, $result);
         }
+        $this->assertSame('ytd', $result['range']);
+        $this->assertSame(array_keys(roi_calculator::ASSUMPTIONS), array_keys($result['cfg']));
+        // Numbers only: nothing in the cached array is a sentence.
+        array_walk_recursive($result, function($v, $k) {
+            $this->assertFalse(is_string($v) && $k !== 'range', "unexpected string at $k");
+        });
     }
 
-    // ── 7. Components structure ───────────────────────────────────────
+    // ── 4. Settings are used at once ──────────────────────────────────
 
-    public function test_components_have_benefits_and_costs(): void {
+    public function test_changed_setting_is_used_without_waiting_for_cache(): void {
         $this->resetAfterTest();
         $this->ensure_bizlms_schema();
-
         roi_calculator::invalidate_caches();
-        $result = roi_calculator::compute('30d', '', true);
 
-        $this->assertArrayHasKey('benefits', $result['components']);
-        $this->assertArrayHasKey('costs',    $result['components']);
-        $this->assertNotEmpty($result['components']['benefits']);
-        $this->assertNotEmpty($result['components']['costs']);
+        $before = roi_calculator::compute('30d', '/1', false);
+        $this->assertEquals(roi_calculator::DEFAULT_PLATFORM_COST, $before['cfg']['platform_cost']);
+
+        set_config('roi_platform_cost', '75000', 'local_sentientia_analytics');
+        $after = roi_calculator::compute('30d', '/1', false);
+        $this->assertEquals(75000.0, $after['cfg']['platform_cost']);
+        $this->assertEquals(75000.0, $after['lines']['platform']);
     }
 
-    // ── 8. Summary sentence sign ──────────────────────────────────────
+    // ── 5. Bad settings fall back ─────────────────────────────────────
 
-    public function test_summary_sentence_exists(): void {
+    public function test_unusable_settings_fall_back_to_defaults(): void {
         $this->resetAfterTest();
         $this->ensure_bizlms_schema();
-
         roi_calculator::invalidate_caches();
-        $result = roi_calculator::compute('30d', '', true);
 
-        $this->assertIsString($result['summary_sentence']);
-        $this->assertNotEmpty($result['summary_sentence']);
+        set_config('roi_hourly_rate', '', 'local_sentientia_analytics');
+        set_config('roi_penalty_avoided', 'abc', 'local_sentientia_analytics');
+        set_config('roi_hours_per_course', '-3', 'local_sentientia_analytics');
+        set_config('roi_course_dev_hours', '12.5', 'local_sentientia_analytics');
+
+        $cfg = roi_calculator::compute('30d', '', true)['cfg'];
+        $this->assertEquals(roi_calculator::DEFAULT_HOURLY_RATE, $cfg['hourly_rate']);
+        $this->assertEquals(roi_calculator::DEFAULT_PENALTY_AVOIDED, $cfg['penalty_avoided']);
+        $this->assertEquals(roi_calculator::DEFAULT_HOURS_PER_COURSE, $cfg['hours_per_course']);
+        $this->assertEquals(12.5, $cfg['course_dev_hours']);
     }
 
-    // ── 9. Cache hit on repeat call ───────────────────────────────────
+    // ── 6. Cache ──────────────────────────────────────────────────────
 
     public function test_roi_cache_hit(): void {
         $this->resetAfterTest();
         $this->ensure_bizlms_schema();
-
         roi_calculator::invalidate_caches();
 
-        // First call — populates cache.
-        $first = roi_calculator::compute('30d', '/1', true);
-
-        // Second call (no $refresh) — should hit cache.
+        $first  = roi_calculator::compute('30d', '/1', true);
         $second = roi_calculator::compute('30d', '/1', false);
 
-        $this->assertSame($first['roi_pct'], $second['roi_pct'],
-            'roi_pct must be identical on cache hit');
-        $this->assertSame($first['total_cost'], $second['total_cost'],
-            'total_cost must be identical on cache hit');
+        $this->assertSame($first['roi_pct'], $second['roi_pct']);
+        $this->assertSame($first['total_cost'], $second['total_cost']);
     }
-
-    // ── 10. Cache invalidation ────────────────────────────────────────
 
     public function test_roi_cache_invalidation(): void {
         $this->resetAfterTest();
         $this->ensure_bizlms_schema();
 
         roi_calculator::invalidate_caches();
-        $first = roi_calculator::compute('30d', '/1', true);
-
+        roi_calculator::compute('30d', '/1', true);
         roi_calculator::invalidate_caches();
-        // After invalidation the next call re-queries — must not throw.
         $second = roi_calculator::compute('30d', '/1', true);
 
         $this->assertIsArray($second, 're-compute after invalidation must return array');
     }
 
-    // ── 11. Flag-OFF no-op pattern ────────────────────────────────────
+    // ── 7. Tenant isolation via raw_metrics ───────────────────────────
+
+    public function test_tenant_scoping_in_raw_metrics(): void {
+        $this->resetAfterTest();
+        $this->ensure_bizlms_schema();
+        roi_calculator::invalidate_caches();
+
+        $result9999 = roi_calculator::compute('30d', '/9999', true);
+        $this->assertSame(0, (int) $result9999['raw_metrics']['completions'],
+            '/9999 completions should be 0 (no users seeded)');
+    }
+
+    // ── 8. export_for_template(): figures ─────────────────────────────
+
+    public function test_export_formats_every_figure(): void {
+        $this->resetAfterTest();
+        $roi = roi_calculator::model(self::METRICS, roi_calculator::defaults()) + ['range' => 'ytd'];
+
+        $ctx = roi_calculator::export_for_template($roi, false);
+
+        $this->assertFalse($ctx['roi_empty']);
+        $this->assertSame('-85%', $ctx['roi_pct_display']);
+        $this->assertTrue($ctx['roi_negative']);
+        $this->assertFalse($ctx['roi_positive']);
+        $this->assertSame('₹14,000', $ctx['total_benefit']);
+        $this->assertSame('₹90,750', $ctx['total_cost']);
+        $this->assertSame('-₹76,750', $ctx['net_benefit']);
+        $this->assertStringContainsString('the year to date', $ctx['summary']);
+        $this->assertStringContainsString('₹76,750', $ctx['summary']);
+
+        $this->assertCount(2, $ctx['benefits']);
+        $this->assertCount(3, $ctx['costs']);
+        $this->assertSame('₹10,000', $ctx['benefits'][0]['value']);
+        $this->assertSame('10 course completions × 2 h saved per completion × ₹500 per hour',
+            $ctx['benefits'][0]['formula']);
+        $this->assertSame('₹750', $ctx['costs'][2]['value']);
+
+        // All seven assumptions, each with a unit and marked as the default.
+        $this->assertSame(array_keys(roi_calculator::ASSUMPTIONS),
+            array_column($ctx['assumptions'], 'assumption_key'));
+        $this->assertTrue($ctx['uses_defaults']);
+        foreach ($ctx['assumptions'] as $a) {
+            $this->assertNotEmpty($a['assumption_label']);
+            $this->assertNotEmpty($a['assumption_value']);
+            $this->assertTrue($a['is_default']);
+        }
+        // No settings link for a viewer who cannot configure.
+        $this->assertFalse($ctx['can_configure']);
+        $this->assertSame('', $ctx['settings_url']);
+    }
+
+    public function test_export_marks_changed_assumptions(): void {
+        $this->resetAfterTest();
+        $cfg = ['hourly_rate' => 650.0] + roi_calculator::defaults();
+        $ctx = roi_calculator::export_for_template(roi_calculator::model(self::METRICS, $cfg), true);
+
+        $this->assertFalse($ctx['uses_defaults']);
+        $byk = array_column($ctx['assumptions'], null, 'assumption_key');
+        $this->assertFalse($byk['hourly_rate']['is_default']);
+        $this->assertSame('₹650 per hour', $byk['hourly_rate']['assumption_value']);
+        $this->assertTrue($byk['platform_cost']['is_default']);
+        $this->assertTrue($ctx['can_configure']);
+        $this->assertStringContainsString('section=local_sentientia_analytics', $ctx['settings_url']);
+    }
+
+    // ── 9. Empty states ───────────────────────────────────────────────
+
+    public function test_export_empty_when_no_completions(): void {
+        $this->resetAfterTest();
+        $roi = roi_calculator::model(['completions' => 0, 'mandatory_ontime' => 0] + self::METRICS,
+            roi_calculator::defaults()) + ['range' => '7d'];
+
+        $ctx = roi_calculator::export_for_template($roi, true);
+        $this->assertTrue($ctx['roi_empty']);
+        $this->assertSame(get_string('roi_empty_title_nocompletions', 'local_sentientia_analytics'),
+            $ctx['empty_state']['title']);
+        $this->assertStringContainsString('the last 7 days', $ctx['empty_state']['message']);
+        $this->assertNotEmpty($ctx['empty_state']['ctaurl'], 'an admin gets the settings link');
+
+        $ctx = roi_calculator::export_for_template($roi, false);
+        $this->assertSame('', $ctx['empty_state']['ctaurl'], 'no link for a viewer who cannot configure');
+    }
+
+    public function test_export_empty_when_no_cost(): void {
+        $this->resetAfterTest();
+        $cfg = ['platform_cost' => 0.0, 'course_dev_hours' => 0.0, 'cost_per_learner_hour' => 0.0]
+            + roi_calculator::defaults();
+        $ctx = roi_calculator::export_for_template(roi_calculator::model(self::METRICS, $cfg), true);
+
+        $this->assertTrue($ctx['roi_empty']);
+        $this->assertSame(get_string('roi_empty_title_nocost', 'local_sentientia_analytics'),
+            $ctx['empty_state']['title']);
+    }
+
+    // ── 10. format_money() ────────────────────────────────────────────
+
+    public function test_format_money(): void {
+        $this->assertSame('₹1,234,567', roi_calculator::format_money(1234567.4, 0));
+        $this->assertSame('₹1,234,567.40', roi_calculator::format_money(1234567.4));
+        $this->assertSame('-₹500', roi_calculator::format_money(-500));
+        $this->assertSame('₹2.50', roi_calculator::format_money(2.5));
+        $this->assertSame('₹0', roi_calculator::format_money(-0.2, 0), 'no "-₹0"');
+        $this->assertSame('₹1.77', roi_calculator::format_money(1.7654, 2));
+    }
+
+    // ── 11. The template prints the figures ───────────────────────────
+
+    /**
+     * QW-ROI regression: index.php handed the template roi_roi_pct,
+     * roi_total_benefit, ... and the template read roi_pct, total_benefit, so
+     * the card showed a lone "%" and headings with no figures.
+     */
+    public function test_template_prints_figures(): void {
+        global $OUTPUT;
+        $this->resetAfterTest();
+        $roi = roi_calculator::model(self::METRICS, roi_calculator::defaults()) + ['range' => '30d'];
+
+        $html = $OUTPUT->render_from_template('local_sentientia_analytics/roi_dashboard', [
+            'roi' => roi_calculator::export_for_template($roi, true),
+        ]);
+
+        $this->assertStringContainsString('-85%', $html);
+        $this->assertStringContainsString('₹14,000', $html);
+        $this->assertStringContainsString('₹90,750', $html);
+        $this->assertStringContainsString('-₹76,750', $html);
+        $this->assertStringContainsString('10 course completions', $html);
+        $this->assertStringContainsString('₹50,000', $html);
+        $this->assertStringContainsString('section=local_sentientia_analytics', $html);
+        $this->assertDoesNotMatchRegularExpression('/>\s*%\s*</', $html, 'no lone "%"');
+    }
+
+    // ── 12. Flag-OFF no-op pattern ────────────────────────────────────
 
     public function test_flag_off_no_roi_data(): void {
         $flag_on = false;
@@ -217,23 +305,5 @@ final class roi_calculator_test extends \advanced_testcase {
 
         $this->assertArrayNotHasKey('roi', $data,
             'When ROI flag is OFF, roi key must not appear in page data');
-    }
-
-    // ── 12. Tenant isolation via raw_metrics ──────────────────────────
-
-    /**
-     * raw_metrics for /9999 (no users) should show 0 completions.
-     * raw_metrics for /1 (with a user + completion) should be > 0.
-     */
-    public function test_tenant_scoping_in_raw_metrics(): void {
-        $this->resetAfterTest();
-        $this->ensure_bizlms_schema();
-
-        roi_calculator::invalidate_caches();
-
-        // Scope /9999 — no data.
-        $result9999 = roi_calculator::compute('30d', '/9999', true);
-        $this->assertSame(0, (int) $result9999['raw_metrics']['completions'],
-            '/9999 completions should be 0 (no users seeded)');
     }
 }

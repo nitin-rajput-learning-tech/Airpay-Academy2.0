@@ -4,7 +4,8 @@ defined('MOODLE_INTERNAL') || die();
 $plugin->component = 'local_sentientia_emails';
 // P1 #49 (2026-05-20) — Hindi top-up: 25 strings covering privacy metadata,
 // ramping reminder + certificate settings, and cadence JSON errors.
-$plugin->version   = 2026101501;  // 2026-10-15 UI fix, template editor (editor.mustache): the live preview iframe's srcdoc is attribute-escaped (it was raw, cut at the first double quote: blank first paint) and the studio no longer has a -1rem side margin (it was 16px wider than the embedded layout); no schema change
+$plugin->version   = 2026111900;  // 2026-11-19 QW-EMAIL: template keys only from the registry (email_renderer::known_template_key) in preview.php (PARAM_ALPHANUMEXT dropped the "/": every preview was "file could not be found"), editor.php, preview_ajax.php and the template WS (get_template read templates/{raw key}.mustache); preview shows the tenant's effective override and BizLMS legacy templates read-only; override bodies render this plugin's partials (partials_loader; they rendered as nothing); 5 strings en+hi; no schema change
+// 2026101501: 2026-10-15 UI fix, template editor (editor.mustache): the live preview iframe's srcdoc is attribute-escaped (it was raw, cut at the first double quote: blank first paint) and the studio no longer has a -1rem side margin (it was 16px wider than the embedded layout); no schema change
 // 2026100804: 2026-10-08 SITEID is the DB string; strict === / !== against it never matched, so the site-course guard did nothing - now (int) SITEID: parity_senders::course_enrolled no longer e-mails an enrolment on the site course; no schema change
 // 2026100803: 2026-10-08 notifications importer: a manager copy's subject masks the member's full name first and folds adjacent placeholders (was "[team member] [team member] completed ..."); no schema change
 // 2026100802: 2026-10-08 FX-04 round 1: mustache_factory::engine() no longer probes class_exists(\Mustache\Engine) on 5.1 (PSR-0 loader re-declared \Mustache_Engine, uncatchable fatal on the 2nd e-mail of a cron run); legacy class is asked for by name first. No schema change.
@@ -16,7 +17,7 @@ $plugin->version   = 2026101501;  // 2026-10-15 UI fix, template editor (editor.
 // 2026092200: cadence setting: validate() returns true on success so the value (and the install default) actually persists
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.4.0';  // +COMMS-N7 notification senders (flagged off), +COMMS-N1/N2/N3 importer rules, +idx_sender_userid (was 1.3.0 +ADR-032 BizLMS email-history importer)
+$plugin->release   = '1.4.1';  // QW-EMAIL template-key whitelist + override-aware preview + override partials (was 1.4.0 +COMMS-N7 notification senders (flagged off), +COMMS-N1/N2/N3 importer rules, +idx_sender_userid (was 1.3.0 +ADR-032 BizLMS email-history importer))
 $plugin->dependencies = [
     'local_sentientia_platform' => 2026093001,  // tenant::is_cross_tenant() (ADR-031); the ADR-032 import framework (bizlms\importer)
 ];
