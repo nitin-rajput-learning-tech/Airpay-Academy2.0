@@ -891,6 +891,9 @@ items need re-scoping before their session (see section 6b). His 15:05 answers t
 
 D33 is not a decision: Nitin to check certificate code 6342739542AU on live BizLMS.
 
+
+**D28 update (Nitin, 19 Nov ~16:10): "plan for both".** Run the 3-day go/no-go spike on a 2 GB Android 9 phone in BOTH Flutter and Kotlin Multiplatform (same scope: login, course list, offline SCORM 1.2 player with scorm-again, a video download with pause/resume and speed control, push), compare on the same scorecard, then choose. Plan both spikes in the mobile track (M0e becomes M0e-F and M0e-K).
+
 ## 6b. Follow-ups created by the answers
 
 - **D5/D6:** course settings session (3) grows: every BizLMS course field + tags + a Course types admin page. Re-estimate.
