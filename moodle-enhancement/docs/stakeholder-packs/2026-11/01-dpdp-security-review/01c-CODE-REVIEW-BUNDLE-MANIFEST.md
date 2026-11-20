@@ -1,12 +1,12 @@
 # Code review bundle manifest
 
-**Sentientia LMS: DPDP code review bundle of 20 November 2026, contents and integrity record**
+**Sentientia LMS: DPDP code review bundle of 21 November 2026, contents and integrity record**
 
 | Field | Value |
 |---|---|
 | Prepared for | Information Security team (Airpay Payment Services) and SISA (external security assessor, under a non-disclosure agreement, NDA) |
 | Document owner | Head of Learning & Development, Airpay Payment Services |
-| Version | 1.2 |
+| Version | 1.3 |
 | Date | 21 November 2026 |
 | Status | Draft for review |
 | Pack | 01 DPDP and security review: 01a design and security review, 01b compliance mapping, 01c (this document) |
@@ -25,6 +25,7 @@ Confidential: Airpay Payment Services internal. Not for external distribution, e
 | 1.0 | 20 November 2026 | Technical writer for the Head of Learning & Development | Bundle built and manifest issued (withdrawn) |
 | 1.1 | 20 November 2026 | Technical writer for the Head of Learning & Development | Bundle rebuilt after internal review: redacted review copies of records and comments; working records and rehearsal tooling removed; substrate, AI client, theme test and three core-modification records added; UAT difference column; new hashes |
 | 1.2 | 21 November 2026 | Technical writer for the Head of Learning & Development | Bundle version 1.2 after a second internal review: 11 AI client files added (rows 198 to 208, for 01a F-21, F-22 and F-28); residue removed from two certificate core-modification records (a quoted approval, a sentence on internal tool permissions, a local site address); row 10 corrected to an exact copy; new zip and manifest hashes |
+| 1.3 | 21 November 2026 | Technical writer for the Head of Learning & Development | Bundle rebuilt as `sentientia-dpdp-code-review-2026-11-21` after the remediation of 01a findings F-14, F-16, F-17, F-18, F-21, F-22 and F-28 (01a section 16.1): 21 changed files refreshed (rows 26 to 28, 98 to 100, 112, 118, 119, 122, 125 to 130, 132, 133, 139, 202 and 205); 19 files added (rows 209 to 227, rule 9); basis moved to commit `9ab49730a` plus the working tree of 21 November 2026; two remaining working-note decision references removed (rows 107 and 182, now 25 redacted review copies); new hashes |
 
 ### 1.2 Reviewers and sign-off
 
@@ -46,11 +47,12 @@ Confidential: Airpay Payment Services internal. Not for external distribution, e
 
 ## 2. Executive summary
 
-- Bundle `sentientia-dpdp-code-review-2026-11-20`, **version 1.2**, contains **208 files, 43,792 lines**, plus `MANIFEST.md`. It holds the complete DPDP plugin, the privacy providers of all 57 product components, all 46 plugin schemas, the tenant-isolation, feature-flag and core-table substrate classes, the AI clients cited in 01a F-21, F-22 and F-28 (assistant chat and quick-action chips, agent, Moodle core AI bridge and its demonstration page, gateway, AI quiz client and smoke test, authoring generator, skills, translation and recommendations clients), the notice and consent code, 50 PHPUnit test files with one fixture (502 test methods by static count), and copies of ADR-035, ADR-031, the erasure rehearsal results, the draft core bug report and four core-modification records. 7 of these 8 records are redacted review copies; the 4 June 2026 substrate record is an exact copy.
-- **24 files are redacted review copies.** Only comments, record text and two test assertion messages were changed, to remove personal names, working-note decision references, local folder paths and request identifiers. No executable statement changed. Section 8.2 gives the repository hash of each, so a reviewer with repository access can match it.
-- Versions 1.0 and 1.1 of 20 November 2026 are **withdrawn**. Version 1.0 carried personal names, working-note references, local paths and request identifiers in records and comments; version 1.1 still quoted an informal approval and named internal tool permissions and a local site address in two certificate records, and lacked the AI clients cited in F-22. Recipients of either version, if any, are asked to destroy it.
+- Bundle `sentientia-dpdp-code-review-2026-11-21`, **version 1.3**, contains **227 files, 47,334 lines**, plus `MANIFEST.md`. It holds the complete DPDP plugin, the privacy providers of all 57 product components, all 46 plugin schemas, the tenant-isolation, feature-flag and core-table substrate classes, the AI clients cited in 01a F-21, F-22 and F-28 (assistant chat and quick-action chips, agent, Moodle core AI bridge and its demonstration page, gateway, AI quiz client and smoke test, authoring generator, skills, translation and recommendations clients), the notice and consent code, 58 PHPUnit test files with one fixture (561 test methods by static count), and copies of ADR-035, ADR-031, the erasure rehearsal results, the draft core bug report and four core-modification records. 7 of these 8 records are redacted review copies; the 4 June 2026 substrate record is an exact copy.
+- **Version 1.3 carries the remediation of 21 November 2026** for 01a findings F-14, F-16, F-17, F-18, F-21, F-22 and F-28: 21 bundled files changed and 19 files were added (rows 209 to 227), 8 of them PHPUnit test files with 59 test methods (53 written for the remediation; 6 already in `agent_client_test.php`). This code is uncommitted and not on UAT; its tests were written but not yet run, so its status is **Built (pending verification on development)**. 01a section 16.1 gives the status of each fix and what remains open.
+- **25 files are redacted review copies.** Only comments, record text and two test assertion messages were changed, to remove personal names, working-note decision references, local folder paths and request identifiers. No executable statement changed. Section 8.2 gives the repository hash of each, so a reviewer with repository access can match it.
+- Version 1.2 of 21 November 2026 (`sentientia-dpdp-code-review-2026-11-20`) is **superseded**: it predates the remediation and kept two working-note decision references in a schema comment and a code comment. Versions 1.0 and 1.1 of 20 November 2026 are **withdrawn**. Version 1.0 carried personal names, working-note references, local paths and request identifiers in records and comments; version 1.1 still quoted an informal approval and named internal tool permissions and a local site address in two certificate records, and lacked the AI clients cited in F-22. Recipients of any earlier version, if any, are asked to destroy it.
 - It contains **no** `.env` file, `config.php`, credentials, database dump, data export, log, run output or persona file (section 5).
-- Integrity: the zip `sentientia-dpdp-code-review-2026-11-20.zip` (658,338 bytes, 209 entries) has SHA-256 `98ede928e18e488ecbc93039912462135f319352ba4a02ace925500a9099c833`. Every file's SHA-256 is in section 8.
+- Integrity: the zip `sentientia-dpdp-code-review-2026-11-21.zip` (720,960 bytes, 228 entries) has SHA-256 `f36beba57e050daadb63bcc6d21ac28ecbcd92dc12500d36ab8f3fda183fe915`. Every file's SHA-256 is in section 8.
 - Read-only access to the repository branch can be arranged on request, for reviewers who want to build and run the tests (01a section 19).
 
 **Ask of the reader.** Verify the zip hash on receipt, confirm receipt to the document owner, and request repository access if you will run the tests.
@@ -61,17 +63,18 @@ Confidential: Airpay Payment Services internal. Not for external distribution, e
 
 | Field | Value |
 |---|---|
-| Bundle folder | `sentientia-dpdp-code-review-2026-11-20/` |
-| Bundle version | 1.2 of 21 November 2026 (replaces 1.1 and 1.0 of 20 November 2026) |
-| Zip file | `sentientia-dpdp-code-review-2026-11-20.zip` |
-| Zip SHA-256 | `98ede928e18e488ecbc93039912462135f319352ba4a02ace925500a9099c833` |
-| Zip size | 658,338 bytes; 209 entries (208 files plus `MANIFEST.md`), one top-level folder |
-| `MANIFEST.md` SHA-256 | `255bb8b61816e8afa8c52ca26f318e8448b9842126a37578101c0444c94b69df` |
-| Built | 21 November 2026 (version 1.1 on 20 November 2026), with Python `zipfile` (deflate); hashes computed with Python `hashlib` and cross-checked with `sha256sum` |
-| Repository basis | The work branch at commit `4df7d4573` plus the uncommitted working tree of 20 November 2026. The 11 files added in version 1.2 are identical at `4df7d4573`, at the UAT commit and in the working tree of 21 November 2026 |
-| Code on UAT | Commit `af6e65c0e`. The DPDP plugin `local_sentientia_privacy` 1.1.0 is unchanged between the UAT commit and the bundle basis |
-| Files that differ from the UAT commit `af6e65c0e` (17) | `docs/core-mods/2026-11-19-tool-certificate-verify-on-arrival.md`; `docs/core-mods/2026-11-19-tool-certificate-verify-result-escaping.md`; `local/sentientia_compliance_report/db/install.xml`; `local/sentientia_courses/classes/privacy/provider.php`; `local/sentientia_courses/db/install.xml`; `local/sentientia_courses/tests/certificate_issuer_test.php`; `local/sentientia_proctoring/classes/identity/verifier_factory.php`; `local/sentientia_proctoring/classes/privacy/provider.php`; `local/sentientia_proctoring/classes/task/purge_old_recordings.php`; `local/sentientia_proctoring/db/install.xml`; `local/sentientia_proctoring/tests/quiz_integration_test.php`; `local/sentientia_proctoring/tests/secure_mode_test.php`; `local/sentientia_users/classes/privacy/provider.php`; `local/sentientia_users/db/install.xml`; `local/sentientia_users/tests/external_trainer_test.php`; `local/sentientia_users/tests/privacy_provider_test.php`; `mod/quiz/accessrule/sentientia_proctoring/db/install.xml`. Behaviour a reviewer sees on UAT may differ for these files; each is marked in the "Differs from UAT" column of section 8 |
-| Files that differ from commit `4df7d4573` (9, uncommitted, Built (verified on development)) | `docs/core-mods/2026-11-19-tool-certificate-verify-on-arrival.md`; `docs/core-mods/2026-11-19-tool-certificate-verify-result-escaping.md`; `local/sentientia_courses/classes/privacy/provider.php`; `local/sentientia_courses/db/install.xml`; `local/sentientia_courses/tests/certificate_issuer_test.php`; `local/sentientia_users/classes/privacy/provider.php`; `local/sentientia_users/db/install.xml`; `local/sentientia_users/tests/external_trainer_test.php`; `local/sentientia_users/tests/privacy_provider_test.php` |
+| Bundle folder | `sentientia-dpdp-code-review-2026-11-21/` |
+| Bundle version | 1.3 of 21 November 2026 (replaces 1.2 of 21 November 2026, `sentientia-dpdp-code-review-2026-11-20`, and 1.1 and 1.0 of 20 November 2026) |
+| Zip file | `sentientia-dpdp-code-review-2026-11-21.zip` |
+| Zip SHA-256 | `f36beba57e050daadb63bcc6d21ac28ecbcd92dc12500d36ab8f3fda183fe915` |
+| Zip size | 720,960 bytes; 228 entries (227 files plus `MANIFEST.md`), one top-level folder |
+| `MANIFEST.md` SHA-256 | `ca12824caff81a3e9e95d92a2c15bd3c475a087ccb06dac75d3de15816edb2df` |
+| Built | 21 November 2026 (version 1.3; versions 1.1 and 1.2 on 20 and 21 November 2026), with Python `zipfile` (deflate); hashes computed with Python `hashlib` and cross-checked with `sha256sum` |
+| Repository basis | The work branch at commit `9ab49730a` plus the uncommitted working tree of 21 November 2026, after the remediation of 01a findings F-14, F-16, F-17, F-18, F-21, F-22 and F-28. Commit `9ab49730a` changed documentation only, so every code file that was identical at `4df7d4573` (the version 1.2 basis) is identical at `9ab49730a` |
+| Code on UAT | Commit `af6e65c0e`, which carries the DPDP plugin `local_sentientia_privacy` 1.1.0 (`2026111300`). The bundle carries the uncommitted 1.1.1 (`2026112100`) with the F-14, F-17 and F-18 fixes; it is not on UAT |
+| Remediation status | Every file changed or added by the remediation of 21 November 2026 is uncommitted and **Built (pending verification on development)**: the tests were written and pass `php -l`, but were not yet run. 01a section 16.1 gives the status of each fix |
+| Files that differ from the UAT commit `af6e65c0e` (57) | The 17 files that already differed in version 1.2 (listed below), the 21 bundled files changed by the remediation (rows 26 to 28, 98 to 100, 112, 118, 119, 122, 125 to 130, 132, 133, 139, 202 and 205) and the 19 files added in version 1.3 (rows 209 to 227; 12 of them do not exist at the UAT commit). The 17 from version 1.2: `docs/core-mods/2026-11-19-tool-certificate-verify-on-arrival.md`; `docs/core-mods/2026-11-19-tool-certificate-verify-result-escaping.md`; `local/sentientia_compliance_report/db/install.xml`; `local/sentientia_courses/classes/privacy/provider.php`; `local/sentientia_courses/db/install.xml`; `local/sentientia_courses/tests/certificate_issuer_test.php`; `local/sentientia_proctoring/classes/identity/verifier_factory.php`; `local/sentientia_proctoring/classes/privacy/provider.php`; `local/sentientia_proctoring/classes/task/purge_old_recordings.php`; `local/sentientia_proctoring/db/install.xml`; `local/sentientia_proctoring/tests/quiz_integration_test.php`; `local/sentientia_proctoring/tests/secure_mode_test.php`; `local/sentientia_users/classes/privacy/provider.php`; `local/sentientia_users/db/install.xml`; `local/sentientia_users/tests/external_trainer_test.php`; `local/sentientia_users/tests/privacy_provider_test.php`; `mod/quiz/accessrule/sentientia_proctoring/db/install.xml`. Behaviour a reviewer sees on UAT may differ for these files; each is marked in the "Differs from UAT" column of section 8 |
+| Files that differ from commit `9ab49730a` (49, uncommitted) | (a) 9 files, **Built (verified on development)**, unchanged since version 1.2: `docs/core-mods/2026-11-19-tool-certificate-verify-on-arrival.md`; `docs/core-mods/2026-11-19-tool-certificate-verify-result-escaping.md`; `local/sentientia_courses/classes/privacy/provider.php`; `local/sentientia_courses/db/install.xml`; `local/sentientia_courses/tests/certificate_issuer_test.php`; `local/sentientia_users/classes/privacy/provider.php`; `local/sentientia_users/db/install.xml`; `local/sentientia_users/tests/external_trainer_test.php`; `local/sentientia_users/tests/privacy_provider_test.php`. (b) 40 files of the remediation, **Built (pending verification on development)**: the 21 changed bundled files and the 19 added files named in the UAT row above (12 of the 19 are new files, not yet in any commit) |
 | Path convention | Relative to `moodle-enhancement/` in the repository (the canonical plugin tree), except `theme/sentientia/`, which sits at the repository root |
 
 ---
@@ -80,18 +83,21 @@ Confidential: Airpay Payment Services internal. Not for external distribution, e
 
 | Group | Inclusion rule | Files | Lines |
 |---|---|---|---|
-| A. DPDP plugin (`local_sentientia_privacy`), complete except tests | Rule 1 | 23 | 3,136 |
-| B. Privacy providers of the other 56 product components | Rule 2 | 56 | 10,632 |
+| A. DPDP plugin (`local_sentientia_privacy`), complete except tests | Rule 1 | 26 | 3,847 |
+| B. Privacy providers of the other 56 product components | Rule 2 | 56 | 10,641 |
 | C. Schemas of the other plugins (data inventory evidence) | Rule 3 | 45 | 6,947 |
-| D. Tenant isolation, flags, substrate, AI client, notices and other context code | Rules 4 and 5 | 14 | 3,217 |
-| E. PHPUnit tests and fixture | Rule 7 | 51 | 15,326 |
+| D. Tenant isolation, flags, substrate, AI client, notices and other context code | Rules 4 and 5 | 14 | 3,119 |
+| E. PHPUnit tests and fixture | Rule 7 | 54 | 16,119 |
 | F. Records (7 redacted review copies, 1 exact copy) | Rule 6 | 8 | 1,380 |
-| G. AI clients (added in version 1.2) | Rule 8 | 11 | 3,154 |
-| **Total** | | **208** | **43,792** |
+| G. AI clients (added in version 1.2) | Rule 8 | 11 | 3,209 |
+| H. Remediation files and tests (added in version 1.3) | Rule 9 | 13 | 2,072 |
+| **Total** | | **227** | **47,334** |
+
+Group A gained 3 files in version 1.3 (rows 209 to 211) and group E gained the plugin's 3 new test files (rows 212 to 214), both under rules 1 and 7 as before. The line counts of groups A, B, D, E and G changed because files in them were changed by the remediation.
 
 Inclusion rules in detail:
 
-1. **DPDP plugin.** Every file under `moodle-enhancement/local/sentientia_privacy/` (its 4 test files and fixture are in group E).
+1. **DPDP plugin.** Every file under `moodle-enhancement/local/sentientia_privacy/` (its 7 test files and fixture are in group E).
 2. **Privacy providers.** Every `classes/privacy/provider.php` in the canonical tree (`local`, `blocks`, `enrol`, `payment/gateway`, `mod/quiz/accessrule`) plus `theme/sentientia/classes/privacy/provider.php`: 57 in total.
 3. **Schemas.** Every `db/install.xml` of our plugins (46 in total), so reviewers can check each provider against the tables it owns.
 4. **Platform tenant, erasure-related and core-table classes.** `tenant.php`, the feature-flag resolver and its state class, the runtime-table list used by the privacy guard, the platform audit log, and `local/sentientia_core/classes/substrate.php`, which adds 37 columns to the core `user` table and 18 to `course` (01a F-23).
@@ -99,6 +105,7 @@ Inclusion rules in detail:
 6. **Records (7 redacted review copies, 1 exact copy).** ADR-035 and ADR-031; the erasure rehearsal results; the draft upstream bug report; the four core-modification records that touch privacy: the 20 May 2026 rename (privacy metadata strings), the 4 June 2026 substrate record (personal-data columns on the core `user` table), and the two 19 November 2026 certificate-verification records (public disclosure of the holder's name, enumeration, escaping).
 7. **PHPUnit tests.** Every test file in our plugins whose name contains `privacy`, `erasure` or `anonymis`, or that calls a privacy provider or the Moodle privacy API, plus the platform tenant tests and the theme provider test.
 8. **AI clients (version 1.2).** Every client that 01a F-21, F-22 or F-28 cites, so the findings can be checked from the bundle: `local/sentientia_ai/classes/gateway.php`; `local/sentientia_assistant/classes/agent/agent_client.php`, `classes/core_ai_bridge.php`, `classes/hook_callbacks.php` and `ai_demo.php`; `local/sentientia_aiquiz/classes/anthropic_client.php` and `cli/live_smoke.php`; `local/sentientia_authoring/classes/course_generator.php`; and the `classes/anthropic_client.php` of `local_sentientia_skillsai`, `local_sentientia_translate` and `local_sentientia_recommendations`. Pipeline Agent 2 (`scripts/agents/`) sits outside `moodle-enhancement/` and is available through repository access.
+9. **Remediation files and tests (version 1.3).** The files changed or added by the remediation of 01a findings F-14, F-16, F-17, F-18, F-21, F-22 and F-28 that rules 1 to 8 do not already include, so each fix in 01a section 16.1 can be checked from the bundle: `local/sentientia_pages/classes/local/policy_setup.php` (the policy setup logic), `index.php` (the static page renderer) and the tests `policy_setup_test.php` and `static_notice_claims_test.php`; `local/sentientia_assistant/db/upgrade.php` and `db/upgradelib.php` (response cache purge), the tests `ai_client_test.php` and `agent_client_test.php`, and the English strings; `local/sentientia_authoring/studio.php`, the test `gateway_refusal_test.php` and the English strings; and the English strings of `local_sentientia_ai` (AI key settings text). Version files, the Hindi, Kannada, Marathi and Swahili strings of these three plugins and the comment-only change to `local/sentientia_pages/templates/onboarding.mustache` are left out; they are available through repository access.
 
 Two core-modification records change behaviour that bears on privacy: the substrate record (columns on the core `user` table) and the certificate verify-on-arrival record (public page shows the holder's name). Neither changes Moodle's privacy subsystem itself; ADR-035 deliberately edits no core file.
 
@@ -120,11 +127,11 @@ Two core-modification records change behaviour that bears on privacy: the substr
 
 ### 5.2 Redaction
 
-Every bundled file was scanned for personal names, working-note decision references, session references, local folder paths and request or subject identifiers. 24 files had matches and are redacted review copies ("Redacted" in section 8): 7 records and 17 code, schema or plugin-README files. Names became roles ("the product owner"), working-note decision codes became "a recorded product decision", local paths became "a local working folder (not distributed)" or "the local development site", and the single request identifier became "one further request". In version 1.2, records 11 and 12 were redacted further: the quoted approval in record 11 became "a recorded product decision", the sentences on internal tool permissions became "copy the file under the change process", and a local site address became `<local site>`. ADR decision numbers (for example "ADR-038 D2") were kept because ADRs are formal records. In code, only comments, XML table comments and two test assertion messages changed; every redacted PHP file passes `php -l` and every redacted XML file parses.
+Every bundled file was scanned for personal names, working-note decision references, session references, local folder paths and request or subject identifiers. 25 files had matches and are redacted review copies ("Redacted" in section 8): 7 records and 18 code, schema or plugin-README files. Names became roles ("the product owner"), working-note decision codes became "a recorded product decision", local paths became "a local working folder (not distributed)" or "the local development site", and the single request identifier became "one further request". In version 1.2, records 11 and 12 were redacted further: the quoted approval in record 11 became "a recorded product decision", the sentences on internal tool permissions became "copy the file under the change process", and a local site address became `<local site>`. In version 1.3, the same rules were applied to the 21 changed and 19 added files: only the DPDP plugin README (row 112) needed the two replacements it already had (a personal name and a local folder path), reapplied to its new repository version. A rescan of the whole bundle also found two working-note decision references that versions 1.1 and 1.2 had kept, in a schema comment (row 107, already a redacted review copy) and a code comment (row 182, now a redacted review copy); both became "a recorded product decision". ADR decision numbers (for example "ADR-038 D2") were kept because ADRs are formal records. In code, only comments, XML table comments and two test assertion messages changed; every redacted PHP file passes `php -l` and every redacted XML file parses.
 
 What remains, by design: the model name "Claude" (an Anthropic product) in AI plugin comments and defaults; code comments in the AI gateway that refer to the AI budget addendum ("Addendum A") as signed, which are engineering notes, not a record of budget status (the AI budget is pending approval); a placeholder key prefix (`sk-ant-...`) in the help text of the AI quiz smoke test; the repository file names `CLAUDE.md` and `.claude/settings.json` (engineering rules); a functional role mailbox used as the fallback privacy contact; synthetic test data (`example.com` addresses, private-range IP addresses, a sample phone number); and upstream open-source copyright attributions.
 
-### 5.3 Secret and personal-data scan (20 November 2026)
+### 5.3 Secret and personal-data scan (20 and 21 November 2026)
 
 The bundle was scanned after redaction for:
 
@@ -132,7 +139,7 @@ The bundle was scanned after redaction for:
 - private-key headers and cloud access-key patterns;
 - e-mail addresses and Indian mobile-number patterns.
 
-Results: no real credential, key or personal data of a data principal. Credential-pattern matches were fixed test values (for example `fresh-access` in a token-vault test) and, in version 1.2, a placeholder key prefix in the AI quiz smoke test help text. The version 1.2 files were scanned again on 21 November 2026 with the same patterns and for local paths and site addresses. E-mail matches were synthetic test addresses, upstream copyright attributions, an example in a code comment and the functional role mailbox. Phone matches were a test fixture value.
+Results: no real credential, key or personal data of a data principal. Credential-pattern matches were fixed test values (for example `fresh-access` in a token-vault test) and, in version 1.2, a placeholder key prefix in the AI quiz smoke test help text. The version 1.2 files were scanned again on 21 November 2026 with the same patterns and for local paths and site addresses. E-mail matches were synthetic test addresses, upstream copyright attributions, an example in a code comment and the functional role mailbox. Phone matches were a test fixture value. The 40 files changed or added in version 1.3 were scanned on 21 November 2026 with the same patterns and for personal names, decision references, local paths and site addresses: matches were the functional role mailbox in the notice pages and templates, and synthetic test data (a fictitious learner with an `example.com` address, a private-range IP address and a sample phone number) in the erasure test. Every changed or added PHP file passes `php -l`.
 
 ---
 
@@ -141,19 +148,19 @@ Results: no real credential, key or personal data of a data principal. Credentia
 1. Compute the zip's SHA-256 and compare it with section 3:
 
 ```bash
-sha256sum sentientia-dpdp-code-review-2026-11-20.zip
+sha256sum sentientia-dpdp-code-review-2026-11-21.zip
 ```
 
 2. Unzip, then check any file against section 8, for example:
 
 ```bash
-sha256sum sentientia-dpdp-code-review-2026-11-20/local/sentientia_privacy/classes/privacy_manager.php
+sha256sum sentientia-dpdp-code-review-2026-11-21/local/sentientia_privacy/classes/privacy_manager.php
 ```
 
 3. To check every file, compare the output of the following with the table in `MANIFEST.md`:
 
 ```bash
-cd sentientia-dpdp-code-review-2026-11-20
+cd sentientia-dpdp-code-review-2026-11-21
 find . -type f ! -name MANIFEST.md -print0 | sort -z | xargs -0 sha256sum
 ```
 
@@ -175,7 +182,7 @@ find . -type f ! -name MANIFEST.md -print0 | sort -z | xargs -0 sha256sum
 
 The same table is in `MANIFEST.md` inside the bundle. Lines are physical lines in the file; SHA-256 is computed over the exact bytes in the bundle. "Review copy" is "Exact" when the file is byte-identical to the repository and "Redacted" when it is a redacted review copy. The last two columns say whether the repository file differs from the UAT commit and from the basis commit ("New" means the file does not exist in that commit).
 
-| # | Relative path | Purpose | Lines | SHA-256 (bundle copy) | Review copy | Differs from UAT `af6e65c0e` | Differs from `4df7d4573` |
+| # | Relative path | Purpose | Lines | SHA-256 (bundle copy) | Review copy | Differs from UAT `af6e65c0e` | Differs from `9ab49730a` |
 |---|---|---|---|---|---|---|---|
 | 1 | `blocks/sentientia_cert_health/classes/privacy/provider.php` | Privacy provider of block_sentientia_cert_health (null_provider) | 20 | `eff930ad63ed5aafe9b3ad86a2e481b64b2bef08c32552a5087882d1e9edcc35` | Exact | No | No |
 | 2 | `blocks/sentientia_compliance/classes/privacy/provider.php` | Privacy provider of block_sentientia_compliance (null_provider) | 24 | `92a03fe031b5f2d87c0912cff2543366453b76e73f7e131964396fd959cf6b11` | Exact | No | No |
@@ -202,9 +209,9 @@ The same table is in `MANIFEST.md` inside the bundle. Lines are physical lines i
 | 23 | `local/sentientia_api/classes/privacy/provider.php` | Privacy provider of local_sentientia_api (metadata provider) | 173 | `6121eb179357544110afa4317fd443f7d9438dc18dc51ec6c3107dfcdbd4b2d3` | Exact | No | No |
 | 24 | `local/sentientia_api/db/install.xml` | Schema of local_sentientia_api (data inventory) | 226 | `2a73e589ee7434bd1b28a8b6c85efa69b67e5c6dc5cf8b4097db8a1d7ec22ba7` | Exact | No | No |
 | 25 | `local/sentientia_api/tests/webhooks_test.php` | PHPUnit: webhooks_test (local_sentientia_api) | 324 | `f9512d96136504bd9af423beade18a35ecf78d4ce7d94fb9a726c7dc161db222` | Exact | No | No |
-| 26 | `local/sentientia_assistant/classes/ai_client.php` | AI assistant chat client: gateway routing, or a direct call with the plugin's own key; builds the learner context sent to the AI provider (finding F-22) | 447 | `f7bb32070b7041c91a56a967e1d82269ace5270a359e7fb3527daa2735cc9a8d` | Exact | No | No |
-| 27 | `local/sentientia_assistant/classes/privacy/provider.php` | Privacy provider of local_sentientia_assistant (metadata provider) | 197 | `eeeae7729d3245b313aa6810c64479de65d0c88f6fe81b4bb3195fbc25235683` | Exact | No | No |
-| 28 | `local/sentientia_assistant/db/install.xml` | Schema of local_sentientia_assistant (data inventory) | 78 | `2c794a676ff9aafc412bf91071dbc113bef1ddd33b5f3dc879a44f933f072c21` | Exact | No | No |
+| 26 | `local/sentientia_assistant/classes/ai_client.php` | AI assistant chat client: live answers only through the AI gateway; with gateway routing off it refuses (gateway_routing_required); response cache removed; builds the learner context sent through the gateway (findings F-22, F-28) | 356 | `50c8ac38cc73c85ca5ba23f372bb1a1113157b973b72228db19519af85892ca8` | Exact | Yes | Yes |
+| 27 | `local/sentientia_assistant/classes/privacy/provider.php` | Privacy provider of local_sentientia_assistant (metadata provider); records the retired response cache (finding F-28) | 206 | `8363ad2a0eb9c063d211d371dc6d50e5c796232bed5fb9f6ff6ab46cc09cad8c` | Exact | Yes | Yes |
+| 28 | `local/sentientia_assistant/db/install.xml` | Schema of local_sentientia_assistant (data inventory); response cache table marked retired (finding F-28) | 78 | `7cf105921a8f4aed4a176ca7818a299feeff99b18265b75f0c7475cbd555fdb8` | Exact | Yes | Yes |
 | 29 | `local/sentientia_assistant/tests/privacy_provider_test.php` | PHPUnit: privacy_provider_test (local_sentientia_assistant) | 95 | `bb5ec7f398ca16f3414c85b0aaff97bf37fbe209bda1bd5b5b71587e5c2cb76d` | Exact | No | No |
 | 30 | `local/sentientia_authoring/classes/privacy/provider.php` | Privacy provider of local_sentientia_authoring (metadata provider) | 376 | `393ac0eeb4acd4eb1a4a1e37f90129ddb6f8fd30b7212a1e680ab9bedabbfff9` | Exact | No | No |
 | 31 | `local/sentientia_authoring/db/install.xml` | Schema of local_sentientia_authoring (data inventory) | 432 | `f30c0b173360a7d9570f3e4c1ba12e2169c120b53b3c935df16aa9d300d9f88b` | Exact | No | No |
@@ -274,48 +281,48 @@ The same table is in `MANIFEST.md` inside the bundle. Lines are physical lines i
 | 95 | `local/sentientia_org/db/install.xml` | Schema of local_sentientia_org (data inventory) | 97 | `391a7c2c67c35bb924942e30663814d98d62578bed27a9843f201788a760b4d2` | Exact | No | No |
 | 96 | `local/sentientia_org/tests/privacy_cohort_scope_test.php` | PHPUnit: privacy_cohort_scope_test (local_sentientia_org) | 145 | `640a91421070a0fe95ecc4eead5733610c6e24606c1de60698c0f5cc47588532` | Exact | No | No |
 | 97 | `local/sentientia_pages/classes/privacy/provider.php` | Privacy provider of local_sentientia_pages (null_provider) | 25 | `a1e91427fb2adecc9f316247872a8128fe628f3fbc013bda9d006ca07f98b0ae` | Exact | No | No |
-| 98 | `local/sentientia_pages/cli/setup_policies.php` | CLI that wires tool_policy and records acceptances for existing users (finding in 01a; must not be run as is) | 118 | `1ba5779fe1ab9d9adb7f54af8577d976a12d76e53f2631fd155019642e44e80a` | Exact | No | No |
-| 99 | `local/sentientia_pages/pages/dpdp.html` | Static DPDP notice page (content under review, see 01a findings) | 89 | `97e626e2b2089f83c071e385c8aa987552dc57a9d2572485aeb8a5776cf38b54` | Exact | No | No |
-| 100 | `local/sentientia_pages/pages/privacy.html` | Static privacy policy page (content under review) | 55 | `f240198ce1186dfdf2520e2023c81996216d335ec0e3da8e627fb45269e11da5` | Exact | No | No |
+| 98 | `local/sentientia_pages/cli/setup_policies.php` | CLI for the site policy setup: dry run by default, never writes acceptances on a user's behalf, prints counts only (finding F-16) | 110 | `d2c51385afa78e82f8ab03e4cf5ff69fa3f14410215afc8d05279e77347e588e` | Exact | Yes | Yes |
+| 99 | `local/sentientia_pages/pages/dpdp.html` | Static DPDP notice page; unevidenced claims removed, draft marker pending DPO review (finding F-17) | 88 | `6d016ad14c9c27e60be8d22ce21ad10d0d428b87849a5f163b490b46eac8d9a8` | Exact | Yes | Yes |
+| 100 | `local/sentientia_pages/pages/privacy.html` | Static privacy policy page; unevidenced claims removed, draft marker pending DPO review (finding F-17) | 57 | `3047449908884192d7f03f4c7ea3db19ef6fea4af21fa0f703ec556510f3c9d5` | Exact | Yes | Yes |
 | 101 | `local/sentientia_platform/classes/audit_log.php` | Platform audit log helper | 329 | `cd38099f745cb409cc7bdf8bc166e1c6f8ab5d937524f95ab683a3c6948475e6` | Redacted | No | No |
 | 102 | `local/sentientia_platform/classes/feature_flags.php` | Feature-flag resolver used by the ADR-035 flags | 682 | `166422202f0e3baf5ffd39d7e63347feb7c81ab730e64b3fb3f7ba40662b48b7` | Redacted | No | No |
 | 103 | `local/sentientia_platform/classes/local/feature_flags_state.php` | Flag override snapshot state | 45 | `740d47a50d56a000783645de725ff644ae4a84fc223c9a1e666aa6fa890aeefc` | Exact | No | No |
 | 104 | `local/sentientia_platform/classes/privacy/provider.php` | Privacy provider of local_sentientia_platform (metadata provider) | 507 | `7f25cb91a77b96e0af097bb2aba743245ffd7d83b4353186f86ccf27a96671bb` | Exact | No | No |
 | 105 | `local/sentientia_platform/classes/schema/user_type_tables.php` | Runtime-created user tables listed for the privacy coverage guard | 148 | `44333884d88f58c493d0ca29f14e095e5c8087818238bbb8e2ae0510a95cf1dd` | Exact | No | No |
 | 106 | `local/sentientia_platform/classes/tenant.php` | Tenant isolation helpers (ADR-031): is_cross_tenant, scope_path, require_same_tenant_user, path_descendant_filter | 467 | `47d364594d7440e2bccfb9f875280f8fa84d034722b4f70bbe3a90812c6d4b4a` | Exact | No | No |
-| 107 | `local/sentientia_platform/db/install.xml` | Schema of local_sentientia_platform (data inventory) | 390 | `77d39c849652b4177b75d5a46eaf7309199a5367493116529478a504166d950b` | Redacted | No | No |
+| 107 | `local/sentientia_platform/db/install.xml` | Schema of local_sentientia_platform (data inventory) | 390 | `5393ebed8464a865e4ff2db87d2067e5313b69197272f2a0fd04325b975b92aa` | Redacted | No | No |
 | 108 | `local/sentientia_platform/tests/cross_tenant_test.php` | PHPUnit: cross_tenant_test (local_sentientia_platform) | 211 | `ee1ff422a73cf02b23e78834d64d513caa2419f0c53a17fe0ced2e30ca92362f` | Exact | No | No |
 | 109 | `local/sentientia_platform/tests/privacy_coverage_test.php` | Structural guard: fails the build when a local plugin with a user column declares null_provider or no provider | 335 | `e3dbeb77d7d334ce2c699066900d6232ec21df788a83748ee7600c9c5740980f` | Exact | No | No |
 | 110 | `local/sentientia_platform/tests/privacy_provider_test.php` | PHPUnit: privacy_provider_test (local_sentientia_platform) | 418 | `05c9ea87f5a5f8b27433257860b1eedc304a94f3517aea5d43eb6e336a2b15c9` | Exact | No | No |
 | 111 | `local/sentientia_platform/tests/tenant_test.php` | PHPUnit: tenant_test (local_sentientia_platform) | 438 | `f1a4aa1aa903278b948b1484c483cd82b8087cc34a69c84d68d9cae669221b85` | Exact | No | No |
-| 112 | `local/sentientia_privacy/README.md` | Plugin README: request hub, supplement, what still remains | 108 | `2a80ef4ff3aa1ecc3ebb43bb12cd88fcc4bea122a3765d20b04a8bd6b7451068` | Redacted | No | No |
+| 112 | `local/sentientia_privacy/README.md` | Plugin README: request hub, supplement, export download (F-14), core account deletion (F-18), what still remains | 116 | `15cc61d295816c7bc65331a00ead75152370700812b1042b35f8c2aee41caaf6` | Redacted | Yes | Yes |
 | 113 | `local/sentientia_privacy/classes/event/erasure_supplemented.php` | Audit event for a supplementary erasure; counts only, no personal data | 178 | `da63775ede05e44a7714965d05558a52f0ace55d3da13cd7302e1d189413ac8c` | Exact | No | No |
 | 114 | `local/sentientia_privacy/classes/local/erasure_completeness.php` | ADR-035 supplement: discovery plan, truncation self-check, apply_delete and apply_export | 790 | `e3371f2dfe7decd1824b7ffc868ab36311e367dd1208dd764423d71fe04fa763` | Redacted | No | No |
 | 115 | `local/sentientia_privacy/classes/local/erasure_plan.php` | ADR-035 plan value object (iterated and missed context ids per component) | 97 | `e415ba40483b1095b801552084dbb2c4d0b17d28e5d5d2e878f0d54df67c3437` | Exact | No | No |
 | 116 | `local/sentientia_privacy/classes/local/erasure_plan_store.php` | Short-lived store of a discovery plan between discovery and delete | 42 | `5a2f0a3e0a56b58c9c38c54bfe0bd3b3d286077766c9b759982970ffc7050230` | Exact | No | No |
 | 117 | `local/sentientia_privacy/classes/local/forced_contextlist.php` | Context list subclass used to build hole-free lists | 38 | `e12c6c6501e7a61e2008f946803b5f9c34761b04319ec7a9c63da62a7bdc0f48` | Exact | No | No |
-| 118 | `local/sentientia_privacy/classes/privacy/provider.php` | Privacy provider of the DPDP plugin; hosts the ADR-035 supplementary erasure and export (flag-gated, global scope) | 407 | `8d68480738bd73aa25fc90f1280dffcc3a9a5b5f79185cc3e2e6c9a0d9844147` | Exact | No | No |
-| 119 | `local/sentientia_privacy/classes/privacy_manager.php` | DPDP request hub logic: download and deletion requests, export JSON, DPDP erasure route (process_deletion Steps 0-5), admin notification | 620 | `0f9a6bafbb7ee708162492525819d4d913630ebff305d6c762be628b29651393` | Exact | No | No |
+| 118 | `local/sentientia_privacy/classes/privacy/provider.php` | Privacy provider of the DPDP plugin; hosts the ADR-035 supplementary erasure and export (flag-gated, global scope); erasure deletes stored export files (finding F-14) | 461 | `9ad07de8dcaf9ea77e456000ff5cca37a0eb2cc58bcd9c815098eceef5a892d3` | Exact | Yes | Yes |
+| 119 | `local/sentientia_privacy/classes/privacy_manager.php` | DPDP request hub logic: download and deletion requests, export in Moodle file storage with download checks and purge (F-14), DPDP erasure route (process_deletion Steps 0-5) with full row anonymisation and core delete_user() (F-18), admin notification | 1022 | `f35bbecb565fa78b0166f537d08185de6176230de72448b0d0c0f2a99119a794` | Exact | Yes | Yes |
 | 120 | `local/sentientia_privacy/db/access.php` | Capabilities :manage (RISK_PERSONAL, no archetype) and :view | 18 | `1fbc87a2ee4e63d8b1e03b95d49657914ab433f2988f7b2f07ed2fd0b90fd9e2` | Exact | No | No |
 | 121 | `local/sentientia_privacy/db/feature_flags.php` | Two ADR-035 flags, both default OFF | 51 | `0c06869f4ccc656e79fcbc1845f7f6dd69693063c5aa5f209a0fc91a0b48a455` | Redacted | No | No |
-| 122 | `local/sentientia_privacy/db/install.xml` | Schema: local_privacy_requests, local_privacy_consent_log | 58 | `2e5d60df69a8531a2c49df7ff843be51e2435e5a44ee8958ea1caa99e7cd7d29` | Exact | No | No |
+| 122 | `local/sentientia_privacy/db/install.xml` | Schema: local_privacy_requests, local_privacy_consent_log (download_url comment updated, F-14) | 58 | `89329b267c0c51aa5f6960c39e12ca47493e10d66e7d9002e7822b6fece2ea63` | Exact | Yes | Yes |
 | 123 | `local/sentientia_privacy/db/messages.php` | Message provider privacy_request (popup and e-mail) | 11 | `e10df8fa369c9bf0c8a1d890399490888ef4ed44e46045840843df785cb7be76` | Exact | No | No |
 | 124 | `local/sentientia_privacy/db/upgrade.php` | Upgrade steps of the DPDP plugin | 6 | `211dfbe13ad9a0f1063e93d889760a2d2470d3a439b4d94f383ad272be1e1cf7` | Exact | No | No |
-| 125 | `local/sentientia_privacy/index.php` | Self-service page (download, deletion request), employee notice, and the cross-tenant DPO admin panel (approve = erase, reject) | 320 | `a992cf8fbe11d4b01164256cb236b736581f4df43ac78457e0399af75f154412` | Exact | No | No |
-| 126 | `local/sentientia_privacy/lang/en/local_sentientia_privacy.php` | Language strings (en) | 47 | `42cde2851589681508e48d9be4eda53c5968436ea211d60ba1c0ce016c0b8fd0` | Exact | No | No |
-| 127 | `local/sentientia_privacy/lang/hi/local_sentientia_privacy.php` | Language strings (hi) | 48 | `ab31bf31ac035596f5b4c24817a1d1ae10558d450674a5113b6912fea29de01e` | Exact | No | No |
-| 128 | `local/sentientia_privacy/lang/kn/local_sentientia_privacy.php` | Language strings (kn) | 12 | `672c0eb896b247997f6f1632c8c8135901ead3546be316623237b57a077def30` | Exact | No | No |
-| 129 | `local/sentientia_privacy/lang/mr/local_sentientia_privacy.php` | Language strings (mr) | 12 | `a5711fdbe15b9a8f3f0773da376381d6effe5aacfe276eb9b98aa3b5b55ceee3` | Exact | No | No |
-| 130 | `local/sentientia_privacy/lang/sw/local_sentientia_privacy.php` | Language strings (sw) | 12 | `13bff5ecb1c7ba8045dee9bff1abd60a91f0eccb111fa90ded2f6971aa8a6975` | Exact | No | No |
+| 125 | `local/sentientia_privacy/index.php` | Self-service page (download, deletion request), export download handler action=getfile (F-14), employee notice, and the cross-tenant DPO admin panel (approve = erase, reject) | 366 | `0e048e98ff3d16a9d1804da40eb8146606fa2de0472d05ea5eeca16099d1c954` | Exact | Yes | Yes |
+| 126 | `local/sentientia_privacy/lang/en/local_sentientia_privacy.php` | Language strings (en) | 54 | `04ccf4bac28526f9f25a214a9255ae2a4eeb459cf36087516537af9e2b2f5524` | Exact | Yes | Yes |
+| 127 | `local/sentientia_privacy/lang/hi/local_sentientia_privacy.php` | Language strings (hi) | 55 | `951114b24adbd94a9b2124ffa56c83b4ee7850b3a033ccab2819331139e86c48` | Exact | Yes | Yes |
+| 128 | `local/sentientia_privacy/lang/kn/local_sentientia_privacy.php` | Language strings (kn) | 12 | `b61afdf06939d7b2de97b50741a851a3d88ce441c0c8402108d395ab49317880` | Exact | Yes | Yes |
+| 129 | `local/sentientia_privacy/lang/mr/local_sentientia_privacy.php` | Language strings (mr) | 12 | `71aa5ac840f9ce0d7128ba7fa83399099f9b10ecee818f11d4ac140e17102c2e` | Exact | Yes | Yes |
+| 130 | `local/sentientia_privacy/lang/sw/local_sentientia_privacy.php` | Language strings (sw) | 12 | `2d4bb262ecb7d4de39008fcb79991b4130caedb9f98c20c3f67594e3f9f3ad0a` | Exact | Yes | Yes |
 | 131 | `local/sentientia_privacy/styles.css` | Page styles | 23 | `4f1d4ddeb22d15be94fbfba547d8367fe2452a0d32b10e6a10ed4c1910072611` | Exact | No | No |
-| 132 | `local/sentientia_privacy/templates/admin_panel.mustache` | DPO admin panel template | 114 | `d9442504ab656c1ad2a7224c38c7cefc85577c9d6a1b52f02942233016cd3dee` | Exact | No | No |
-| 133 | `local/sentientia_privacy/templates/self_service.mustache` | Self-service template (notice text, download and delete forms, request list) | 98 | `02582eb02ae8dee0e0cef7a4a017cde2a6c53e5568abae11fe0e17c2344593c2` | Exact | No | No |
+| 132 | `local/sentientia_privacy/templates/admin_panel.mustache` | DPO admin panel template (wording corrected, finding F-17) | 115 | `696a5664a4b47d8470695afa3ba09819dafc3b7f0bc95e3a0d22e6353e723b98` | Exact | Yes | Yes |
+| 133 | `local/sentientia_privacy/templates/self_service.mustache` | Self-service template (notice text, download and delete forms, request list; fixed statutory periods removed, finding F-17) | 99 | `2cbd18bed8fa2ba976b6510dd4d1a4357136a76eae4e791511ac49df67f4ab4d` | Exact | Yes | Yes |
 | 134 | `local/sentientia_privacy/tests/admin_scope_test.php` | PHPUnit: admin_scope_test (local_sentientia_privacy) | 118 | `16122d5f9dc99af2744ea05c1df55b5b39eab3920b8f843e4e12caf40f1b3e24` | Exact | No | No |
 | 135 | `local/sentientia_privacy/tests/erasure_completeness_test.php` | PHPUnit: erasure_completeness_test (local_sentientia_privacy) | 821 | `231056f7bceccb01450623c4dbf5129e2d2aac9f36096c9c06a2434dcaa4b987` | Exact | No | No |
 | 136 | `local/sentientia_privacy/tests/erasure_scope_test.php` | PHPUnit: erasure_scope_test (local_sentientia_privacy) | 223 | `9437f09c54bba3ae697c5f74a7c3993d71c5deefa7f0257b68471bf4362c8e1b` | Exact | No | No |
 | 137 | `local/sentientia_privacy/tests/fixtures/failing_erasure_provider.php` | Test fixture: a provider that throws, to prove partial erasure is reported | 49 | `dbb13fb50b419a12661e01481cbf97cce5624e9d36b63bc243f04eea990baf75` | Exact | No | No |
 | 138 | `local/sentientia_privacy/tests/privacy_manager_test.php` | PHPUnit: privacy_manager_test (local_sentientia_privacy) | 163 | `c96b78c70139a83b6584f92e44d7d0f58b58193fc3025939670802b0bedc7a60` | Exact | No | No |
-| 139 | `local/sentientia_privacy/version.php` | Plugin version 2026111300 (1.1.0) | 26 | `a5acb0a3b037a52cb7a2c15b8e0a6f4ba69e494b0e268696103ae4a5bc1c2bad` | Exact | No | No |
+| 139 | `local/sentientia_privacy/version.php` | Plugin version 2026112100 (1.1.1) | 35 | `ad80305bb04085f029e157f1f2810c5fe6ab9dafdc762e8b9caa90536716d080` | Exact | Yes | Yes |
 | 140 | `local/sentientia_proctoring/classes/identity/verifier_factory.php` | Identity verifier selection: external face matching no longer selectable (mock only); the AWS verifier class remains in the code | 32 | `289ac8831ac6b8e037afca588729fa34f2700460119b21ea210440939a52157f` | Redacted | Yes | No |
 | 141 | `local/sentientia_proctoring/classes/privacy/provider.php` | Privacy provider of local_sentientia_proctoring (metadata provider) | 237 | `899ad748ae6f039927e7c617046d8f9cb07ea6093f0aaae8732933f5785953ee` | Redacted | Yes | No |
 | 142 | `local/sentientia_proctoring/classes/task/purge_old_recordings.php` | Retention task: deletes proctoring recording objects after retention_days | 151 | `c3edba995b5409b87ceb07e6c92f09cd0a72ac2b5deb803b9bdef4f2bb68d191` | Exact | Yes | No |
@@ -358,7 +365,7 @@ The same table is in `MANIFEST.md` inside the bundle. Lines are physical lines i
 | 179 | `local/sentientia_translate/db/install.xml` | Schema of local_sentientia_translate (data inventory) | 121 | `a9a0aef0247598c0ec0a7ce3b0b3c9ddcc520b3df9c462ddc64548eb0c56eecf` | Exact | No | No |
 | 180 | `local/sentientia_translate/tests/anonymised_owner_test.php` | PHPUnit: anonymised_owner_test (local_sentientia_translate) | 70 | `5cb7d1ca7da18e12cd8a8b3d1de6f20e865e5f443b29209ae80b014f9fc637ab` | Exact | No | No |
 | 181 | `local/sentientia_users/classes/privacy/provider.php` | Privacy provider of local_sentientia_users (metadata provider) | 198 | `84b1bce220c9381d3044570afee87d1a7004f88d67a84d547cad3ea1f7cec13d` | Redacted | Yes | Yes |
-| 182 | `local/sentientia_users/classes/signup_service.php` | Public self-registration; consent flags default OFF | 410 | `d3402bdd1da0b7acf7e17ee7954b31df6544864804b218916fad7d167850205c` | Exact | No | No |
+| 182 | `local/sentientia_users/classes/signup_service.php` | Public self-registration; consent flags default OFF | 410 | `84baab08683310e12b229075095d518026a57c42c62c9e74887befc515932c12` | Redacted | No | No |
 | 183 | `local/sentientia_users/db/install.xml` | Schema of local_sentientia_users (data inventory) | 221 | `3a19c0411ba294cd03e31d7ebc2bcffa46ad4a6c09867d83a09d2a46a234778a` | Redacted | Yes | Yes |
 | 184 | `local/sentientia_users/tests/external_trainer_test.php` | PHPUnit: external_trainer_test (local_sentientia_users) | 601 | `d8259b800fd2dc67d720819ca7d520b1cc04e3b10ccef4446a4574bb912e1297` | Redacted | New | New |
 | 185 | `local/sentientia_users/tests/privacy_provider_test.php` | PHPUnit: privacy_provider_test (local_sentientia_users) | 437 | `3a0e6a0f53360d735848894d4037cb4f5f39ffe28728f6228e2bf3ee551dc8cf` | Redacted | Yes | Yes |
@@ -378,13 +385,32 @@ The same table is in `MANIFEST.md` inside the bundle. Lines are physical lines i
 | 199 | `local/sentientia_aiquiz/classes/anthropic_client.php` | AI quiz client: refuses live calls without gateway routing (gateway_routing_required) (finding F-22) | 431 | `3f94c9a56206d925d4b6621bef2519096881c1e683b587b58f97240ff260ff04` | Exact | No | No |
 | 200 | `local/sentientia_aiquiz/cli/live_smoke.php` | Administrator command-line smoke test that calls the AI quiz call_live() directly (finding F-22) | 145 | `c8c31f2eed2a3413efa3063e8b5e136df4176e79c2b0f849483cb60d7a0fcd6b` | Exact | No | No |
 | 201 | `local/sentientia_assistant/ai_demo.php` | Site-administrator demonstration page for Moodle core AI providers through core_ai_bridge (01a section 13.1) | 74 | `af71dfea55a1050d2db9c29e961f992d6c68d3c6f73d612d4ab531ea7827c659` | Exact | No | No |
-| 202 | `local/sentientia_assistant/classes/agent/agent_client.php` | Agentic copilot client: gateway routing, or a direct call with the assistant key when its live flag is on (finding F-22) | 357 | `fa8b45e42aef6553fce3c9980f7ee3c20f2f03f1abc1869e9a5f56a1f145cb39` | Exact | No | No |
+| 202 | `local/sentientia_assistant/classes/agent/agent_client.php` | Agentic copilot client: live proposals only through the AI gateway; with gateway routing off live intent is refused (finding F-22) | 378 | `ab688ae456c69decdfcef1118f2153cea59cba80ce3d2d9fc4e2e4ad6578caab` | Exact | Yes | Yes |
 | 203 | `local/sentientia_assistant/classes/core_ai_bridge.php` | Bridge from the assistant to Moodle core AI providers (01a section 13.1) | 169 | `d067e67fa16fc20a6a1792b6f7c1efc610a6cf4700b1c5206dd2254f79f449cb` | Exact | No | No |
 | 204 | `local/sentientia_assistant/classes/hook_callbacks.php` | Assistant drawer quick-action chips that send fixed questions (finding F-28) | 153 | `57d33dd81ff7b815999b1eab89259a143b3298cf481dd658c32922b264885ba7` | Exact | No | No |
-| 205 | `local/sentientia_authoring/classes/course_generator.php` | Authoring studio generator: gateway routing, or a direct call with anthropic_api_key when its live flag is on (finding F-22) | 412 | `c99d777a7c28cf4f99b1fcd25c6f7b96e31f3228d948c2d61d51f8aace52ed01` | Exact | No | No |
+| 205 | `local/sentientia_authoring/classes/course_generator.php` | Authoring studio generator: live generation only through the AI gateway; with gateway routing off it is refused (finding F-22) | 446 | `3fad2e8f8d401906fe1e2423110aeff2bcee624e9e290c0b50f02c4227ca3ff6` | Exact | Yes | Yes |
 | 206 | `local/sentientia_recommendations/classes/anthropic_client.php` | Recommendations client: refuses live calls without gateway routing (finding F-22) | 360 | `8c7e6fbc3cdd0b2036145fcc0fdbf1e4ad192a8358d3b0aab31fe9ed63a13a95` | Exact | No | No |
 | 207 | `local/sentientia_skillsai/classes/anthropic_client.php` | Skills extraction client: refuses live calls without gateway routing (finding F-22) | 379 | `cc6b5401e81bdbcad48230a1586c3cb1da06455618a3e03fd8d5fc5db04a1fb2` | Exact | No | No |
 | 208 | `local/sentientia_translate/classes/anthropic_client.php` | Translation client: refuses live calls without gateway routing (finding F-22) | 333 | `220dfe7d02f53045b35e2a1e94e93ea8ae7e6be023bfbb4b4bc1db9ce003643b` | Exact | No | No |
+| 209 | `local/sentientia_privacy/classes/event/export_downloaded.php` | Event: a DPDP data export was downloaded (finding F-14) | 102 | `254ecc2ff778f0cf3587636a164b4e66327fc274147d5956b32fb1c6a35ebc0a` | Exact | New | New |
+| 210 | `local/sentientia_privacy/classes/task/purge_expired_exports.php` | Scheduled task: deletes expired, orphaned and legacy DPDP export files (findings F-14, F-7) | 48 | `5f36e00fd652ecf4278605b48f2c40b1a916fa140ac4640afcc5b0972a3fef29` | Exact | New | New |
+| 211 | `local/sentientia_privacy/db/tasks.php` | Scheduled task registration: purge_expired_exports, hourly (finding F-14) | 26 | `edd29f0c4388bf4612f3f643eb7c2bb4b1feb403086c841d48a77596aada1fb5` | Exact | New | New |
+| 212 | `local/sentientia_privacy/tests/erasure_core_deletion_test.php` | PHPUnit: erasure_core_deletion_test (local_sentientia_privacy; finding F-18) | 315 | `aeaf6d05166ca4c51fc14bd13ea2d1bf59d7a843c6e5a4aa7198871db09e767f` | Exact | New | New |
+| 213 | `local/sentientia_privacy/tests/export_download_test.php` | PHPUnit: export_download_test (local_sentientia_privacy; finding F-14) | 382 | `4613df5553bac1b9398de8e7bc281049800612c815b404193439f71b89dedac4` | Exact | New | New |
+| 214 | `local/sentientia_privacy/tests/notice_templates_test.php` | PHPUnit: notice_templates_test (local_sentientia_privacy; finding F-17) | 96 | `a5f9c70d7dd4207799b579e82f848e41a1a4bbb2f25b12712d93302f75d1abf4` | Exact | New | New |
+| 215 | `local/sentientia_pages/classes/local/policy_setup.php` | Site policy setup logic behind the CLI: read-only plan, policy creation through tool_policy, no acceptance rows, counts only (finding F-16) | 270 | `ced2851ac6275d1990036838b23383f85e8b3e4338303dfae9ef9f7ad46d5f6c` | Exact | New | New |
+| 216 | `local/sentientia_pages/index.php` | Static page renderer; strips HTML comments before output (finding F-17) | 90 | `71f894bc41d9e5854ecc504350a10914663c454382d7a28040b6e850b250f77a` | Exact | Yes | Yes |
+| 217 | `local/sentientia_pages/tests/policy_setup_test.php` | PHPUnit: policy_setup_test (local_sentientia_pages; finding F-16) | 170 | `a0ca64bcfb8e10f6bfeb5333e0ed3adab496c7b262dd43270aba54af93564b08` | Exact | New | New |
+| 218 | `local/sentientia_pages/tests/static_notice_claims_test.php` | PHPUnit: static_notice_claims_test (local_sentientia_pages; finding F-17) | 164 | `97753dc31536f582d2be6a1a4f000814e999e4c6e23d064be1dcb6b992ab4f2a` | Exact | New | New |
+| 219 | `local/sentientia_assistant/db/upgrade.php` | Upgrade steps of local_sentientia_assistant; step 2026112100 purges the retired response cache (finding F-28) | 53 | `112d7525e6dd9df0a258b276ebfb6bd20dd1f3ede8f3eb12cb9cf6b429dd975b` | Exact | Yes | Yes |
+| 220 | `local/sentientia_assistant/db/upgradelib.php` | Response cache purge function called by the upgrade step (finding F-28) | 38 | `4fb295eb5514e231a970934a45290cbf64cb8d8974875e8cc21af09b5e7abaaa` | Exact | New | New |
+| 221 | `local/sentientia_assistant/lang/en/local_sentientia_assistant.php` | Language strings (en) of local_sentientia_assistant: legacy key setting text and gateway refusal message (findings F-21, F-22) | 99 | `9cf8c86b166af279e89099121dc439fb22b2a104b94d49e546d83e127f90ff8c` | Exact | Yes | Yes |
+| 222 | `local/sentientia_assistant/tests/agent_client_test.php` | PHPUnit: agent_client_test (local_sentientia_assistant; finding F-22) | 127 | `0377bbd0828398fc4212498e0dfb1cba6d002899677a4433920fe2e49046bdcc` | Exact | Yes | Yes |
+| 223 | `local/sentientia_assistant/tests/ai_client_test.php` | PHPUnit: ai_client_test (local_sentientia_assistant; findings F-22, F-28) | 258 | `251a076e36d1df4ec1f616575c54e06016ed88206a162dd3ca21f2e1681f9673` | Exact | New | New |
+| 224 | `local/sentientia_authoring/lang/en/local_sentientia_authoring.php` | Language strings (en) of local_sentientia_authoring: key setting text and gateway-required badge (findings F-21, F-22) | 281 | `94b8a63ca14a3f5dd4624ec8de44d0c6f710637d760eeca3eb36b805834af351` | Exact | Yes | Yes |
+| 225 | `local/sentientia_authoring/studio.php` | Authoring studio page; live mode needs gateway routing (finding F-22) | 367 | `0d239c020f55d67b9470e62d9bc3750ec08418ade70cd6265994a2330a20101e` | Exact | Yes | Yes |
+| 226 | `local/sentientia_authoring/tests/gateway_refusal_test.php` | PHPUnit: gateway_refusal_test (local_sentientia_authoring; finding F-22) | 89 | `efa60320f3f54439687d229473167e60249d3d3f225996963608ec0d24748e03` | Exact | New | New |
+| 227 | `local/sentientia_ai/lang/en/local_sentientia_ai.php` | Language strings (en) of local_sentientia_ai: gateway key setting text listing the fallback keys (finding F-21) | 66 | `b0cc5a9fc25008f075284685d254e8231d53274f62b547e04a86e310ac0c56c3` | Exact | Yes | Yes |
 
 ### 8.2 Redacted review copies: repository hashes
 
@@ -403,7 +429,7 @@ The same table is in `MANIFEST.md` inside the bundle. Lines are physical lines i
 | 101 | `local/sentientia_platform/classes/audit_log.php` | `ea7212552786493758d42eaf0e88c6e4ae37dfb629218528506d79adc6eaf84d` |
 | 102 | `local/sentientia_platform/classes/feature_flags.php` | `4cfe9711b1dc942c9b9186494a50acdee59f35b433dd0a196b0048e5f68035b4` |
 | 107 | `local/sentientia_platform/db/install.xml` | `93300c41b1f5198de54ff3535ee347b2acf97677fc67f650ed720c6f602e4f44` |
-| 112 | `local/sentientia_privacy/README.md` | `b8a17fae9dfa47bb3e07613513358cefbb7ef6e9380b20f5054a4b0343756107` |
+| 112 | `local/sentientia_privacy/README.md` | `45fa22a9c13b3c48bc28f6175938c6410fa61de4a5ec750ea54619263622f536` |
 | 114 | `local/sentientia_privacy/classes/local/erasure_completeness.php` | `529e727a9ab01b624a5d74d9a35dbc56988bcc6217de4785e73b0b7efdb1096f` |
 | 121 | `local/sentientia_privacy/db/feature_flags.php` | `78b1e51bf7019bacc1bfec81bfd4ec7cd7600a49e7accb99c4e4d89d0b20adab` |
 | 140 | `local/sentientia_proctoring/classes/identity/verifier_factory.php` | `d392ce8b68a48cd6f093b451e82c3e9c2fe24b0e2559e44da710f395f1f538af` |
@@ -411,6 +437,7 @@ The same table is in `MANIFEST.md` inside the bundle. Lines are physical lines i
 | 144 | `local/sentientia_proctoring/tests/quiz_integration_test.php` | `108dab682223e664d50c72e4f9d89e59cb28e37a07e74ec77b8654ececb8c3e5` |
 | 145 | `local/sentientia_proctoring/tests/secure_mode_test.php` | `a14ebe637d687c1cadc4fa16d9703df725267e203ba788b597e95fa9fbf9a820` |
 | 181 | `local/sentientia_users/classes/privacy/provider.php` | `c7cdfe13ac475042524c2353ec26668d8e8114de0f929e583fd590d9e1a78964` |
+| 182 | `local/sentientia_users/classes/signup_service.php` | `d3402bdd1da0b7acf7e17ee7954b31df6544864804b218916fad7d167850205c` |
 | 183 | `local/sentientia_users/db/install.xml` | `1be968e7224f92dd8c86dd4e571f28e89cff11faba312a9e795742e688bca3f8` |
 | 184 | `local/sentientia_users/tests/external_trainer_test.php` | `6a8b3147a084b49588c2104591049b6d31f5443a0f77d22ef984833ca0dfd1d1` |
 | 185 | `local/sentientia_users/tests/privacy_provider_test.php` | `f611184820020344644a04ae2c37b379d665dac2b2759089543cd04f2afd6af3` |
@@ -424,7 +451,8 @@ The same table is in `MANIFEST.md` inside the bundle. Lines are physical lines i
 | 1 | Verify the zip hash and confirm receipt | SISA; Information Security | Within 2 working days of receipt | E-mail to the document owner |
 | 2 | Request repository access if tests will be run | SISA | At kick-off, proposed by 4 December 2026 | Named reviewers |
 | 3 | Report any file that should have been excluded or further redacted | SISA; Information Security | On discovery | Immediate notice to the document owner |
-| 4 | Destroy any copy of bundle versions 1.0 and 1.1 | Any recipient of those versions | On receipt of this version | Confirmation to the document owner |
+| 4 | Destroy any copy of bundle versions 1.0, 1.1 and 1.2 | Any recipient of those versions | On receipt of this version | Confirmation to the document owner |
+| 5 | Review the remediation files (rows 209 to 227 and the changed rows named in section 3) against 01a section 16.1; treat them as not yet verified until the platform engineer reports the test run | SISA; Information Security | With the review findings, proposed 18 December 2026 | Findings with CWE identifiers |
 
 ---
 
@@ -432,10 +460,11 @@ The same table is in `MANIFEST.md` inside the bundle. Lines are physical lines i
 
 | # | Item | Owner role | Proposed resolution |
 |---|---|---|---|
-| Q1 | The bundle reflects uncommitted work for 9 files; the repository could move after 20 November | Platform engineer | Commit the work and tag the basis before granting repository access; the hashes here stay authoritative for the bundle |
+| Q1 | The bundle reflects uncommitted work for 49 files; the repository could move after 21 November | Platform engineer | Commit the work and tag the basis before granting repository access; the hashes here stay authoritative for the bundle |
 | Q2 | The bundle is not runnable on its own | Platform engineer | Provide repository access, or a full plugin package on request |
-| Q3 | 24 files are redacted review copies and so are not byte-identical to the repository | Head of Information Security | Accept the redaction for the review, or ask for the exact files through repository access; section 8.2 lets a reviewer match each copy to the repository |
-| Q4 | The superseded version 1.0 and 1.1 bundles and zips still exist in the local build area | Head of L&D | Delete them after this version is accepted; never distribute them |
+| Q3 | 25 files are redacted review copies and so are not byte-identical to the repository | Head of Information Security | Accept the redaction for the review, or ask for the exact files through repository access; section 8.2 lets a reviewer match each copy to the repository |
+| Q4 | The superseded version 1.0, 1.1 and 1.2 bundles and zips still exist in the local build area | Head of L&D | Delete them after this version is accepted; never distribute them |
+| Q5 | The remediation tests (8 files, 59 test methods) were written but not run; a failing test would change the code in this bundle | Platform engineer | Run the tests on the development environment; if any code changes, rebuild the bundle as a new version with new hashes and update 01a section 16.1 |
 
 ---
 
@@ -458,6 +487,7 @@ The same table is in `MANIFEST.md` inside the bundle. Lines are physical lines i
 | Item | Location |
 |---|---|
 | Distribution | The document owner sends the zip through Airpay's approved secure file-transfer channel to named recipients; it is not hosted at any public location |
-| Bundle and zip names | `sentientia-dpdp-code-review-2026-11-20/`, `sentientia-dpdp-code-review-2026-11-20.zip` |
+| Bundle and zip names | `sentientia-dpdp-code-review-2026-11-21/`, `sentientia-dpdp-code-review-2026-11-21.zip` (version 1.3); superseded: `sentientia-dpdp-code-review-2026-11-20/` and its zip (versions 1.0 to 1.2) |
+| Remediation status per finding | 01a section 16.1; 01b rows for F-14, F-16, F-17, F-18, F-21, F-22 and F-28 |
 | Fact base | `moodle-enhancement/docs/stakeholder-packs/2026-11/_facts/00-FACTS-INDEX.md`, `40-data-privacy.md` |
 | Python `zipfile` and `hashlib` documentation | https://docs.python.org/3/library/zipfile.html ; https://docs.python.org/3/library/hashlib.html (accessed 20 November 2026) |
