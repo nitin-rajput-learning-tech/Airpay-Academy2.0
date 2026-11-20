@@ -553,3 +553,19 @@ certificate details are blurred.
 - Verification: `D:/Claude Local/kit-scratch/1119/s01/verify/A/` and `verify/B/`. These hold the raw unmasked
   shots, `results*.json`, the scripts, and `B/fix/` with the repair logs.
 - Re-vendor package: `D:/Claude Local/kit-scratch/1119/s01/revendor/`.
+
+
+## Decisions recorded (Nitin, 20 Nov 2026 ~08:30, in chat)
+
+| # | Answer |
+|---|---|
+| D-1 | Run the D4 pin script on UAT only after a green PHPUnit run, on Nitin's go; dry run first, shown to Nitin, then `--execute --clear-enddates` |
+| D-2, D-3 | Course certificate issuer: **no flag**; issued certificates **survive course delete** (courseid NULL + Sentientia course map) |
+| D-4, D-5, D-6 | Accepted as recommended (popup kept, tool_certificate e-mail off at cutover; new certificate on re-completion, old one keeps verifying; no Stage B courseid backfill) |
+| D-7, D-8 | Apply the 5.0.12 re-vendor with the CHECK 2 hook change; deploy the 4 tool_certificate files to UAT on Nitin's go |
+| D-9 | Deploy session 0+1 to UAT after green PHPUnit, on Nitin's go |
+| D-10 | **"Do all"**: build `--unenrol-outsiders` and remove the 113 local cross-tenant compliance enrolments |
+| D-11 | Keep the flag OFF; switch it ON on local only so Nitin can see it, then OFF again |
+| D-12, D-13 | **Both now**: rule-editor field reset fix and survey minimum group size 5 |
+| D-14 | **"Do all"**: make the root fix in core `lib/form/form.js` (ADR + core-mods record), in addition to the page guard |
+| D-15 | **Build session 5 (external trainer accounts) now**, per ADR-036 / D14 / D15 |
