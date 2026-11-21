@@ -1,5 +1,6 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-11-21 ~15:45 (**UAT push 1 DEPLOYED 13:05 IST on Nitin's go (`af6e65c0e..2962954a6`: the 19-20 Nov builds, 180 files, 12 upgrades, flags +8 all OFF); D-1 compliance pin executed (0 pin changes, 3 expired end dates cleared); Nitin's browser smoke OK; `production` fast-forwarded. The 21 Nov code-only batch is still in local verification. See the 2026-11-21 ~15:45 entry.**)
+**Updated:** 2026-11-21 ~17:20 (**Session paused until Monday 23 Nov on Nitin's call. Course-content question answered; Nitin edited a UAT course in Edit mode as the L&D admin (works, "not smooth", no visible section delete); course-editing UX backlog filed. verify-1121 STOPPED in its repair stage (state recorded, nothing committed). See the 2026-11-21 ~17:20 entry.**)
+**Before that, 2026-11-21 ~15:45** (**UAT push 1 DEPLOYED 13:05 IST on Nitin's go (`af6e65c0e..2962954a6`: the 19-20 Nov builds, 180 files, 12 upgrades, flags +8 all OFF); D-1 compliance pin executed (0 pin changes, 3 expired end dates cleared); Nitin's browser smoke OK; `production` fast-forwarded. The 21 Nov code-only batch is still in local verification. See the 2026-11-21 ~15:45 entry.**)
 **Before that, 2026-11-21 ~10:30** (**20 Nov session: decisions D-2..D-15 built, reviewed, fixed, gated, deployed to local XAMPP and verified (browser where the overloaded web tier allowed, otherwise server side); proctoring B1/B2 verified server side; PHPUnit GREEN 21 Nov (88 files, 756 tests). NOT committed, NOT on UAT. See the 2026-11-21 entry.**)
 **Before that, 2026-11-20 ~05:15 (**Post-demo sessions 0 + 1 built, reviewed, deployed to local XAMPP and partly verified; NOT committed, NOT on UAT; PHPUnit NOT finished (the local re-init is cut off by the 06:00 shutdown). Session 1b confirmed: no course certificate is issued on completion; issuer spec amended, waits for Q9 / Q9-d. Proctoring B1/B2 code committed in `76e8ec572`, flags OFF, unverified, not on production or UAT. See the 2026-11-20 entry.**)
 **Before that, 2026-11-19 16:00** (**Post-demo: Nitin decided D1-D32 (plan 6a); 5 quick wins + certificate verify-on-arrival (D32) DEPLOYED TO UAT 15:15 (`fe94e7c97`); D32 extras (noindex, escaping, ADR-041 accepted) committed, not deployed; mobile = Flutter recommended pending spike. See the 2026-11-19 16:00 entry.**)
@@ -14,6 +15,39 @@
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
 
 ---
+
+## 2026-11-21 ~17:20 - Session paused until Monday; course editing answered and checked on UAT (Opus 5.5)
+
+**Course content question (Nitin: "how to add content to the courses, or edit contents of the existing course").**
+- Manage Courses edits course settings only. Content is edited on the course page in Edit mode: click the course name, turn on the Edit mode switch, then use "+ Add content".
+- Code research with two verifier passes: 70/77 claims confirmed, corrections applied. Notes in `D:/Claude Local/kit-scratch/1121/content-howto/`.
+- Nitin then checked it on UAT (course id 3, L&D admin test account). Edit mode and the activity chooser work. His verdict: "UI is not smooth", and he found no way to delete a section. He asked for a full UI/UX review of this later.
+- Evidence: `docs/visual-evidence/2026-11-21/course-edit-mode/` (browser bar cropped).
+- Backlog with findings N1-N2, screenshot notes S1-S5, gaps G1-G12, the proposed `sentientia.courses.content_entry.enabled` fix (flag OFF) and open checks: `docs/audits/2026-11-21-COURSE-EDITING-UX-BACKLOG.md`.
+- Nothing built for it yet.
+- Order: after the verify-1121 commits (same plugin, `local_sentientia_courses`), then local verification, then UAT push 2 on Nitin's go.
+
+**verify-1121 stopped (workflow `wf_0c4e3661-772`, script `D:/Claude Local/kit-scratch/1121/verify-1121.js`).**
+- Finished stages: gates, local deploy, lanes A and B, PHPUnit, fresh-eyes screenshot review.
+- Stopped at ~17:05 inside **repair**. Not run: repair, evidence + pack 01 status + SISA bundle v1.4, commit plan.
+- Repair work left in the working tree so far:
+  - `local_sentientia_assistant/classes/external.php` (6 edits);
+  - a rebuilt `amd/build/chat.min.js` (+ map, `src/chat.js` LF-normalised) for an A5 assistant re-check.
+- All three copies (ME tree, `local/` twin, XAMPP) are byte-equal, `php -l` is clean, and `check-tree-drift.php` reports 0 new drift.
+- The local flag `sentientia.ai.gateway.enabled` was left ON by the stopped repair agent (16:58). It was restored to unset at 17:13 and logged in `kit-scratch/1121/flag-toggles.log`.
+- Nothing committed. The 21 Nov batch is NOT on UAT.
+
+**Monday 23 Nov, in order:**
+1. Re-run the A5 assistant check on the rebuilt chat bundle, then finish verify-1121: resume with `Workflow({scriptPath: 'D:/Claude Local/kit-scratch/1121/verify-1121.js', resumeFromRunId: 'wf_0c4e3661-772'})`. The cached stages replay, and repair re-runs over the current tree.
+2. Make the commits from its commit plan through the real hook, then push.
+3. Build the course content-entry fix plus the guide fixes, behind a flag (OFF), and verify locally.
+4. UAT push 2 on Nitin's go (window hh:37-hh:50 IST; UAT tasks run on UTC).
+5. Course-editing UI/UX review (backlog N1-N2, S1-S5).
+
+**Still open for Nitin:**
+- whether to switch on the existing `sentientia.courses.advanced_actions.enabled` on UAT now (his call);
+- GitHub Actions CI result for `2962954a6` / `5654c4682`;
+- the earlier decision list (course types flag, LP back-fill, A6 enrolment policy, N-1..N-6, tool_certificate upstream features).
 
 ## 2026-11-21 ~15:45 - UAT push 1 deployed (`2962954a6`) and D-1 executed (Opus 5.5)
 
