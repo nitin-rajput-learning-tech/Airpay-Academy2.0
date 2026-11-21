@@ -1,5 +1,6 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-11-21 ~10:30 (**20 Nov session: decisions D-2..D-15 built, reviewed, fixed, gated, deployed to local XAMPP and verified (browser where the overloaded web tier allowed, otherwise server side); proctoring B1/B2 verified server side; PHPUnit GREEN 21 Nov (88 files, 756 tests). NOT committed, NOT on UAT. See the 2026-11-21 entry.**)
+**Updated:** 2026-11-21 ~15:45 (**UAT push 1 DEPLOYED 13:05 IST on Nitin's go (`af6e65c0e..2962954a6`: the 19-20 Nov builds, 180 files, 12 upgrades, flags +8 all OFF); D-1 compliance pin executed (0 pin changes, 3 expired end dates cleared); Nitin's browser smoke OK; `production` fast-forwarded. The 21 Nov code-only batch is still in local verification. See the 2026-11-21 ~15:45 entry.**)
+**Before that, 2026-11-21 ~10:30** (**20 Nov session: decisions D-2..D-15 built, reviewed, fixed, gated, deployed to local XAMPP and verified (browser where the overloaded web tier allowed, otherwise server side); proctoring B1/B2 verified server side; PHPUnit GREEN 21 Nov (88 files, 756 tests). NOT committed, NOT on UAT. See the 2026-11-21 entry.**)
 **Before that, 2026-11-20 ~05:15 (**Post-demo sessions 0 + 1 built, reviewed, deployed to local XAMPP and partly verified; NOT committed, NOT on UAT; PHPUnit NOT finished (the local re-init is cut off by the 06:00 shutdown). Session 1b confirmed: no course certificate is issued on completion; issuer spec amended, waits for Q9 / Q9-d. Proctoring B1/B2 code committed in `76e8ec572`, flags OFF, unverified, not on production or UAT. See the 2026-11-20 entry.**)
 **Before that, 2026-11-19 16:00** (**Post-demo: Nitin decided D1-D32 (plan 6a); 5 quick wins + certificate verify-on-arrival (D32) DEPLOYED TO UAT 15:15 (`fe94e7c97`); D32 extras (noindex, escaping, ADR-041 accepted) committed, not deployed; mobile = Flutter recommended pending spike. See the 2026-11-19 16:00 entry.**)
 **Before that, 2026-11-19 09:20** (**Walk fixes A+B+C DEPLOYED TO UAT at 09:06-09:12 on Nitin's go (`b757187a9` code, docs `53b249a16`, `production` fast-forwarded); all checks green; PHPUnit not run. See the 2026-11-19 09:20 entry.**)
@@ -13,6 +14,38 @@
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
 
 ---
+
+## 2026-11-21 ~15:45 - UAT push 1 deployed (`2962954a6`) and D-1 executed (Opus 5.5)
+
+- **Runbook:** `docs/cutover/UAT-DEPLOY-RUNBOOK-2026-11-21.md` (steps 0-7). Kit and every output:
+  `D:/Claude Local/kit-scratch/uat-1121-2962954a6/` (outside the repo).
+- **Deploy 13:05 IST, Nitin's go** (TS `20261121-130514`): `tools/uat/deploy_to_uat.sh --prefer-me --yes`,
+  `af6e65c0e..2962954a6`, 180 files, exit 0. Upgrade: 12 components, all `++ Success`, in this order:
+  `theme_sentientia`, then local analytics, classroom, compliance_report, courses, emails, evaluation, learningpath,
+  proctoring, skillsai, users, then `quizaccess_sentientia_proctoring` **last**. tool_certificate: 4 files sent, no
+  upgrade (version unchanged).
+- **Verified on the box:** 332/332 deployed paths equal their git blobs; `lib/form/form.js` carries the D-14 guard
+  (ADR-044); new tables, columns, capability, message provider, web services and task present; page probes 200 or a
+  login redirect; no new error-log lines. **Flags:** 8 new keys registered, all OFF
+  (`assessment.candidates`, `assessment.seb_preset`, `assessment.secure_mode`, `classroom.trainer_own_scope`,
+  `courses.advanced_actions`, `proctoring`, `proctoring.recording`, `users.external_trainer`); no existing flag changed.
+- **D-1 compliance pin, 13:12 on Nitin's go** (`cli/pin_compliance_courses.php --clear-enddates --execute`, never
+  `--unenrol-outsiders`): 0 pin changes (the AML-KYC and INFOSEC rows were already pinned to Airpay); 3 deadline-based
+  end dates cleared (UAT-AP-POSH, UAT-AP-AML-KYC, UAT-AP-INFOSEC, one locked-out learner each); 3 listed courses have
+  no active compliance row (nothing changed for them). A second dry run shows 0 left to clear. Undo snapshot:
+  kit `pin-snapshot-before.json` + `pin_undo.php`.
+- **Browser smoke (Nitin, VPN off, ~15:30): all OK.** Login brand; learner `/my/` + course page clean; L&D admin
+  Programs link, compliance report, Manage Courses New > Cancel > Edit with no TypeError and no "Number of sections";
+  certificate verify shows "Not verified". Evidence: `docs/visual-evidence/2026-11-21/uat-push-1/`.
+- **Rollback point:** `/tmp/uat-predeploy-backup-20261121-130514.tgz` on the UAT box (runbook section 5).
+- **Learned, written into the runbook:** (1) UAT's scheduled tasks run on UTC, so the hh:00 compliance refresh
+  runs at hh:30 IST and the safe deploy window is hh:37-hh:50 IST. (2) quizaccess upgrades after the local plugins,
+  not before; the B-noupgrade rollback reasoning is corrected.
+- **Open:** Nitin to check GitHub Actions CI for `2962954a6` (no gh CLI here). Chrome Issues-tab label hints on
+  the course form (core date-picker pattern), a later accessibility item. Nitin asked how content is added to and
+  edited in courses; read-only research started, answer to follow.
+- **Not on UAT:** the 21 Nov code-only batch (course settings v2, survey quick wins, LP completion engine, DPDP
+  follow-up), still in local verification; UAT push 2 after its commits, on Nitin's go.
 
 ## 2026-11-21 ~10:30 - 20 Nov session: decisions D-2..D-15 and proctoring verification (Opus 5.5)
 
