@@ -50,32 +50,47 @@ class list_classroom_users extends external_api {
         $history = \local_sentientia_classroom\session_manager::history_enabled();
 
         // ADR-031: the capability says WHAT; the classroom must also be in the caller's tenant.
-        \local_sentientia_classroom\session_manager::require_classroom_access($params['classroomid']);
+        $classroom = \local_sentientia_classroom\session_manager::require_classroom_access($params['classroomid']);
+        // ADR-036 D9/D10 (session 5): an external trainer, or an internal trainer under the own-classroom
+        // flag, sees the roster of a classroom they train only; an external trainer sees names only.
+        \local_sentientia_classroom\session_manager::require_trainer_scope($classroom);
+        $namesonly = \local_sentientia_classroom\session_manager::roster_names_only();
+        if ($namesonly) {
+            $can_update = false;
+            $history = false;
+        }
 
         // ADR-031: an in-tenant classroom can still hold other tenants' or
         // pathless learners (site-admin, approval-flow or pre-fix enrolments);
         // a scoped caller is shown only their own tenant's. Cross-tenant
         // callers see the whole roster, as before.
         $total = \local_sentientia_classroom\session_manager::count_enrolled_filtered(
-            $params['classroomid'], $params['search'], true);
+            $params['classroomid'], $params['search'], true, $namesonly);
 
         $rows = [];
         if ($total > 0) {
             $records = \local_sentientia_classroom\session_manager::get_enrolled_users(
                 $params['classroomid'], $params['search'],
                 $params['sort'], $params['sortdir'],
-                $params['page'] * $params['perpage'], $params['perpage'], true);
+                $params['page'] * $params['perpage'], $params['perpage'], true, $namesonly);
 
             foreach ($records as $r) {
                 $fullname = trim(($r->firstname ?? '') . ' ' . ($r->lastname ?? ''));
-                if (empty($fullname)) { $fullname = $r->email; }
+                if (empty($fullname)) { $fullname = $namesonly ? '—' : $r->email; }
 
-                $userurl = (new \moodle_url('/user/profile.php', ['id' => (int) $r->userid]))->out(false);
-                $name_html = '<a href="' . s($userurl) . '" class="text-reset fw-semibold text-decoration-none">'
-                    . s($fullname) . '</a>';
-
-                $employeeid = property_exists($r, 'open_employeeid') ? (string) $r->open_employeeid : '';
-                $designation = property_exists($r, 'open_designation') ? (string) $r->open_designation : '';
+                if ($namesonly) {
+                    // Names only: no profile link, no e-mail, employee id or designation.
+                    $name_html = '<span class="fw-semibold">' . s($fullname) . '</span>';
+                    $r->email = '';
+                    $employeeid = '';
+                    $designation = '';
+                } else {
+                    $userurl = (new \moodle_url('/user/profile.php', ['id' => (int) $r->userid]))->out(false);
+                    $name_html = '<a href="' . s($userurl) . '" class="text-reset fw-semibold text-decoration-none">'
+                        . s($fullname) . '</a>';
+                    $employeeid = property_exists($r, 'open_employeeid') ? (string) $r->open_employeeid : '';
+                    $designation = property_exists($r, 'open_designation') ? (string) $r->open_designation : '';
+                }
 
                 $actions = '';
                 if ($can_update) {

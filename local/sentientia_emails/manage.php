@@ -43,44 +43,49 @@ if ($action && confirm_sesskey()) {
                 'Rule ' . ($enabled ? 'enabled' : 'disabled'), null, \core\output\notification::NOTIFY_SUCCESS);
             break;
         case 'saverule':
-            // G1 (2026-11-19): the template key is checked against the template registry below
-            // (rule_manager::rule_template_key(), exact match only), so only whitespace is trimmed
-            // here: a cleaning PARAM type could turn a crafted value into '' ("None") and save it
-            // quietly instead of refusing it. It was PARAM_RAW, stored unchecked.
-            $requestedtemplate = optional_param('template_key', '', PARAM_RAW_TRIMMED);
-            $ruledata = (object)[
-                'rule_name'     => required_param('rule_name', PARAM_TEXT),
-                'rule_type'     => required_param('rule_type', PARAM_ALPHANUMEXT),
-                'trigger_event' => optional_param('trigger_event', 'cron', PARAM_RAW),
-                'trigger_days'  => optional_param('trigger_days', 0, PARAM_INT),
-                'channel'       => required_param('channel', PARAM_RAW),
-                'audience'      => required_param('audience', PARAM_ALPHA),
-                'template_key'  => $requestedtemplate,
-                'tenant_id'     => optional_param('rule_tenant', 0, PARAM_INT),
-                'enabled'       => optional_param('rule_enabled', 1, PARAM_INT),
-                'priority'      => optional_param('priority', 50, PARAM_INT),
-                'conditions_json' => optional_param('conditions_json', '', PARAM_RAW),
-            ];
             $editid = optional_param('ruleid', 0, PARAM_INT);
-            if ($editid > 0) {
-                // ADR-031: the rule being edited must be one the caller may change.
-                \local_sentientia_emails\tenant_scope::modifiable_rule($editid);
-                $ruledata->id = $editid;
+            // ADR-031: the rule being edited must be one the caller may change.
+            $storedrule = $editid > 0 ? \local_sentientia_emails\tenant_scope::modifiable_rule($editid) : null;
+            // D-12 (2026-11-20): an edit saves back every stored value it did not change. A field the
+            // request does not carry is null here and keeps the stored value (rule_manager::rule_from_form()).
+            // trigger_event and conditions_json are not read from the request at all: the form does not edit
+            // them, and they used to be reset to 'cron' and '' on every edit. The choice fields and the numbers
+            // are read raw-trimmed and checked by exact match or strict format there, so a cleaning PARAM type
+            // cannot turn a crafted value into an accepted one (the reason G1 reads template_key this way).
+            $ruleform = [
+                'rule_name'               => required_param('rule_name', PARAM_TEXT),
+                'rule_type'               => optional_param('rule_type', null, PARAM_RAW_TRIMMED),
+                'trigger_days'            => optional_param('trigger_days', null, PARAM_RAW_TRIMMED),
+                'channel'                 => optional_param('channel', null, PARAM_RAW_TRIMMED),
+                'audience'                => optional_param('audience', null, PARAM_RAW_TRIMMED),
+                'template_key'            => optional_param('template_key', null, PARAM_RAW_TRIMMED),
+                'tenant_id'               => optional_param('rule_tenant', null, PARAM_RAW_TRIMMED),
+                // The form posts a hidden 0 before each box, so an unticked box arrives as 0. The save used to
+                // default a missing rule_enabled to 1, so the Enabled box could never switch a rule off.
+                'enabled'                 => optional_param('rule_enabled', null, PARAM_INT),
+                'priority'                => optional_param('priority', null, PARAM_RAW_TRIMMED),
+                'cadence_days_json'       => optional_param('cadence_days_json', null, PARAM_RAW_TRIMMED),
+                'max_reminders_per_user'  => optional_param('max_reminders_per_user', null, PARAM_RAW_TRIMMED),
+                'auto_stop_on_completion' => optional_param('auto_stop_on_completion', null, PARAM_INT),
+            ];
+            try {
+                // G1: only "None" or a template from the registry; D-12: the choice fields only from their lists.
+                $ruledata = \local_sentientia_emails\rule_manager::rule_from_form($ruleform, $storedrule);
+            } catch (\moodle_exception $e) {
+                // Back to the form with the reason; nothing was saved. s(): a notification is shown as HTML,
+                // and a cadence error quotes the submitted value.
+                $formparams = ['tab' => 'rules', 'tenant' => $tenantid];
+                $formparams += $editid > 0 ? ['edit' => $editid] : ['new' => 1];
+                redirect(new moodle_url('/local/sentientia_emails/manage.php', $formparams),
+                    s($e->getMessage()), null, \core\output\notification::NOTIFY_ERROR);
             }
             // ADR-031: the scope the caller chose is the scope saved. A scoped
             // caller's form offers their own tenant only (and pre-selects it),
             // so global (0) or another tenant from them is refused here -
-            // no longer quietly rewritten to their own tenant.
-            \local_sentientia_emails\tenant_scope::require_can_write_tenant((int) $ruledata->tenant_id);
-            // G1: only "None" or a template from the registry (the form's select offers nothing
-            // else). Anything else goes back to the form with a message; save_rule() refuses it too.
-            if (\local_sentientia_emails\rule_manager::rule_template_key($requestedtemplate) === null) {
-                $formparams = ['tab' => 'rules', 'tenant' => $tenantid];
-                $formparams += $editid > 0 ? ['edit' => $editid] : ['new' => 1];
-                redirect(new moodle_url('/local/sentientia_emails/manage.php', $formparams),
-                    get_string('template_unknown', 'local_sentientia_emails'), null,
-                    \core\output\notification::NOTIFY_ERROR);
-            }
+            // no longer quietly rewritten to their own tenant. An edit that
+            // keeps its scope is checked against the stored one.
+            \local_sentientia_emails\tenant_scope::require_can_write_tenant(
+                (int) ($ruledata->tenant_id ?? $storedrule->tenant_id));
             \local_sentientia_emails\rule_manager::save_rule($ruledata);
             $msg = $editid ? 'Rule updated.' : 'Rule created.';
             redirect(new moodle_url('/local/sentientia_emails/manage.php', ['tab' => 'rules', 'tenant' => $tenantid]),
@@ -192,22 +197,8 @@ $pagecontext = [
     'is_rules'     => ($tab === 'rules'),
     'is_logs'      => ($tab === 'logs'),
     'is_settings'  => ($tab === 'settings'),
-    // Rule editor data.
-    'editrule'     => $editrule ? [
-        'id'              => $editrule->id,
-        'rule_name'       => format_string($editrule->rule_name),
-        'rule_type'       => $editrule->rule_type,
-        'trigger_event'   => $editrule->trigger_event ?? 'cron',
-        'trigger_days'    => $editrule->trigger_days ?? 0,
-        'channel'         => $editrule->channel,
-        'audience'        => $editrule->audience,
-        'template_key'    => $editrule->template_key ?? '',
-        'tenant_id'       => $editrule->tenant_id,
-        'enabled'         => (bool)$editrule->enabled,
-        'priority'        => $editrule->priority,
-        'conditions_json' => $editrule->conditions_json ?? '',
-    ] : null,
-    'has_editrule' => !empty($editrule),
+    // Rule editor data (editrule, has_editrule and the rule type / channel / audience option lists) is
+    // merged in below from manage_controller::rule_form_context() (D-12, 2026-11-20).
     // ADR-031: scoped callers see a read-only global rule (no save) and a
     // Tenant Scope select holding their own tenant only.
     'is_crosstenant'     => $crosstenant,
@@ -222,6 +213,10 @@ $pagecontext = [
     'template_options' => \local_sentientia_emails\manage_controller::rule_template_options(
         $editrule ? (string) ($editrule->template_key ?? '') : ''),
 ];
+// D-12 (2026-11-20): every stored value of the edited rule is loaded into the form (it used to pre-select
+// nothing in Rule Type, Channel and Audience, show a NULL Trigger Days as 0 and hide the cadence), so a
+// re-save keeps the rule as it was unless the admin changed a field.
+$pagecontext += \local_sentientia_emails\manage_controller::rule_form_context($editrule);
 
 echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_sentientia_emails/manage/page', $pagecontext);

@@ -73,3 +73,16 @@ vendor release replaces the files.
 A static diff of the 5.1/5.2 and 5.3 form-element sources against every `createElement('duration', ...)` call in the
 repository. Not yet exercised at runtime: when a 5.3 instance exists, open "Issue certificates" from the
 templates list as a site admin and confirm the dialog builds.
+
+---
+
+## Reverted 2026-11-20 (re-vendored to 5.0.12 on 2026-11-20)
+
+Upstream 5.0.12 spells the option `'defaultunit' => DAYSECS` in `certificate::add_expirydate_to_form()`
+(`classes/certificate.php`, line 637), so the typo fix is no longer needed; on Moodle 5.3 the "Issue certificates"
+dialog builds with the upstream file. The direct-access guard hunk in the same file existed only so the patched file
+could pass pre-commit CHECK 2; it goes with the patch. (CHECK 2 now skips files under a `Core-Mods-Upstream-Sync`
+line staged with the commit, as CHECK 6 does; see the import record.) The file is upstream's, with no marker; it
+lands in the import commit under the sync line. ADR-041 D7 step 2: upstream taken, record kept. No Sentientia tests
+to remove. The "three tool_certificate vendor patches on 5.3" table above is history. Import record:
+`2026-11-20-tool-certificate-5.0.12-revendor.md`.

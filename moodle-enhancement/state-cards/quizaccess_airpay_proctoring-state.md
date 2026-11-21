@@ -1,13 +1,17 @@
 # State Card — `quizaccess_airpay_proctoring`
 
 **Component:** `quizaccess_airpay_proctoring`
-**Version:** `2026052401` / `1.1.1`  — Phase B.12 hotfix (defensive `table_exists()` in upgrade.php)
+**Version:** `2026112002` / `1.3.1` (`quizaccess_sentientia_proctoring`; B2 security levels with review fixes, committed `76e8ec572`; on local XAMPP since 2026-11-20, not on UAT)
 **Maturity:** `MATURITY_STABLE`
 **Status:** NOT live anywhere and locks learners out when switched on (corrected 2026-11-19; this line said "Live on airpay.academy", which was never true: live airpay.academy is still BizLMS). Keep "Require proctoring" = No on every quiz until post-demo session 4 (B1). Companion to `local_airpay_proctoring`.
 **Last refreshed:** 2026-11-19 (stale claims corrected; see the dated section at the end)
 **2026-11-20:** B1/B2 code is committed in `76e8ec572` (flags `sentientia.proctoring.enabled` and `sentientia.assessment.secure_mode.enabled` OFF), not yet verified (no PHPUnit, no browser), not on UAT. The header and the 2026-11-19 section describe the rule before that commit.
 
 ---
+
+## 2026-11-21 - 20 Nov session wrap-up: local deploy, verification, PHPUnit
+
+Verified server side on local 20 Nov (rule loads, pre-start checks per level, secure acknowledgement). PHPUnit green 21 Nov (3 files, 37 tests). Evidence: `docs/visual-evidence/2026-11-20/session/README.md`.
 
 ## Mission
 

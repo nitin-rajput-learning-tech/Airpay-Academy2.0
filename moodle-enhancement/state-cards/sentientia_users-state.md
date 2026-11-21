@@ -1,6 +1,6 @@
 # State Card — local_airpay_users
 **Component:** `local_airpay_users`
-**Version:** `2026111801` / `2.9.4`
+**Version:** `2026112000` / `2.10.0` (external trainer accounts, flag `sentientia.users.external_trainer.enabled` OFF; on local XAMPP since 2026-11-20, not committed, not on UAT. Was `2026111801` / `2.9.4`)
 **Status:** STABLE — installed + live; HRMS importer + bulk + signup + welcome shipped
 **Depends on:** local_airpay_org (Phase 1); local_sentientia_platform (`tenant`, declared ANY_VERSION from 2026092401)
 **Purpose:** Replaces BizLMS `local_users` — Airpay-owned user management, profile rendering, open_* field ownership, signup, HRMS sync
@@ -17,6 +17,24 @@
 > theme fixes (tall-card scroll + login-index notice card) live in
 > `theme_airpayux` `_surface-login.scss` — see its state card. Evidence:
 > `docs/visual-evidence/2026-05-29/signup-*.png`.
+
+---
+
+## 2026-11-21 - 20 Nov session wrap-up: local deploy, verification, PHPUnit
+
+Session 5 review findings fixed (profile access refused to external trainers; ended accounts cannot be re-activated from Manage Users / bulk / CSV and the daily task re-suspends them; flag checked for the target tenant). Deployed to local XAMPP 20 Nov; server-side verification PASS (invite, role, scope, roster redaction, expiry dry run, revoke); pages not yet seen in a browser (web tier overloaded). PHPUnit green 21 Nov (7 files, 75 tests). Flag restored to OFF. Evidence: `docs/visual-evidence/2026-11-20/session/README.md`.
+
+## 2026-11-20 — session 5: external trainer accounts (2026112000 / 2.10.0; repo only, not on XAMPP or UAT; PHPUnit written, not run)
+
+ADR-036 D9, plan C6, Nitin D-15 ("build session 5 now"). Flag `sentientia.users.external_trainer.enabled`, default OFF.
+- Table `local_sentientia_external_trainer_profile` (owned here, not by the platform plugin as the ADR draft said): userid, organisation, invitedby, open_path, validfrom, expires_at, status (active/expired/revoked), remindedat.
+- Capability `local/sentientia_users:inviteexternaltrainer`, no archetype; upgrade step 2026112000 grants it to the role with shortname `administrator` where it exists.
+- Page `external_trainers.php` (flag + capability; list, invite form, extend/revoke/reactivate as POST + sesskey). Button on Manage Users when allowed.
+- Invite: manual account in the inviter's tenant, random password never sent, forced password change, e-mail with a core reset-token link (`external_trainer\invite_mailer`), restricted role `sentientia_externaltrainer` (no archetype; classroom :view + :attendance only; made by the first invite).
+- Expiry: max(last non-cancelled session they train, validfrom) + 30 days; classroom saves recompute it; daily task `external_trainer_expiry` (01:15, enabled, runs whatever the flag says) reminds the inviter + same-tenant capability holders 7 days before (message provider `exttrainer_expiring`), then suspends and logs out; never deletes.
+- Events: `external_trainer_invited`, `_extended`, `_reactivated`, `_expired`, `_revoked`. Privacy provider covers the table (row kept on erasure; organisation and invitedby anonymised).
+- Provider `user_type\external_trainer_provider` is ready; the platform factory does not list the type yet (platform part is a separate spec), so no `local_sentientia_user_type` row is written until it does (the daily task back-fills it then).
+- Tests: `tests/external_trainer_test.php`, `tests/privacy_provider_test.php` (table list).
 
 ---
 

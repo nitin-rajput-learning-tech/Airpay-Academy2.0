@@ -46,6 +46,8 @@ function local_sentientia_classroom_pluginfile($course, $cm, $context, $filearea
     if (has_capability('local/sentientia_classroom:view', $context)) {
         try {
             \local_sentientia_classroom\session_manager::assert_classroom_in_scope($classroom);
+            // ADR-036 D9/D10 (session 5): and, under the own-classroom rule, a classroom they train.
+            \local_sentientia_classroom\session_manager::require_trainer_scope($classroom);
             $allowed = true;
         } catch (\moodle_exception $e) {
             $allowed = false;

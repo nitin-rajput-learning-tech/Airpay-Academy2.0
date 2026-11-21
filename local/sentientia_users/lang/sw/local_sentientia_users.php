@@ -236,3 +236,6 @@ $string['hrms_source_bizlms'] = 'Imeingizwa kutoka BizLMS';
 $string['hrms_lines_uploader_only'] = 'Mistari iliyokataliwa ya uendeshaji huu inaonyesha anwani ya barua pepe, msimbo wa mfanyakazi na jina. Inaonekana tu kwa mtu aliyepakia uendeshaji huu na kwa wasimamizi wa jukwaa.';
 $string['hrms_imported_history_off'] = 'Historia ya usawazishaji wa HRMS iliyoingizwa kutoka BizLMS haijawashwa kwa tovuti hii.';
 $string['skillprofile_interests'] = 'Anavutiwa na';
+
+// ADR-036 D9 (session 5, 2026-11-20): the user-type label (ADR-017 Q6, five locales).
+$string['usertype_external_trainer_label'] = 'Mkufunzi wa nje';

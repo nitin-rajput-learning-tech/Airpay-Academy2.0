@@ -342,8 +342,14 @@ class notification_bridge {
         }
 
         $course_name = '';
-        if (!empty($issue->courseid)) {
-            $course = $DB->get_record('course', ['id' => $issue->courseid], 'fullname');
+        // Course certificate issuer (2026-11-20): Sentientia's course certificates carry courseid NULL (they survive
+        // course delete); local_sentientia_courses' resolver knows the course, also while the issue is being created.
+        $issuecourseid = (int) ($issue->courseid ?? 0);
+        if (!$issuecourseid && class_exists('\\local_sentientia_courses\\certificate_issuer')) {
+            $issuecourseid = \local_sentientia_courses\certificate_issuer::course_of_issue((int) $issue->id);
+        }
+        if ($issuecourseid > 0) {
+            $course = $DB->get_record('course', ['id' => $issuecourseid], 'fullname');
             if ($course) {
                 $course_name = format_string($course->fullname);
             }

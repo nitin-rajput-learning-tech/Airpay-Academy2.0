@@ -1,20 +1,68 @@
 # Changelog
 
-## 4.5.7 - 2025-10-07
-### Changed
-- Only changes to automatic testing scripts
+## 5.0.12 - 2026-11-10
+### Added
+- Added support for Moodle 5.3
+### Fixed
+- Backwards compatibility fix for the launcher icon
 
-## 4.5.6 - 2025-08-12
+## 5.0.11 - 2026-10-06
+### Changed
+- Brand new icon
+
+## 5.0.10 - 2026-09-15
+### Fixed
+- Course navigation access for teachers
+- Certificate regeneration for course teachers
+- Accessibility improvements in forms
+
+## 5.0.9 - 2026-08-11
+### Fixed
+- Fixed the expiration duration form element name
+- Even more UI glitches squashed in page/template editor
+
+## 5.0.8 - 2026-06-09
+### Fixed
+- Fixed some more UI glitches in editor on narrow screens
+
+## 5.0.7 - 2026-04-21
+### Added
+- Added support for Moodle 5.2
+### Fixed
+- Fixed UI spacing glitches in template editor
+### Changed
+- Added pagination to user selector autocomplete element to improve performance
+
+## 5.0.6 - 2026-02-13
+### Fixed
+- Fixed redundant string formatting of user profile fields in certificates
+
+## 5.0.4 - 2025-12-09
+### Added
+- Added bulk certificate regeneration
+### Changed
+- Updated all time and date handling to use the new Clock API
+- Compatibility with latest codechecker standards
+### Fixed
+- Fixed exception when editing a certificate on a new site
+
+## 5.0.3 - 2025-10-07
+### Added
+- Added support for Moodle 5.1
+
+## 5.0.2 - 2025-08-12
+### Added
+- Added mobile app version of "My certificates"
 ### Fixed
 - Fixed issue where bulk PDF generation could fill up local temporary directory
 
-## 4.5.5 - 2025-06-10
+## 5.0.1 - 2025-06-10
 ### Fixed
 - Fixed an issue where course navigation was not working correctly when viewing a certificate
 
-## 4.5.4 - 2025-05-15
-### Changed
-- Only changes to automatic testing scripts
+## 5.0 - 2025-04-14
+### Added
+- Added support for Moodle 5.0
 
 ## 4.5.3 - 2025-03-18
 ### Fixed

@@ -129,7 +129,22 @@ through `tools/uat/deploy_to_uat.sh` like any other change; with no version bump
    `admin/tool/certificate/classes/output/verify_certificate_result.php`, its PHPUnit file
    (`tests/sentientia_verify_result_escaping_test.php`, with a tripwire) and the README index row. The companion
    noindex for the verification page went into the theme (D1), not the vendor plugin.
-3. Next tool_certificate import (ADR-033 open question 4): follow D7 for all five tool_certificate records.
+3. Done 2026-11-20 (re-vendored to 5.0.12 on 2026-11-20, decision D-7; also answers ADR-033 open question 4):
+   tool_certificate 5.0.12 (`version.php` 2026111000, `supported = [500, 503]`), the release UAT runs, imported
+   under D7 (`docs/core-mods/2026-11-20-tool-certificate-5.0.12-revendor.md`, which carries the
+   `Core-Mods-Upstream-Sync: admin/tool/certificate/ v5.0.12 (2026111000)` line). Per record:
+   - image guard (2026-05-23): re-applied, `element/image/classes/element.php` lines 29-30 and 222-235;
+   - verify on arrival (2026-11-19): re-applied, `index.php` lines 50-60 and 69-72 (5.0.12 puts one constructor
+     argument per line, so hunk 1 wraps the 7-line call); its tripwire now matches either layout;
+   - result escaping (2026-11-19): re-applied, `classes/output/verify_certificate_result.php` lines 35-38 and 96-102;
+   - reset caches (2026-09-03) and duration `defaultunit` (2026-10-08): reverted, fixed upstream, records kept with a
+     "Reverted" note;
+   - Hindi pack (2026-05-29): still staged; 13 new and 1 reworded English keys to translate before activation.
+   The Sentientia test files were kept (D7 step 3). `pix/icon.png`, which 5.0.12 no longer ships, is listed in the
+   import record and not deleted by the import script. Pre-commit CHECK 2 (MOODLE_INTERNAL guard) now skips files
+   under a sync line staged with the commit, as CHECK 6 does, so the unguarded upstream class files can be committed
+   without `--no-verify`. D7 step 4 (PHPUnit group and Behat on the target Moodle) and the UAT deploy of the 4 files
+   that differ from UAT (`--no-upgrade`, D8, decision D-8) are open. The Context table's "4.5.7" is history.
 
 ---
 

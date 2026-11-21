@@ -8,6 +8,10 @@
 
 ---
 
+## 2026-11-21 - 20 Nov session wrap-up: local deploy, verification, PHPUnit
+
+`certificates.php` deployed to local XAMPP 20 Nov; the gallery shows the course name for new and imported certificates at 1440 and 390. Evidence: `docs/visual-evidence/2026-11-20/session/README.md`.
+
 ## 2026-11-19 — walk fixes (2026111801 / 1.2.2; local only, not on UAT; PHPUnit not run)
 
 Phase A+B: certificate gallery. Phase C: certificate templates banner, ID and empty-template badge (V19-CERT-TEMPLATES); onboarding strings (V8-D); LinkedIn organisation from customer branding. Evidence: `docs/visual-evidence/2026-11-19/phase-c/README.md`.
@@ -345,3 +349,7 @@ Branch `claude/persona-fix-admingates`. Source: `docs/visual-evidence/2026-09-30
 ## 2026-10-08 Moodle 5.3 compat FX-12
 
 User creation and update now go through `\local_sentientia_platform\compat\user_api::create()` / `::update()` instead of the global `user_create_user()` / `user_update_user()`, which Moodle 5.3 deprecates (PHPUnit "unexpected debugging"). Same arguments, same events, same behaviour on 5.1/5.2 (the shim falls back to `user/lib.php` there). No schema change, no version bump needed (no new class here); the shim lives in `local_sentientia_platform` 2026100801. Not run: PHPUnit (owner rule).
+
+## 2026-11-20 - certificate gallery names the course through the course certificate issuer
+
+`certificates.php` (both trees) now also selects `ci.data`, and for issues whose course the join did not find it asks `\local_sentientia_courses\certificate_issuer::course_ids_for_issues()`. Sentientia course certificates carry `courseid` NULL (they survive course delete) and imported BizLMS ones `courseid` 0 with the course in `moduletype`/`moduleid`. The card shows the live course name, else the `coursefullname` saved in the issue data, else the template name, as before. When the issuer class is absent the page behaves as before. PHP only: no version bump, no schema change. PHPUnit not run (the issuer tests live in local_sentientia_courses). See `sentientia_courses-state.md`, 2026-11-20.

@@ -236,3 +236,6 @@ $string['hrms_source_bizlms'] = 'BizLMS ನಿಂದ ಇಂಪೋರ್ಟ್ �
 $string['hrms_lines_uploader_only'] = 'ಈ ರನ್‌ನ ತಿರಸ್ಕೃತ ಲೈನ್‌ಗಳಲ್ಲಿ ಇಮೇಲ್ ವಿಳಾಸ, ಉದ್ಯೋಗಿ ಕೋಡ್ ಮತ್ತು ಹೆಸರು ಕಾಣಿಸುತ್ತವೆ. ಇವು ರನ್ ಅಪ್‌ಲೋಡ್ ಮಾಡಿದವರಿಗೆ ಮತ್ತು ಪ್ಲಾಟ್‌ಫಾರ್ಮ್ ಅಡ್ಮಿನ್‌ಗಳಿಗೆ ಮಾತ್ರ ಕಾಣಿಸುತ್ತವೆ.';
 $string['hrms_imported_history_off'] = 'BizLMS ನಿಂದ ಇಂಪೋರ್ಟ್ ಮಾಡಿದ HRMS ಸಿಂಕ್ ಹಿಸ್ಟರಿ ಈ ಸೈಟ್‌ಗೆ ಆನ್ ಆಗಿಲ್ಲ.';
 $string['skillprofile_interests'] = 'ಆಸಕ್ತಿಯ ವಿಷಯಗಳು';
+
+// ADR-036 D9 (session 5, 2026-11-20): the user-type label (ADR-017 Q6, five locales).
+$string['usertype_external_trainer_label'] = 'ಬಾಹ್ಯ ತರಬೇತುದಾರ';

@@ -14,6 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace tool_certificate\external;
+
+use core_external\external_function_parameters;
+use core_external\external_value;
+use core_external\external_api;
+
 /**
  * This is the external API for this tool.
  *
@@ -21,34 +27,17 @@
  * @copyright  2019 Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-namespace tool_certificate\external;
-
-defined('MOODLE_INTERNAL') || die();
-
-require_once("$CFG->libdir/externallib.php");
-
-use external_function_parameters;
-use external_value;
-use tool_certificate\certificate;
-
-/**
- * This is the external API for this tool.
- *
- * @copyright  2019 Marina Glancy
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-class templates extends \external_api {
-
+class templates extends external_api {
     /**
      * Returns the duplicate_template() parameters.
      *
-     * @return \external_function_parameters
+     * @return external_function_parameters
      */
     public static function duplicate_template_parameters() {
-        return new \external_function_parameters(
+        return new external_function_parameters(
             [
-                'id' => new \external_value(PARAM_INT, 'Template id'),
-                'categoryid' => new \external_value(PARAM_INT, 'Category id', VALUE_DEFAULT, 0),
+                'id' => new external_value(PARAM_INT, 'Template id'),
+                'categoryid' => new external_value(PARAM_INT, 'Category id', VALUE_DEFAULT, 0),
             ]
         );
     }
@@ -60,8 +49,10 @@ class templates extends \external_api {
      * @param int $categoryid
      */
     public static function duplicate_template($templateid, $categoryid) {
-        $params = self::validate_parameters(self::duplicate_template_parameters(),
-            ['id' => $templateid, 'categoryid' => $categoryid]);
+        $params = self::validate_parameters(
+            self::duplicate_template_parameters(),
+            ['id' => $templateid, 'categoryid' => $categoryid]
+        );
         self::validate_context(\context_system::instance());
         $template = \tool_certificate\template::instance($params['id']);
         $context = $params['categoryid'] ? \context_coursecat::instance($params['categoryid']) : $template->get_context();
@@ -82,12 +73,12 @@ class templates extends \external_api {
     /**
      * Returns the delete_template() parameters.
      *
-     * @return \external_function_parameters
+     * @return external_function_parameters
      */
     public static function delete_template_parameters() {
-        return new \external_function_parameters(
+        return new external_function_parameters(
             [
-                'id' => new \external_value(PARAM_INT, 'Template id'),
+                'id' => new external_value(PARAM_INT, 'Template id'),
             ]
         );
     }
@@ -98,8 +89,10 @@ class templates extends \external_api {
      * @param int $templateid
      */
     public static function delete_template($templateid) {
-        $params = self::validate_parameters(self::delete_template_parameters(),
-            ['id' => $templateid]);
+        $params = self::validate_parameters(
+            self::delete_template_parameters(),
+            ['id' => $templateid]
+        );
         self::validate_context(\context_system::instance());
         $template = \tool_certificate\template::instance($params['id']);
         $template->require_can_manage();

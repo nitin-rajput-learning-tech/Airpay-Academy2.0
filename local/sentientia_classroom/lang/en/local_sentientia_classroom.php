@@ -223,3 +223,6 @@ $string['privacy:metadata:trainers:timecreated'] = 'When the trainer was attache
 // Message provider (db/messages.php), 2026-10-20: it had no string, so notification preferences showed
 // [[messageprovider:waitlist_promoted]].
 $string['messageprovider:waitlist_promoted'] = 'A classroom waiting-list place became yours';
+
+// ADR-036 D9/D10 (session 5, 2026-11-20): trainers see only the classrooms they train.
+$string['error_notyourclassroom'] = 'You can open only the classrooms you train.';

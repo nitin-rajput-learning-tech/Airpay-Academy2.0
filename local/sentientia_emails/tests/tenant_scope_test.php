@@ -419,7 +419,8 @@ final class tenant_scope_test extends \advanced_testcase {
         // when editing a global rule - so "All Tenants (Global)" is never offered.
         // (No org registry row for tenant 1 here, so it carries the neutral label.)
         $own = self::str('rule_scope_tenant', self::str('tenant_n', 1));
-        foreach ([null, 0, 177, 1] as $ruletenant) {
+        // 999 (an unregistered tenant): the "saved value" option is for cross-tenant callers only.
+        foreach ([null, 0, 177, 1, 999] as $ruletenant) {
             $this->assertSame([['id' => 1, 'name' => $own, 'selected' => true]],
                 manage_controller::rule_scope_options(1, $ruletenant));
         }

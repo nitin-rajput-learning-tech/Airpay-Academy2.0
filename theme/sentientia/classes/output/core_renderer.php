@@ -1341,7 +1341,16 @@ JS;
                 // shipped in the 5.2 package does not (courseid/component only), and querying the
                 // missing columns 500'd every completed course page for the learner. Use the BizLMS
                 // columns when they exist (production stays byte-identical), else the stock ones.
-                if ($DB->get_manager()->field_exists('tool_certificate_issues', 'moduleid')) {
+                // Course certificate issuer (2026-11-20): Sentientia issues course certificates with
+                // courseid NULL (they survive course delete) and maps the course in
+                // local_sentientia_courses; its resolver reads that map, the BizLMS columns and courseid,
+                // and returns the newest issue (get_field() debugged on a second row after a re-completion).
+                // The two queries below stay as the fallback for a site without that plugin.
+                if (class_exists('\local_sentientia_courses\certificate_issuer')) {
+                    $certissue = \local_sentientia_courses\certificate_issuer::get_issue_for_user_course(
+                        (int) $USER->id, (int) $COURSE->id);
+                    $certcode = $certissue ? $certissue->code : 0;
+                } else if ($DB->get_manager()->field_exists('tool_certificate_issues', 'moduleid')) {
                     $certcode = $DB->get_field('tool_certificate_issues', 'code',
                         array('moduleid' => $COURSE->id, 'userid' => $USER->id, 'moduletype' => 'course'));
                 } else {

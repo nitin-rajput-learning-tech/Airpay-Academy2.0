@@ -156,3 +156,17 @@ UAT (Nitin's call): `tools/uat/deploy_to_uat.sh --no-upgrade admin/tool/certific
 ## Addendum (19 Nov, lead)
 
 A second tagged hunk adds `defined('MOODLE_INTERNAL') || die();` after the `use` block, because the project pre-commit hook (CHECK 2) requires the guard in every committed PHP file and upstream has none in this namespaced class. It has no runtime effect. The tripwire test now expects 2 markers. The three earlier patched vendor files already carry the guard.
+
+---
+
+## Addendum 2026-11-20 (re-vendored to 5.0.12 on 2026-11-20)
+
+- **Still required on 5.0.12.** Upstream 5.0.12 still assigns `@json_decode($issue->data, true)['userfullname']` and
+  `$issue->certificatename` unescaped (tag v5.0.12; equal to UAT's copy fetched before the 19 Nov 16:19 deploy).
+- **Re-applied** unchanged: the guard hunk at lines 35-38 and the escaping hunk at lines 96-102. On 4.5.7 they were at
+  35-38 and 97-103 (5.0.12 has no blank line after the class declaration).
+- **Upstream change kept:** 5.0.12 computes `expired` with `\core\di::get(\core\clock::class)->time()`. The
+  4.5.7-based file deployed to UAT on 19 Nov uses `time()`: the same at run time, but only the 5.0.12 line follows a
+  test's mocked clock, so deploy the 5.0.12-based file to UAT (`--no-upgrade`, Nitin's go, decision D-8).
+- Tripwire unchanged (2 markers, both statements present). **Vendor release patched:** now tool_certificate 5.0.12
+  (`version.php` 2026111000). Import record: `2026-11-20-tool-certificate-5.0.12-revendor.md`.

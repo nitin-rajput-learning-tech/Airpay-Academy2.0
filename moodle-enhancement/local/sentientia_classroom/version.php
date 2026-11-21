@@ -11,7 +11,9 @@ $plugin->component = 'local_sentientia_classroom';
 // local_sentientia_platform 2026100701, which this plugin therefore requires. One version for the batch (F-85).
 // 2026093002: ADR-032: BizLMS import schema (trainers, linked courses, roster completion, location hierarchy) + importer
 // 2026100702: one version above both 2026100701 bumps (IDN-04 copies_files marker; XC-CLS-ENROL services capability), so a site at either re-reads db/services.php.
-$plugin->version   = 2026110300;  // user search matches a full name ("Rahul Sharma"), 2026-11-03. Was: 2026100702;  // ADR-032 IDN-04 + XC-CLS-ENROL (no schema change)
+$plugin->version   = 2026112000;  // ADR-036 D9/D10 (session 5, 2026-11-20): own classrooms only for internal trainers without :update behind sentientia.classroom.trainer_own_scope.enabled (default OFF) and always for external trainers (local_sentientia_users), on the list, tiles, classroom page, sessions, roster, waiting list, calendar file and logo; names-only rosters for external trainers; an external trainer never gets the :update shortcut in may_run_session(); classroom and session saves recompute an external trainer's expiry. New flag and string (en + hi). No schema change. Was: 2026110300.
+// 2026112000 also carries the G-EXTTRAINER review fix (2026-11-20, no schema change, no bump: not yet released): waitlist_join refuses an external trainer for every classroom id.
+// 2026110300: user search matches a full name ("Rahul Sharma"), 2026-11-03. Was: 2026100702;  // ADR-032 IDN-04 + XC-CLS-ENROL (no schema change)
 // 2026093001: T-01: teacher archetype can view classrooms + take attendance (back-fill)
 // 2026092501: locations table + locationid in install.xml; lat/long NUMBER(10,6)
 // 2026092500: ADR-031: every classroomid/sessionid/userid tenant-checked
@@ -20,7 +22,7 @@ $plugin->version   = 2026110300;  // user search matches a full name ("Rahul Sha
 // 2026052001:
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.11.3';  // 1.11.3: full-name user search.  // ADR-032 IDN-04 copies_files marker + XC-CLS-ENROL services capability; 1.11.0: ADR-032 BizLMS classroom importer + import schema
+$plugin->release   = '1.12.0';  // 1.12.0: trainer own-classroom scope + external-trainer restrictions (ADR-036). 1.11.3: full-name user search.  // ADR-032 IDN-04 copies_files marker + XC-CLS-ENROL services capability; 1.11.0: ADR-032 BizLMS classroom importer + import schema
 $plugin->dependencies = [
     'local_sentientia_org'      => 2026041600,
     'local_sentientia_platform' => 2026100701,  // tenant::is_cross_tenant / scope_path; bizlms import framework + provenance; the copies_files marker (IDN-04)

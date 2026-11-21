@@ -23,11 +23,9 @@
  */
 
 namespace tool_certificate\customfield;
-defined('MOODLE_INTERNAL') || die();
 
 use core_customfield\field_controller;
 use core_customfield\handler;
-use tool_certification\certification;
 
 /**
  * Class issue_handler
@@ -37,11 +35,10 @@ use tool_certification\certification;
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class issue_handler extends handler {
-
     /**
      * @var issue_handler
      */
-    static protected $singleton;
+    protected static $singleton;
 
     /**
      * Returns a singleton
@@ -155,8 +152,12 @@ class issue_handler extends handler {
         $mform->addHelpButton('configdata[visible]', 'customfield_visible', 'tool_certificate');
 
         // Preview value.
-        $mform->addElement('text', 'configdata[previewvalue]',
-            get_string('customfield_previewvalue', 'tool_certificate'), ['size' => 50]);
+        $mform->addElement(
+            'text',
+            'configdata[previewvalue]',
+            get_string('customfield_previewvalue', 'tool_certificate'),
+            ['size' => 50]
+        );
         $mform->setType('configdata[previewvalue]', PARAM_TEXT);
         $mform->addHelpButton('configdata[previewvalue]', 'customfield_previewvalue', 'tool_certificate');
     }
@@ -190,8 +191,14 @@ class issue_handler extends handler {
      * @param array $config additional field configuration, for example, for date - includetime
      * @return field_controller|null
      */
-    public function ensure_field_exists(string $shortname, string $type = 'text', string $displayname = '',
-            bool $visible = false, ?string $previewvalue = null, array $config = []): ?field_controller {
+    public function ensure_field_exists(
+        string $shortname,
+        string $type = 'text',
+        string $displayname = '',
+        bool $visible = false,
+        ?string $previewvalue = null,
+        array $config = []
+    ): ?field_controller {
         if ($field = $this->find_field_by_shortname($shortname)) {
             return $field;
         }
@@ -286,7 +293,7 @@ class issue_handler extends handler {
     /**
      * For use in unittests
      */
-    public static function reset_caches(): void { // SENTIENTIA-CORE-MOD: Moodle 5.2 core_customfield handler::reset_caches() declares : void
+    public static function reset_caches(): void {
         self::$singleton = null;
     }
 }

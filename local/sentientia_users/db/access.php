@@ -86,4 +86,16 @@ $capabilities = [
             'manager' => CAP_ALLOW,
         ],
     ],
+
+    // ADR-036 D9 (session 5, 2026-11-20): invite, extend, reactivate and revoke external trainers
+    // (external_trainers.php, behind sentientia.users.external_trainer.enabled). No archetype on
+    // purpose: core's manager defaults must not hand it out. Upgrade step 2026112000 grants it to the
+    // tenant administrator role (shortname 'administrator') where that role exists; site admins
+    // always pass. Every action stays inside the caller's own tenant (ADR-031).
+    'local/sentientia_users:inviteexternaltrainer' => [
+        'riskbitmask'  => RISK_PERSONAL | RISK_SPAM,
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [],
+    ],
 ];

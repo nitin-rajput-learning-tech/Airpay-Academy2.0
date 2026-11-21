@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/sentientia_users/db" VERSION="20261001"
+<XMLDB PATH="local/sentientia_users/db" VERSION="20261120"
        COMMENT="W1-6 (2026-05-16) — HRMS sync runs + error log for 24-column Darwinbox/SAP CSV bulk import. ADR-032 (2026-10-01) — imported BizLMS history: earlier training records, login days, position and domain lookups">
 
   <TABLES>
@@ -181,6 +181,39 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="idx_costcenter" UNIQUE="false" FIELDS="costcenterid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_external_trainer_profile"
+           COMMENT="ADR-036 D9 (session 5, 2026-11-20): one row per external-trainer account. A row makes the account an external trainer: restricted role, own classrooms only, names-only rosters, and an expiry. Owned by local_sentientia_users (the ADR named the platform plugin; see the session 5 notes). Created by upgrade step 2026112000; must stay identical to it.">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"       TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="The external trainer (user.id)"/>
+        <FIELD NAME="organisation" TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""
+               COMMENT="The trainer's own company or institution, as the inviting admin typed it"/>
+        <FIELD NAME="invitedby"    TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="user.id of the admin who sent the invite; 0 after that admin's data was erased"/>
+        <FIELD NAME="open_path"    TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="The tenant the account was placed in (the inviter's tenant, ADR-031)"/>
+        <FIELD NAME="validfrom"    TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Invite time, or the last reactivation or extension: the expiry base when no later session exists"/>
+        <FIELD NAME="expires_at"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="max(end of the last non-cancelled session they train, validfrom) plus 30 days"/>
+        <FIELD NAME="status"       TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="active"
+               COMMENT="active, expired or revoked"/>
+        <FIELD NAME="remindedat"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="When the admins were reminded of the current expires_at; 0 = not yet"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"   TYPE="primary"        FIELDS="id"/>
+        <KEY NAME="fk_userid" TYPE="foreign-unique" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_status_expires" UNIQUE="false" FIELDS="status, expires_at"/>
+        <INDEX NAME="idx_invitedby"      UNIQUE="false" FIELDS="invitedby"/>
       </INDEXES>
     </TABLE>
 

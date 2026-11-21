@@ -268,3 +268,25 @@ $string['privacy:metadata:sessions:violations']        = 'How many violations th
 $string['privacy:metadata:sessions:lastviolation']     = 'When the last violation was counted';
 $string['privacy:metadata:sessions:lastheartbeat']     = 'When the attempt page last reported to the server';
 $string['privacy:metadata:sessions:timeautosubmitted'] = 'When the server submitted the attempt because it reached the limit';
+
+// Privacy metadata: fields of the identity, recordings and reviews tables (2026-11-21).
+$string['privacy:metadata:identity:userid']        = 'The learner whose identity was checked';
+$string['privacy:metadata:identity:sessionid']     = 'The proctored session the check belongs to';
+$string['privacy:metadata:identity:provider']      = 'The service that compared the photos';
+$string['privacy:metadata:identity:match_score']   = 'How closely the selfie matched the ID photo';
+$string['privacy:metadata:identity:passed']        = 'Whether the identity check passed';
+$string['privacy:metadata:identity:error_code']    = 'The error code if the check could not be completed';
+$string['privacy:metadata:identity:error_msg']     = 'The error message if the check could not be completed';
+$string['privacy:metadata:identity:timecreated']   = 'When the check was made';
+$string['privacy:metadata:recordings:sessionid']   = 'The proctored session the recording belongs to';
+$string['privacy:metadata:recordings:kind']        = 'Whether the recording is of the webcam or the screen';
+$string['privacy:metadata:recordings:s3_key']      = 'Where the recording is stored';
+$string['privacy:metadata:recordings:duration_ms'] = 'How long the recording is';
+$string['privacy:metadata:recordings:retain_until'] = 'When the recording is due to be deleted';
+$string['privacy:metadata:recordings:deleted_at']  = 'When the recording was deleted';
+$string['privacy:metadata:recordings:timecreated'] = 'When the recording was stored';
+$string['privacy:metadata:reviews:sessionid']      = 'The proctored session that was reviewed';
+$string['privacy:metadata:reviews:reviewer_userid'] = 'The reviewer who made the decision';
+$string['privacy:metadata:reviews:decision']       = 'The reviewer\'s decision';
+$string['privacy:metadata:reviews:note']           = 'The reviewer\'s note';
+$string['privacy:metadata:reviews:timecreated']    = 'When the review was submitted';

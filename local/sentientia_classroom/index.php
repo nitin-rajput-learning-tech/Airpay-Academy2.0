@@ -28,12 +28,15 @@ $completed = 0;
 if ($dbman->table_exists('local_sentientia_classroom')) {
     // ADR-031: the tiles count the caller's tenant, the same set the list
     // shows ('1=1' cross-tenant, '1=0' for a caller with no tenant).
-    [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter();
-    $total     = (int) $DB->count_records_select('local_sentientia_classroom', $tnsql, $tnargs);
-    $active    = (int) $DB->count_records_select('local_sentientia_classroom',
-        "$tnsql AND status = 1", $tnargs);
-    $completed = (int) $DB->count_records_select('local_sentientia_classroom',
-        "$tnsql AND status = 2", $tnargs);
+    // ADR-036 D9/D10 (session 5): and, for a trainer under the own-classroom rule, only the classrooms
+    // they train ('1=1' for everyone else, so with the flag OFF the tiles are unchanged).
+    [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('c');
+    [$ownsql, $ownargs] = \local_sentientia_classroom\session_manager::trainer_scope_sql('c');
+    $countsql = "SELECT COUNT(1) FROM {local_sentientia_classroom} c WHERE $tnsql AND $ownsql";
+    $countargs = $tnargs + $ownargs;
+    $total     = (int) $DB->count_records_sql($countsql, $countargs);
+    $active    = (int) $DB->count_records_sql("$countsql AND c.status = 1", $countargs);
+    $completed = (int) $DB->count_records_sql("$countsql AND c.status = 2", $countargs);
 }
 
 $columns = [

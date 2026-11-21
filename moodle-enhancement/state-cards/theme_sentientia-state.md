@@ -55,6 +55,10 @@
 
 ---
 
+## 2026-11-21 - 20 Nov session wrap-up: local deploy, verification, PHPUnit
+
+Course header certificate now comes from the course certificate issuer's resolver (`core_renderer.php`, PHP only, no version bump); verified for `vp_learner1` at 1440 and 390. `tests/certificate_verify_template_test.php` renders on a fresh page (issuing e-mails the user and sets up the theme on `$PAGE`). PHPUnit green 21 Nov (15 files, 125 tests). Not committed, not on UAT. Evidence: `docs/visual-evidence/2026-11-20/session/README.md`.
+
 ## 2026-11-19/20 — Programs link for L&D admins (2026111902 / 1.0.73-beta; working tree, uncommitted; local XAMPP only)
 
 Post-demo plan 2.4 (Programs), session 1. `classes/sidebar_navigation.php`: the L&D admin branch of `get_nav_items()` adds **Programs** (label `nav_programs`, icon `fa-trophy`) right after Learning Paths. It is gated by the new private `can_view_programs()`: `get_capability_info('local/sentientia_programs:view')` and then `has_capability()` at system context, the same check as the Programs page, so the link shows exactly when the page opens (a customer without the plugin gets no debugging). New constant `PROGRAMS_PAGE`; the site-admin item uses it (same URL). No new strings, no flag (a link to an existing, unflagged page, like the other capability-only links). Manager and learner menus unchanged. Tests: `tests/nav_chrome_test.php`, 6 new (not run).

@@ -102,6 +102,15 @@ class bulk_action extends external_api {
                 fn(int $id): bool => !is_siteadmin($id)
                     && (!$scoped || !\local_sentientia_platform\tenant::is_cross_tenant($id))));
         }
+        // ADR-036 D9 (review fix 2026-11-20): an external trainer whose access ended (expired or revoked)
+        // is never bulk-activated; only Reactivate on external_trainers.php gives access back. Counted
+        // as skipped, like every other filtered id.
+        if ($params['action'] === 'activate' && $clean_ids) {
+            $ended = \local_sentientia_users\external_trainer\manager::ended_userids($clean_ids);
+            if ($ended) {
+                $clean_ids = array_values(array_diff($clean_ids, $ended));
+            }
+        }
         if (empty($clean_ids)) {
             return [
                 'action'  => $params['action'],

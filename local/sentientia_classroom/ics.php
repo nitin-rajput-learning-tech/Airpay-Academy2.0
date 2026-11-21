@@ -28,6 +28,9 @@ if (!is_siteadmin() && !$is_member) {
         throw new \moodle_exception('nopermissions', 'error', '', 'classroom session calendar invite');
     }
     \local_sentientia_classroom\session_manager::assert_classroom_in_scope($classroom);
+    // ADR-036 D9/D10 (session 5): under the own-classroom rule, only a classroom the caller trains.
+    // A learner on the roster is let through above, unchanged.
+    \local_sentientia_classroom\session_manager::require_trainer_scope($classroom);
 }
 
 $organizer = !empty($CFG->supportemail) ? (string) $CFG->supportemail

@@ -55,6 +55,8 @@ class list_classroom_sessions extends external_api {
 
         // ADR-031: the capability says WHAT; the classroom must also be in the caller's tenant.
         $classroom = \local_sentientia_classroom\session_manager::require_classroom_access($params['classroomid']);
+        // ADR-036 D9/D10 (session 5): under the own-classroom rule, only a classroom the caller trains.
+        \local_sentientia_classroom\session_manager::require_trainer_scope($classroom);
 
         $allowed = ['title', 'sessiondate', 'starttime', 'endtime', 'location', 'timecreated'];
         $sort = in_array($params['sort'], $allowed, true) ? $params['sort'] : 'sessiondate';

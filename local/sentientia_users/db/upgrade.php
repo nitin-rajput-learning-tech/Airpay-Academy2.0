@@ -204,5 +204,44 @@ function xmldb_local_sentientia_users_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026100101, 'local', 'sentientia_users');
     }
 
+    // 2026112000 - ADR-036 D9 (session 5, 2026-11-20): external trainer accounts. The profile table (same as
+    // db/install.xml), and the invite capability granted to the tenant administrator role (shortname
+    // 'administrator', role 9 on UAT) where that role exists: no archetype default, so this grant is the only
+    // way a tenant admin gets it. An explicit setting already on that role (a prohibit, say) is kept. The
+    // restricted role sentientia_externaltrainer is NOT made here: the first invite makes it, so a site that
+    // never turns the flag on never sees it. Nothing is sent, nothing is flipped: the flag stays OFF.
+    if ($oldversion < 2026112000) {
+        $table = new xmldb_table('local_sentientia_external_trainer_profile');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id',           XMLDB_TYPE_INTEGER, '10',  null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $table->add_field('userid',       XMLDB_TYPE_INTEGER, '10',  null, XMLDB_NOTNULL);
+            $table->add_field('organisation', XMLDB_TYPE_CHAR,    '255', null, XMLDB_NOTNULL, null, '');
+            $table->add_field('invitedby',    XMLDB_TYPE_INTEGER, '10',  null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('open_path',    XMLDB_TYPE_CHAR,    '255', null, null);
+            $table->add_field('validfrom',    XMLDB_TYPE_INTEGER, '10',  null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('expires_at',   XMLDB_TYPE_INTEGER, '10',  null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('status',       XMLDB_TYPE_CHAR,    '20',  null, XMLDB_NOTNULL, null, 'active');
+            $table->add_field('remindedat',   XMLDB_TYPE_INTEGER, '10',  null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timecreated',  XMLDB_TYPE_INTEGER, '10',  null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10',  null, XMLDB_NOTNULL, null, '0');
+            $table->add_key('primary',   XMLDB_KEY_PRIMARY,        ['id']);
+            $table->add_key('fk_userid', XMLDB_KEY_FOREIGN_UNIQUE, ['userid'], 'user', ['id']);
+            $table->add_index('idx_status_expires', XMLDB_INDEX_NOTUNIQUE, ['status', 'expires_at']);
+            $table->add_index('idx_invitedby',      XMLDB_INDEX_NOTUNIQUE, ['invitedby']);
+            $dbman->create_table($table);
+        }
+
+        // Moodle registers db/access.php only after this function returns; the new capability must exist
+        // before assign_capability() accepts it.
+        update_capabilities('local_sentientia_users');
+        $adminroleid = (int) $DB->get_field('role', 'id', ['shortname' => 'administrator']);
+        if ($adminroleid > 0) {
+            assign_capability('local/sentientia_users:inviteexternaltrainer', CAP_ALLOW, $adminroleid,
+                context_system::instance()->id, false);
+        }
+
+        upgrade_plugin_savepoint(true, 2026112000, 'local', 'sentientia_users');
+    }
+
     return true;
 }

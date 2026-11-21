@@ -10,6 +10,10 @@
 
 ---
 
+## 2026-11-21 - 20 Nov session wrap-up: local deploy, verification, PHPUnit
+
+`classes/observer.php` deployed to local XAMPP 20 Nov (ME tree only); webhooks flag OFF, so nothing was sent. Evidence: `docs/visual-evidence/2026-11-20/session/README.md`.
+
 ## 2026-09-25 - ADR-031 fix-forward: adversarial review S1-S4 + LTI (1.3.2, 2026092501)
 
 Wave-1 review of the integration group. Version bumped because `db/access.php` changed (comment
@@ -261,3 +265,7 @@ User creation and update now go through `\local_sentientia_platform\compat\user_
 ## 2026-10-08 Moodle 5.3 compat FX-18
 
 Every `fputcsv()` / `fgetcsv()` / `str_getcsv()` call in this plugin now passes the `$escape` argument explicitly with the historic default (`',', '"', '\\'`, and `null` for the `fgetcsv` length). The output and the parsing are byte-identical; PHP 8.4 deprecates relying on the default, and the notice would otherwise be written into the CSV stream on a 8.4 host (UAT and production run PHP 8.3). No version bump, no schema change.
+
+## 2026-11-20 - certificate_issued webhook carries the course of a Sentientia course certificate
+
+`classes/observer.php` (this plugin exists in the moodle-enhancement tree only): Sentientia course certificates carry `courseid` NULL, so the `certificate_issued` event has no course. The payload `courseid` now comes from `\local_sentientia_courses\certificate_issuer::course_of_issue()` when the event has none (it reads the issue data while the issue is being created). Without that class the payload is as before. Webhooks stay behind their existing flags (OFF). PHP only: no version bump, no schema change. PHPUnit not run.

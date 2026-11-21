@@ -83,3 +83,22 @@ On every future `tool_certificate` upgrade:
 Version independent: an additive Hindi language file for the vendored `tool_certificate`, staged and not applied. Nothing
 to do for 5.3 itself. When a 5.x-compatible `tool_certificate` release replaces the bundled 4.5.7 (compatibility report C6),
 diff its English strings against this pack's keys before applying it.
+
+---
+
+## Addendum 2026-11-20 (re-vendored to 5.0.12 on 2026-11-20)
+
+The bundled release is now tool_certificate 5.0.12 (2026111000). The pack is still staged and not applied
+(`docs/translations/tool_certificate-hi-DRAFT.php`, in no `lang/` directory), so the import had no file to re-apply.
+Step 1 of "Upgrade-safety procedure", done against 5.0.12's `lang/en/tool_certificate.php` (186 strings; the pack
+has 173, built from 4.5.7):
+
+- **13 keys added:** `regenerateall`, `regeneratefileconfirmallusers`, `regeneratefileconfirmselectedusers`,
+  `regeneratefileconfirmsingleuser`, `regenerateissuedcertificates`, `regeneratenotification`, `regenerateselected`,
+  `regeneratesinglenotification`, `requiredparam`, `sendnotificationaffectedusers`,
+  `sendnotificationaffectedusers_help`, `sendnotificationsingleuser`, `viewmore`.
+- **1 key reworded:** `regenerateissuefile` ("Regenerate issue file" became "Regenerate issued certificate").
+- **None removed:** every key in the pack still exists in 5.0.12.
+
+Steps 2-3 (translate those 14 strings, then the L&D review of the changed strings only) remain before activation.
+Import record: `2026-11-20-tool-certificate-5.0.12-revendor.md`.

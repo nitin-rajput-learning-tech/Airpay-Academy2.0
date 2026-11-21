@@ -219,7 +219,10 @@ class session_manager {
         if ($userid <= 0) {
             return false;
         }
-        if (has_capability('local/sentientia_classroom:update', \context_system::instance(), $userid)) {
+        // ADR-036 D9 (session 5): an external trainer never runs every session, whatever role they were
+        // given by hand; only the sessions they train.
+        if (!self::is_external_trainer($userid)
+                && has_capability('local/sentientia_classroom:update', \context_system::instance(), $userid)) {
             return true;
         }
         if ($userid === (int) ($session->trainerid ?? 0)
@@ -250,6 +253,223 @@ class session_manager {
             throw new \moodle_exception('error_nottrainer', 'local_sentientia_classroom');
         }
         return [$session, $classroom];
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // ADR-036 D9 + D10 (session 5, 2026-11-20) — own classrooms only, names-only rosters
+    // ═══════════════════════════════════════════════════════════════════
+    //
+    // :view is granted at system context to the teacher archetypes, so on the capability alone a
+    // trainer sees every classroom and roster of their tenant (with e-mails and employee ids).
+    // Attendance was limited to their own sessions on 2026-09-30 (may_run_session()); the list,
+    // classroom page, sessions, roster, waiting list, calendar file and logo were not. These
+    // helpers apply "own classrooms only" to all of them:
+    //
+    //  - for an internal trainer (no :update) when sentientia.classroom.trainer_own_scope.enabled is
+    //    ON for their tenant (D10, owner decision D15; default OFF = today's behaviour);
+    //  - for an external trainer (local_sentientia_users, ADR-036 D9) ALWAYS, whatever the flag says
+    //    and whatever role they hold, and their rosters show names only.
+    //
+    // "Own" = the classroom's primary trainer, a co-trainer ({local_sentientia_classroom_trainers}),
+    // or the trainer of one of its sessions. It narrows the ADR-031 tenant guard, never replaces it:
+    // callers run require_classroom_access() first. It is deliberately NOT inside
+    // assert_classroom_in_scope() / require_classroom_access(): those also guard learner actions
+    // (waitlist_join, the QR scan), and a trainer can be a learner in someone else's classroom.
+    // An external trainer is never a learner: waitlist_join refuses them outright (review fix 2026-11-20).
+
+    /** @var string Internal trainers see only their own classrooms (ADR-036 D10). */
+    public const OWN_SCOPE_FLAG = 'sentientia.classroom.trainer_own_scope.enabled';
+
+    /**
+     * Is this account an external trainer (local_sentientia_users)? False when that plugin is absent.
+     *
+     * @param int $userid
+     * @return bool
+     */
+    public static function is_external_trainer(int $userid): bool {
+        $class = '\\local_sentientia_users\\external_trainer\\manager';
+        return $userid > 0 && class_exists($class) && $class::is_external_trainer($userid);
+    }
+
+    /**
+     * Does the own-classroom rule apply to this viewer?
+     *
+     * External trainer: always. Site admin, or anyone holding :update (managers, the tenant
+     * administrator role): never. Anyone else: when the D10 flag is ON for their tenant.
+     *
+     * @param int|null $userid defaults to the current user
+     * @return bool
+     */
+    public static function trainer_scope_applies(?int $userid = null): bool {
+        global $DB, $USER;
+        $current = (int) ($USER->id ?? 0);
+        $userid = $userid ?? $current;
+        if ($userid <= 0) {
+            return false;
+        }
+        if (self::is_external_trainer($userid)) {
+            return true;
+        }
+        if (is_siteadmin($userid)
+                || has_capability('local/sentientia_classroom:update', \context_system::instance(), $userid)) {
+            return false;
+        }
+        if ($userid === $current) {
+            return \local_sentientia_platform\feature_flags::is_enabled(self::OWN_SCOPE_FLAG);
+        }
+        $user = $DB->get_record('user', ['id' => $userid], 'id, open_path');
+        return \local_sentientia_platform\feature_flags::is_enabled_for_tenant(self::OWN_SCOPE_FLAG,
+            $user ? \local_sentientia_platform\tenant::root_for_user($user) : 0);
+    }
+
+    /**
+     * Is the user the primary trainer, a co-trainer, or a session trainer of the classroom?
+     *
+     * @param int $classroomid
+     * @param int|null $userid defaults to the current user
+     * @return bool
+     */
+    public static function is_trainer_of(int $classroomid, ?int $userid = null): bool {
+        global $DB, $USER;
+        $userid = $userid ?? (int) ($USER->id ?? 0);
+        if ($userid <= 0 || $classroomid <= 0) {
+            return false;
+        }
+        if ($DB->record_exists(self::TABLE, ['id' => $classroomid, 'trainerid' => $userid])
+                || $DB->record_exists(self::SESSION_TABLE, ['classroomid' => $classroomid, 'trainerid' => $userid])) {
+            return true;
+        }
+        return $DB->get_manager()->table_exists(self::TRAINERS_TABLE)
+            && $DB->record_exists(self::TRAINERS_TABLE, ['classroomid' => $classroomid, 'trainerid' => $userid]);
+    }
+
+    /**
+     * WHERE fragment over the classrooms table aliased $alias: '1=1' when the own-classroom rule does
+     * not apply to the viewer, otherwise "a classroom they train". For list and count queries; AND it
+     * with the tenant filter (tenant::path_filter()), never use it instead.
+     *
+     * @param string $alias the classrooms table alias (required: the fragment correlates on its id)
+     * @param int|null $userid defaults to the current user
+     * @return array{0: string, 1: array}
+     */
+    public static function trainer_scope_sql(string $alias = 'c', ?int $userid = null): array {
+        global $DB, $USER;
+        static $counter = 0;
+        $userid = $userid ?? (int) ($USER->id ?? 0);
+        if (!self::trainer_scope_applies($userid)) {
+            return ['1=1', []];
+        }
+        $counter++;
+        $p = 'tsc' . $counter;
+        $sql = "({$alias}.trainerid = :{$p}a"
+            . " OR EXISTS (SELECT 1 FROM {" . self::SESSION_TABLE . "} {$p}s"
+            . " WHERE {$p}s.classroomid = {$alias}.id AND {$p}s.trainerid = :{$p}b)";
+        $params = ["{$p}a" => $userid, "{$p}b" => $userid];
+        if ($DB->get_manager()->table_exists(self::TRAINERS_TABLE)) {
+            $sql .= " OR EXISTS (SELECT 1 FROM {" . self::TRAINERS_TABLE . "} {$p}t"
+                . " WHERE {$p}t.classroomid = {$alias}.id AND {$p}t.trainerid = :{$p}c)";
+            $params["{$p}c"] = $userid;
+        }
+        return [$sql . ')', $params];
+    }
+
+    /**
+     * Refuse a classroom the viewer may not see under the own-classroom rule. Call it after
+     * require_classroom_access() on every page or web service that SHOWS a classroom to a :view holder.
+     *
+     * @param \stdClass $classroom a row of the classrooms table
+     * @param int|null $userid defaults to the current user
+     * @throws \moodle_exception error_notyourclassroom
+     */
+    public static function require_trainer_scope(\stdClass $classroom, ?int $userid = null): void {
+        if (self::trainer_scope_applies($userid) && !self::is_trainer_of((int) $classroom->id, $userid)) {
+            throw new \moodle_exception('error_notyourclassroom', 'local_sentientia_classroom');
+        }
+    }
+
+    /**
+     * Should rosters show this viewer names only (no e-mail, employee id, designation, completion or
+     * profile link)? True for external trainers (ADR-036 D9).
+     *
+     * @param int|null $userid defaults to the current user
+     * @return bool
+     */
+    public static function roster_names_only(?int $userid = null): bool {
+        global $USER;
+        return self::is_external_trainer($userid ?? (int) ($USER->id ?? 0));
+    }
+
+    /**
+     * The end of the last session the user trains in a classroom that is not cancelled: as the
+     * session's trainer, the classroom's primary trainer, or a co-trainer. The external-trainer expiry
+     * (local_sentientia_users) is this plus 30 days.
+     *
+     * @param int $userid
+     * @return int|null null when they train no such session
+     */
+    public static function trainer_last_session_end(int $userid): ?int {
+        global $DB;
+        if ($userid <= 0) {
+            return null;
+        }
+        $params = ['cancelled' => self::STATUS_CANCELLED, 'tlu1' => $userid, 'tlu2' => $userid];
+        $cotrainer = '';
+        if ($DB->get_manager()->table_exists(self::TRAINERS_TABLE)) {
+            $cotrainer = ' OR EXISTS (SELECT 1 FROM {' . self::TRAINERS_TABLE . '} t'
+                . ' WHERE t.classroomid = c.id AND t.trainerid = :tlu3)';
+            $params['tlu3'] = $userid;
+        }
+        $max = $DB->get_field_sql(
+            "SELECT MAX(s.endtime)
+               FROM {" . self::SESSION_TABLE . "} s
+               JOIN {" . self::TABLE . "} c ON c.id = s.classroomid
+              WHERE c.status <> :cancelled
+                AND (s.trainerid = :tlu1 OR c.trainerid = :tlu2{$cotrainer})", $params);
+        return $max ? (int) $max : null;
+    }
+
+    /**
+     * Every trainer of a classroom: primary, co-trainers and session trainers (ids only).
+     *
+     * @param int $classroomid
+     * @return int[]
+     */
+    public static function trainer_userids_of_classroom(int $classroomid): array {
+        global $DB;
+        $ids = [(int) $DB->get_field(self::TABLE, 'trainerid', ['id' => $classroomid])];
+        foreach ($DB->get_fieldset_select(self::SESSION_TABLE, 'trainerid',
+                'classroomid = :cid AND trainerid IS NOT NULL', ['cid' => $classroomid]) as $id) {
+            $ids[] = (int) $id;
+        }
+        if ($DB->get_manager()->table_exists(self::TRAINERS_TABLE)) {
+            foreach ($DB->get_fieldset_select(self::TRAINERS_TABLE, 'trainerid', 'classroomid = :cid',
+                    ['cid' => $classroomid]) as $id) {
+                $ids[] = (int) $id;
+            }
+        }
+        return array_values(array_unique(array_filter($ids, fn($id) => $id > 0)));
+    }
+
+    /**
+     * Tell local_sentientia_users that these trainers' sessions changed, so an external trainer's
+     * expiry is recomputed at once (the daily task would catch it anyway). Never breaks the save that
+     * called it.
+     *
+     * @param int[] $userids
+     * @return void
+     */
+    private static function trainers_changed(array $userids): void {
+        $class = '\\local_sentientia_users\\external_trainer\\manager';
+        $userids = array_values(array_unique(array_filter(array_map('intval', $userids), fn($id) => $id > 0)));
+        if (!$userids || !class_exists($class)) {
+            return;
+        }
+        try {
+            $class::recalculate_for_users($userids);
+        } catch (\Throwable $e) {
+            debugging('local_sentientia_classroom: external-trainer expiry not recomputed: ' . $e->getMessage(),
+                DEBUG_DEVELOPER);
+        }
     }
 
     /**
@@ -533,7 +753,9 @@ class session_manager {
             $record->open_path = $fallbackpath;
         }
 
-        return $DB->insert_record(self::TABLE, $record);
+        $id = (int) $DB->insert_record(self::TABLE, $record);
+        self::trainers_changed([(int) $record->trainerid]);  // ADR-036 D9: external-trainer expiry.
+        return $id;
     }
 
     /**
@@ -576,6 +798,8 @@ class session_manager {
         }
 
         $DB->update_record(self::TABLE, $record);
+        // ADR-036 D9: a changed trainer or status moves an external trainer's expiry (old trainer too).
+        self::trainers_changed(array_merge([(int) $existing->trainerid], self::trainer_userids_of_classroom($id)));
         return true;
     }
 
@@ -602,6 +826,8 @@ class session_manager {
             'status'       => $status,
             'timemodified' => time(),
         ]);
+        // ADR-036 D9: a cancelled classroom's sessions no longer keep an external trainer's access open.
+        self::trainers_changed(self::trainer_userids_of_classroom($id));
 
         // W1-9 (2026-05-15) — emit classroom_completed event on transition
         // INTO completed state. The W1-5 evaluation observer listens to this
@@ -642,6 +868,7 @@ class session_manager {
             throw new \moodle_exception('error_protected_history', 'local_sentientia_classroom');
         }
 
+        $trainerids = self::trainer_userids_of_classroom($id);  // ADR-036 D9, read before the rows go.
         $transaction = $DB->start_delegated_transaction();
         try {
             // Delete attendance records for all sessions.
@@ -671,6 +898,7 @@ class session_manager {
         } catch (\Throwable $e) {
             $transaction->rollback($e);
         }
+        self::trainers_changed($trainerids);
 
         return true;
     }
@@ -727,7 +955,9 @@ class session_manager {
         $record->timecreated  = $now;
         $record->timemodified = $now;
 
-        return $DB->insert_record(self::SESSION_TABLE, $record);
+        $id = (int) $DB->insert_record(self::SESSION_TABLE, $record);
+        self::trainers_changed(self::trainer_userids_of_classroom($classroomid));  // ADR-036 D9.
+        return $id;
     }
 
     /**
@@ -775,6 +1005,9 @@ class session_manager {
         }
 
         $DB->update_record(self::SESSION_TABLE, $record);
+        // ADR-036 D9: new times or a new trainer move an external trainer's expiry (old trainer too).
+        self::trainers_changed(array_merge([(int) $existing->trainerid],
+            self::trainer_userids_of_classroom((int) $existing->classroomid)));
         return true;
     }
 
@@ -783,7 +1016,7 @@ class session_manager {
      */
     public static function delete_session(int $sessionid): bool {
         global $DB;
-        $DB->get_record(self::SESSION_TABLE, ['id' => $sessionid], 'id', MUST_EXIST);
+        $existing = $DB->get_record(self::SESSION_TABLE, ['id' => $sessionid], 'id, classroomid, trainerid', MUST_EXIST);
 
         // ADR-032: an imported session and the attendance recorded for it are history.
         if (self::is_imported(self::SESSION_TABLE, $sessionid)) {
@@ -798,6 +1031,9 @@ class session_manager {
         } catch (\Throwable $e) {
             $tx->rollback($e);
         }
+        // ADR-036 D9: one session fewer can bring an external trainer's expiry forward.
+        self::trainers_changed(array_merge([(int) $existing->trainerid],
+            self::trainer_userids_of_classroom((int) $existing->classroomid)));
         return true;
     }
 
@@ -1001,13 +1237,16 @@ class session_manager {
      *
      * @param bool $callerscope ADR-031: only learners in the caller's tenant
      *                          (see roster_scope()); web services pass true
+     * @param bool $namesonly   ADR-036 D9: the viewer sees names only (roster_names_only()), so the
+     *                          search does not match e-mail addresses and an e-mail sort becomes a
+     *                          name sort (the caller also leaves those columns out)
      * @return array  Each row: id (rosterid), userid, firstname, lastname,
      *                email, enrolled_at, optional open_employeeid/designation.
      */
     public static function get_enrolled_users(int $classroomid, string $search = '',
                                               string $sort = 'lastname', string $sortdir = 'ASC',
                                               int $offset = 0, int $limit = 100,
-                                              bool $callerscope = false): array {
+                                              bool $callerscope = false, bool $namesonly = false): array {
         global $DB;
         $dbman = $DB->get_manager();
         if (!$dbman->table_exists(self::USERS_TABLE)) {
@@ -1025,15 +1264,20 @@ class session_manager {
         if (!empty($search)) {
             $term = '%' . $DB->sql_like_escape($search) . '%';
             // A full name ("Rahul Sharma") matches neither name column alone (2026-11-03).
+            // ADR-036 D9: a names-only viewer cannot probe e-mail addresses through the search.
             $where[] = '(' . $DB->sql_like('u.firstname', ':s1', false) . ' OR ' .
                 $DB->sql_like('u.lastname', ':s2', false) . ' OR ' .
-                $DB->sql_like('u.email', ':s3', false) . ' OR ' .
+                ($namesonly ? '' : $DB->sql_like('u.email', ':s3', false) . ' OR ') .
                 $DB->sql_like($DB->sql_fullname('u.firstname', 'u.lastname'), ':sfull', false) . ')';
-            $params['s1'] = $params['s2'] = $params['s3'] = $params['sfull'] = $term;
+            $params['s1'] = $params['s2'] = $params['sfull'] = $term;
+            if (!$namesonly) {
+                $params['s3'] = $term;
+            }
         }
         $wheresql = implode(' AND ', $where);
 
-        $allowed_sorts = ['firstname', 'lastname', 'email', 'timecreated'];
+        $allowed_sorts = $namesonly ? ['firstname', 'lastname', 'timecreated']
+            : ['firstname', 'lastname', 'email', 'timecreated'];
         $sortcol = in_array($sort, $allowed_sorts, true) ? $sort : 'lastname';
         $sortcol = ($sortcol === 'timecreated') ? 'cu.timecreated' : "u.{$sortcol}";
         $dir = strtoupper($sortdir) === 'DESC' ? 'DESC' : 'ASC';
@@ -1055,9 +1299,10 @@ class session_manager {
      *
      * @param bool $callerscope ADR-031: count only learners in the caller's
      *                          tenant, matching get_enrolled_users()
+     * @param bool $namesonly   ADR-036 D9: match the search on names only, as get_enrolled_users()
      */
     public static function count_enrolled_filtered(int $classroomid, string $search = '',
-                                                   bool $callerscope = false): int {
+                                                   bool $callerscope = false, bool $namesonly = false): int {
         global $DB;
         $dbman = $DB->get_manager();
         if (!$dbman->table_exists(self::USERS_TABLE)) {
@@ -1070,11 +1315,15 @@ class session_manager {
         if (!empty($search)) {
             $term = '%' . $DB->sql_like_escape($search) . '%';
             // A full name ("Rahul Sharma") matches neither name column alone (2026-11-03).
+            // ADR-036 D9: a names-only viewer cannot probe e-mail addresses through the search.
             $where[] = '(' . $DB->sql_like('u.firstname', ':s1', false) . ' OR ' .
                 $DB->sql_like('u.lastname', ':s2', false) . ' OR ' .
-                $DB->sql_like('u.email', ':s3', false) . ' OR ' .
+                ($namesonly ? '' : $DB->sql_like('u.email', ':s3', false) . ' OR ') .
                 $DB->sql_like($DB->sql_fullname('u.firstname', 'u.lastname'), ':sfull', false) . ')';
-            $params['s1'] = $params['s2'] = $params['s3'] = $params['sfull'] = $term;
+            $params['s1'] = $params['s2'] = $params['sfull'] = $term;
+            if (!$namesonly) {
+                $params['s3'] = $term;
+            }
         }
         $wheresql = implode(' AND ', $where);
 

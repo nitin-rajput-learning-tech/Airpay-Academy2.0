@@ -63,6 +63,8 @@ $PAGE->set_secondary_navigation(false);
 // scan. An Absent exists only because the trainer set it.
 $loadedat = time();
 $rows_obj = \local_sentientia_classroom\session_manager::get_session_attendance($sessionid, true);
+// ADR-036 D9 (session 5): an external trainer sees the learners by name only (no e-mail line).
+$namesonly = \local_sentientia_classroom\session_manager::roster_names_only();
 
 // Build template rows with status flags for radio rendering.
 $rows = [];
@@ -70,7 +72,10 @@ $counts = ['present' => 0, 'late' => 0, 'excused' => 0, 'absent' => 0];
 foreach ($rows_obj as $r) {
     $status = (int) $r->status;
     $fullname = trim(($r->firstname ?? '') . ' ' . ($r->lastname ?? ''));
-    if (empty($fullname)) { $fullname = $r->email; }
+    if (empty($fullname)) { $fullname = $namesonly ? '—' : $r->email; }
+    if ($namesonly) {
+        $r->email = '';
+    }
 
     $is_present = ($status === \local_sentientia_classroom\session_manager::ATT_PRESENT);
     $is_late    = ($status === \local_sentientia_classroom\session_manager::ATT_LATE);

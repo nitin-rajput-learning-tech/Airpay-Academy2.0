@@ -33,6 +33,14 @@ defined('MOODLE_INTERNAL') || die();
  * THE RULE, in order
  * ------------------
  *   1. Your own profile: allowed.
+ *   1b. An external trainer (ADR-036 D9, a row in
+ *      {local_sentientia_external_trainer_profile}, any status): refused for
+ *      every other profile, checked before rules 2-5. They sit at their
+ *      inviter's tenant root, so rule 3 would otherwise open every profile of
+ *      that tenant (e-mail, employee id, address, manager) to an outsider,
+ *      and the roster web services hand them learner ids. profile.php,
+ *      skillprofile.php and photo.php all come through here.
+ *      (Review fix, 2026-11-20.)
  *   2. A cross-tenant viewer (ADR-031: site admin, or holder of
  *      local/sentientia_platform:crosstenant): allowed. Until 2026-09-25 this
  *      was site admin only, so a :crosstenant holder - offered every tenant's
@@ -92,6 +100,12 @@ final class profile_access {
         // Rule 1: own profile.
         if ($viewerid === $targetid) {
             return true;
+        }
+
+        // Rule 1b: an external trainer (ADR-036 D9) sees no profile but their own. Same false as every
+        // other refusal, so the page cannot tell them whether the id exists.
+        if (\local_sentientia_users\external_trainer\manager::is_external_trainer($viewerid)) {
+            return false;
         }
 
         // Rule 2: a cross-tenant viewer (site admin or :crosstenant, ADR-031).

@@ -1,12 +1,20 @@
 ﻿# State Card â€” `local_airpay_compliance_report`
 
 **Component:** `local_airpay_compliance_report`
-**Version:** `2026111901` / `1.0.11`
+**Version:** `2026111902` / `1.0.12`
 **Maturity:** `MATURITY_STABLE`
 **Status:** Not live: Sentientia LMS is not in production yet (live airpay.academy is still BizLMS). Compliance training audit + escalation.
 **Last refreshed:** 2026-11-20 ~05:15 (session 0+1 wrap-up; A1 / D4 tenant + share + cohort guard, no enrolment end date, D4 data-fix CLI; see the first section)
 
 ---
+
+## 2026-11-21 - 20 Nov session wrap-up: local deploy, verification, PHPUnit
+
+D-10 deployed to local XAMPP (2026111902) and run there: dry run 109 tenant-77 outsiders (AML 27, Infosec 27, Phishing 27, POSH 2025 28), execute removed 109 (0 skipped, 0 failed), re-check 0 left, refresh did not re-enrol. 4 no-tenant enrolments left (needs `--include-no-tenant`, decision N-1). `--execute` also applied the D4 pin and created empty IC cohort 221 on local (decision N-2). PHPUnit green 21 Nov (5 files, 74 tests). Not committed, not on UAT. Evidence: `docs/visual-evidence/2026-11-20/session/README.md`.
+
+## 2026-11-20 - D-10: `--unenrol-outsiders` (2026111902 / 1.0.12; working tree only, not deployed, PHPUnit not run, not run on any site)
+
+Nitin's D-10 answer ("do all") to the 113 local cross-tenant compliance enrolments: `cli/pin_compliance_courses.php --unenrol-outsiders` (dry run by default) lists per course and per tenant, never by name, the enrolments the old auto-enrol made (manual, end = start + deadline days of one of the course's rows) for people whose tenant is neither the course's tenant nor an actively shared tenant (`tenant::path_descendant_filter()` in SQL, re-checked in PHP). `--execute --unenrol-outsiders` removes them through `enrol_manual`'s `unenrol_user()`, one transaction each, after re-reading the row (changed rows skipped). Left alone and counted: outsiders who also hold another role in the course, outsiders' other enrolments, and accounts with no tenant unless `--include-no-tenant` (this card's 113 = 109 Public users + 4 with no tenant, so Nitin's "remove the 113" needs `--include-no-tenant`). Exit 1 also when a removal fails. Code: `compliance_pinning::outsider_enrolments()` / `unenrol_outsiders()` / `render_outsiders()`; tests `tests/outsider_unenrol_test.php` (8). Code only, no upgrade step, no flag (a CLI data fix, like D4).
 
 ## 2026-11-20 - A1 / D4: who a tracked course reaches (2026111901 / 1.0.11; working tree only, not deployed, PHPUnit not run)
 

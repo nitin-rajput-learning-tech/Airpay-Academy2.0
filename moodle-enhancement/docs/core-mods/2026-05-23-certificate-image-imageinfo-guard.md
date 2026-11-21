@@ -130,3 +130,21 @@ through audit**. See PROJECT-STATE.md.
 - **Source of truth is now the top-level tree.** The single-file ME copy was removed in the same commit so the
   guard has exactly one home. Re-apply by searching for `SENTIENTIA-CORE-MOD (2026-05-23)` after any vendor update.
 - **Related vendor patches on 5.3:** see `2026-10-08-tool-certificate-duration-defaultunit.md` for the full table.
+
+---
+
+## Addendum 2026-11-20 (re-vendored to 5.0.12 on 2026-11-20)
+
+- **Still required on 5.0.12.** Upstream 5.0.12 `element/image/classes/element.php` (`render_html()`) still passes
+  `$file->get_imageinfo()` to `element_helper::render_image_html(..., array $imageinfo, ...)` unchecked.
+- **Re-applied** to the 5.0.12 file with the same two tagged blocks and the same wording: the direct-access guard
+  after the `use` block, now lines 29-30, and the non-image guard after `$fileimageinfo = $file->get_imageinfo();`,
+  now lines 222-235 (it started at line 208 on 4.5.7). The line numbers in "Bug" above are 4.5.7's.
+- **Vendor release patched:** tool_certificate 5.0.12 (`version.php` 2026111000). Import record:
+  `2026-11-20-tool-certificate-5.0.12-revendor.md`.
+- **UAT:** UAT's 5.0.12 copy of this file has no guard, so UAT has the TypeError for a template image element whose
+  file is not an image until this file is deployed (decision D-8, Nitin's go):
+  `tools/uat/deploy_to_uat.sh --no-upgrade admin/tool/certificate/element/image/classes/element.php` (with the other
+  three files named in the import record).
+- **Same pattern, not patched:** `element/digitalsignature/classes/element.php` line 164 calls `get_imageinfo()`
+  unchecked too. Pre-existing upstream, no failure reported; a hunk there would need its own record.

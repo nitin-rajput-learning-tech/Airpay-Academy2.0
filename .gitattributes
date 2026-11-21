@@ -16,3 +16,5 @@ tools/uat/rehearse_*.py text eol=lf
 tools/uat/rehearse_*.php text eol=lf
 tools/uat/flag_snapshot.php text eol=lf
 tools/uat/mysql84_reserved_scan.py text eol=lf
+moodle-enhancement/core-patches/** text eol=lf
+tools/check-core-patches.sh text eol=lf

@@ -24,4 +24,11 @@ $messageproviders = [
         'capability' => null,
         'defaults'   => $defaults,
     ],
+    // ADR-036 D9 (session 5, 2026-11-20): "an external trainer's account expires in 7 days", sent by
+    // the daily external_trainer_expiry task to the inviter and to the tenant's holders of
+    // local/sentientia_users:inviteexternaltrainer. It names the trainer and the date only.
+    'exttrainer_expiring' => [
+        'capability' => 'local/sentientia_users:inviteexternaltrainer',
+        'defaults'   => $defaults,
+    ],
 ];

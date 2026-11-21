@@ -273,3 +273,25 @@ $string['privacy:metadata:sessions:violations']        = 'सर्वर ने
 $string['privacy:metadata:sessions:lastviolation']     = 'पिछला उल्लंघन कब गिना गया';
 $string['privacy:metadata:sessions:lastheartbeat']     = 'प्रयास के पेज ने आख़िरी बार सर्वर को कब रिपोर्ट किया';
 $string['privacy:metadata:sessions:timeautosubmitted'] = 'सीमा तक पहुँचने के कारण सर्वर ने प्रयास कब सबमिट किया';
+
+// Privacy metadata: fields of the identity, recordings and reviews tables (2026-11-21).
+$string['privacy:metadata:identity:userid']        = 'वह शिक्षार्थी जिसकी पहचान जाँची गई';
+$string['privacy:metadata:identity:sessionid']     = 'वह प्रॉक्टर्ड सत्र जिससे यह जाँच जुड़ी है';
+$string['privacy:metadata:identity:provider']      = 'वह सेवा जिसने फ़ोटो की तुलना की';
+$string['privacy:metadata:identity:match_score']   = 'सेल्फ़ी ID फ़ोटो से कितनी मिलती थी';
+$string['privacy:metadata:identity:passed']        = 'पहचान जाँच पास हुई या नहीं';
+$string['privacy:metadata:identity:error_code']    = 'जाँच पूरी न हो पाने पर त्रुटि कोड';
+$string['privacy:metadata:identity:error_msg']     = 'जाँच पूरी न हो पाने पर त्रुटि संदेश';
+$string['privacy:metadata:identity:timecreated']   = 'जाँच कब की गई';
+$string['privacy:metadata:recordings:sessionid']   = 'वह प्रॉक्टर्ड सत्र जिससे रिकॉर्डिंग जुड़ी है';
+$string['privacy:metadata:recordings:kind']        = 'रिकॉर्डिंग वेबकैम की है या स्क्रीन की';
+$string['privacy:metadata:recordings:s3_key']      = 'रिकॉर्डिंग कहाँ संग्रहीत है';
+$string['privacy:metadata:recordings:duration_ms'] = 'रिकॉर्डिंग कितनी लंबी है';
+$string['privacy:metadata:recordings:retain_until'] = 'रिकॉर्डिंग कब हटाई जानी है';
+$string['privacy:metadata:recordings:deleted_at']  = 'रिकॉर्डिंग कब हटाई गई';
+$string['privacy:metadata:recordings:timecreated'] = 'रिकॉर्डिंग कब संग्रहीत की गई';
+$string['privacy:metadata:reviews:sessionid']      = 'वह प्रॉक्टर्ड सत्र जिसकी समीक्षा हुई';
+$string['privacy:metadata:reviews:reviewer_userid'] = 'वह समीक्षक जिसने निर्णय लिया';
+$string['privacy:metadata:reviews:decision']       = 'समीक्षक का निर्णय';
+$string['privacy:metadata:reviews:note']           = 'समीक्षक का नोट';
+$string['privacy:metadata:reviews:timecreated']    = 'समीक्षा कब सबमिट की गई';

@@ -44,16 +44,18 @@ class list_session_attendance extends external_api {
         // ADR-031: only the caller's tenant's learners on this roster.
         $records = \local_sentientia_classroom\session_manager::get_session_attendance(
             $params['sessionid'], true);
+        // ADR-036 D9 (session 5): an external trainer sees names only.
+        $namesonly = \local_sentientia_classroom\session_manager::roster_names_only();
 
         $rows = [];
         foreach ($records as $r) {
             $fullname = trim(($r->firstname ?? '') . ' ' . ($r->lastname ?? ''));
-            if (empty($fullname)) { $fullname = $r->email; }
+            if (empty($fullname)) { $fullname = $namesonly ? '—' : $r->email; }
 
             $rows[] = [
                 'userid'       => (int) $r->userid,
                 'name'         => $fullname,
-                'email'        => (string) $r->email,
+                'email'        => $namesonly ? '' : (string) $r->email,
                 'status'       => (int) $r->status,
                 'status_label' => (string) $r->status_label,
                 'marked_at'    => $r->marked_at_human ?? '',

@@ -1,0 +1,19 @@
+# Versioned Moodle core patches (ADR-044). One line per patched core file and Moodle version.
+#
+# Moodle core is not in git for 5.3: the package is a vanilla 5.3 tree plus the Sentientia overlay. A patched
+# core file therefore lives here as a FULL FILE, per version: the upstream file of that release plus our hunks,
+# each opened by a "SENTIENTIA-CORE-MOD:" comment and closed by an "END SENTIENTIA-CORE-MOD" comment.
+# Rule: hunks only ADD lines. Removing every hunk (opening marker line to END line, inclusive) must give back the
+# upstream file byte for byte; its SHA-256 is pinned below. tools/check-core-patches.sh enforces it (CI: the
+# core-mods workflow), copies the file into a tree only when that tree still holds the pinned upstream file
+# (tools/packaging/build-standalone.sh, step 3b), and refuses when it does not (a newer point release: re-apply the
+# hunk to the new upstream file and update the hash). Hashes are taken with CR removed.
+#
+# The repository's top-level lib/ is the Moodle 4.5.10 snapshot (the CI Playwright source root). Its form.js is the
+# same file as 5.1.3+ and 5.2, so that copy serves 5.1 and 5.2. UAT and the cutover package (5.3) take the copy
+# under 5.3/. tools/uat/deploy_to_uat.sh maps 5.3/public/<path> to public/<path> and refuses the top-level lib/.
+#
+# Columns: targets (comma list) | repository path | path in a Moodle tree (the dir that holds public/) |
+#          SHA-256 of the upstream file | record in moodle-enhancement/docs/core-mods/
+5.1,5.2  lib/form/form.js                                             public/lib/form/form.js  eebdcf57ff9e190ae01275dac1f59aefbe717babaabc036af4d0e8fa28ef1509  2026-11-20-form-js-dependency-guard.md
+5.3      moodle-enhancement/core-patches/5.3/public/lib/form/form.js  public/lib/form/form.js  cd7a5b63d7480f5a4f87fdb8b04115bb81b461b3a45d32f3fd9592f778bf1bc2  2026-11-20-form-js-dependency-guard.md

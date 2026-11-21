@@ -233,16 +233,36 @@ class manage_controller {
      * A cross-tenant caller on manage.php?tenant=N gets tenant N pre-selected
      * for a new rule (it used to be Global for everyone).
      *
+     * D-12 review (2026-11-20): a cross-tenant caller is offered Global and the
+     * registered (active) tenant roots only. A rule whose tenant_id is not among
+     * them (a suspended or retired tenant, a legacy id) had no option selected,
+     * so the browser posted the first one, Global, and an unchanged re-save
+     * turned it into a global rule that sends to every tenant's users. Its
+     * tenant is now added as a "saved value" option, selected, as
+     * rule_form_context() does for the other selects. This is for the edited
+     * rule only (not a new rule, not tenant_selector_options()); the save still
+     * goes through tenant_scope::require_can_write_tenant().
+     *
      * @param int $pagetenant the page's resolved tenant (0 = all, cross-tenant only)
      * @param int|null $ruletenant tenant_id of the rule being edited; null for a new rule
      * @return array [{id, name, selected}]
      */
     public static function rule_scope_options(int $pagetenant, ?int $ruletenant = null): array {
-        return self::scope_options(
+        $label = fn(int $root): string => get_string('rule_scope_tenant', 'local_sentientia_emails',
+            self::tenant_name($root));
+        $options = self::scope_options(
             get_string('rule_scope_global', 'local_sentientia_emails'),
-            fn(int $root): string => get_string('rule_scope_tenant', 'local_sentientia_emails',
-                self::tenant_name($root)),
+            $label,
             $ruletenant ?? $pagetenant);
+        if ($ruletenant !== null && $ruletenant > 0 && \local_sentientia_platform\tenant::is_cross_tenant()
+                && !in_array($ruletenant, array_column($options, 'id'), true)) {
+            $options[] = [
+                'id'       => $ruletenant,
+                'name'     => get_string('rule_option_saved', 'local_sentientia_emails', $label($ruletenant)),
+                'selected' => true,
+            ];
+        }
+        return $options;
     }
 
     /**
@@ -270,6 +290,81 @@ class manage_controller {
                 ];
             }
             $options[] = ['category' => $cat['category'], 'templates' => $templates];
+        }
+        return $options;
+    }
+
+    /**
+     * The rule form's values and option lists (D-12, 2026-11-20).
+     *
+     * Editing a saved rule used to pre-select nothing in Rule Type, Channel and Audience and to show a NULL
+     * Trigger Days as 0, so a re-save stored the first option of each and 0. Now every stored value is loaded:
+     * each select has the rule's value selected (a stored value the list does not offer is added as a "saved
+     * value" option, so it survives a re-save), Trigger Days and the cadence show what is stored (blank for
+     * NULL), and the trigger event and conditions, which the form does not edit, are shown read-only.
+     * rule_manager::rule_from_form() accepts exactly these values back.
+     *
+     * The rule name is the stored text, not format_string()'d: the template escapes it once, and a name with
+     * "&" used to come back as "&amp;" and grow on every save.
+     *
+     * @param \stdClass|null $editrule the rule being edited; null for a new rule
+     * @return array {editrule|null, has_editrule, rule_type_options, channel_options, audience_options};
+     *               each option list is [{value, label, selected}]
+     */
+    public static function rule_form_context(?\stdClass $editrule = null): array {
+        $editcontext = null;
+        if ($editrule !== null) {
+            $conditions = trim((string) ($editrule->conditions_json ?? ''));
+            $editcontext = [
+                'id'                      => (int) $editrule->id,
+                'rule_name'               => (string) $editrule->rule_name,
+                'rule_type'               => (string) $editrule->rule_type,
+                'trigger_event'           => (string) ($editrule->trigger_event ?? ''),
+                'has_trigger_event'       => trim((string) ($editrule->trigger_event ?? '')) !== '',
+                'trigger_days'            => $editrule->trigger_days === null ? '' : (string) (int) $editrule->trigger_days,
+                'channel'                 => (string) $editrule->channel,
+                'audience'                => (string) $editrule->audience,
+                'template_key'            => (string) ($editrule->template_key ?? ''),
+                'tenant_id'               => (int) $editrule->tenant_id,
+                'enabled'                 => (bool) $editrule->enabled,
+                'priority'                => (int) $editrule->priority,
+                'conditions_json'         => $conditions,
+                'has_conditions'          => $conditions !== '',
+                'cadence_days_json'       => (string) ($editrule->cadence_days_json ?? ''),
+                'max_reminders_per_user'  => (int) ($editrule->max_reminders_per_user ?? 0),
+                'auto_stop_on_completion' => (bool) ($editrule->auto_stop_on_completion ?? 1),
+            ];
+        }
+
+        return [
+            'editrule'          => $editcontext,
+            'has_editrule'      => $editcontext !== null,
+            'rule_type_options' => self::rule_choice_options('rule_type', $editrule, null),
+            // A new rule starts as the form always did: Email + Popup, to learners.
+            'channel_options'   => self::rule_choice_options('channel', $editrule, 'email,popup'),
+            'audience_options'  => self::rule_choice_options('audience', $editrule, 'learner'),
+        ];
+    }
+
+    /**
+     * One select of the rule form: the values rule_manager::choices() accepts, labelled, with one selected.
+     *
+     * @param string $field 'rule_type', 'channel' or 'audience'
+     * @param \stdClass|null $editrule the rule being edited; null for a new rule
+     * @param string|null $newdefault the value selected for a new rule (null = none, the placeholder shows)
+     * @return array [{value, label, selected}]
+     */
+    private static function rule_choice_options(string $field, ?\stdClass $editrule, ?string $newdefault): array {
+        $selected = $editrule !== null ? trim((string) ($editrule->$field ?? '')) : $newdefault;
+        $prefix = ['rule_type' => 'rule_type_', 'channel' => 'rule_channel_', 'audience' => 'rule_audience_'][$field];
+        $sm = get_string_manager();
+        $options = [];
+        foreach (rule_manager::choices($field, $editrule) as $value) {
+            $stringid = $prefix . str_replace(',', '_', $value);
+            $label = preg_match('/^[a-z_,]+$/', $value) && $sm->string_exists($stringid, 'local_sentientia_emails')
+                ? get_string($stringid, 'local_sentientia_emails')
+                : get_string('rule_option_saved', 'local_sentientia_emails', $value);
+            $options[] = ['value' => $value, 'label' => $label, 'selected' => ($selected !== null && $value === $selected)];
         }
         return $options;
     }

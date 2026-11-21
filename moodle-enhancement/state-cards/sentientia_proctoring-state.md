@@ -1,13 +1,17 @@
 # State Card — `local_airpay_proctoring`
 
 **Component:** `local_airpay_proctoring`
-**Version:** `2026111200` / `1.0.6`  (decision A5 audit events, 2026-11-12; the previous version was `2026110300` / `1.0.5`, the 2026-11-03 full-name user search, which has no dated section here; see the dated sections below)
+**Version:** `2026112003` / `1.2.1` (B1 + B2 with review fixes, committed `76e8ec572`; flags `sentientia.proctoring.enabled` and `sentientia.assessment.secure_mode.enabled` OFF; on local XAMPP since 2026-11-20, not on UAT)
 **Maturity:** `MATURITY_STABLE`
 **Status:** NOT usable end to end and NOT live anywhere (corrected 2026-11-19; this line said "Live on airpay.academy", which was never true: live airpay.academy is still BizLMS and Sentientia is not in production). Do not set "Require proctoring" on any quiz until post-demo session 4 (B1). Engine for `quizaccess_airpay_proctoring`.
 **Last refreshed:** 2026-11-19 (stale claims corrected; see the dated section at the end)
 **2026-11-20:** B1/B2 code is committed in `76e8ec572` (flags `sentientia.proctoring.enabled` and `sentientia.assessment.secure_mode.enabled` OFF), not yet verified (no PHPUnit, no browser), not on UAT. The header and the 2026-11-19 section describe the plugin before that commit.
 
 ---
+
+## 2026-11-21 - 20 Nov session wrap-up: local deploy, verification, PHPUnit
+
+B1/B2 verified server side on local 20 Nov: pre-start consent + identity, session recording and end of attempt, secure acknowledgement, employee warn-and-flag, hiring auto-submit at 3 violations, integrity report web service. Client-side secure mode (fullscreen gate, copy/paste blocking) not yet seen in a browser. PHPUnit green 21 Nov (3 files, 43 tests). Fixes in the working tree: the privacy provider now lists the fields of the identity, recordings and reviews tables (20 descriptions, en + hi), and the identity rate-limit cache key uses `u_<id>` (simplekeys allow no ':'). Flags restored to OFF. Evidence: `docs/visual-evidence/2026-11-20/session/README.md`.
 
 ## Mission
 

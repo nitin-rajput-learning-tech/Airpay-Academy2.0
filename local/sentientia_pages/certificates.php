@@ -31,7 +31,7 @@ echo $OUTPUT->header();
 
 // Get user's certificates.
 $certificates = $DB->get_records_sql(
-    "SELECT ci.id, ci.code, ci.timecreated, ci.courseid,
+    "SELECT ci.id, ci.code, ci.timecreated, ci.courseid, ci.data,
             ct.name as templatename,
             c.fullname as coursename, c.shortname as courseshort
        FROM {tool_certificate_issues} ci
@@ -41,6 +41,31 @@ $certificates = $DB->get_records_sql(
    ORDER BY ci.timecreated DESC",
     ['uid' => $USER->id]
 );
+
+// Course certificate issuer (2026-11-20): Sentientia's course certificates carry courseid NULL (they survive course
+// delete) and imported BizLMS ones courseid 0 with the course in moduletype/moduleid, so the join above finds no
+// course for either. local_sentientia_courses' resolver names it. A deleted course falls back to the course name
+// saved in the issue data, then to the template name.
+if ($certificates && class_exists('\\local_sentientia_courses\\certificate_issuer')) {
+    $unnamed = array_keys(array_filter($certificates, static fn($cert) => empty($cert->coursename)));
+    $issuecourses = \local_sentientia_courses\certificate_issuer::course_ids_for_issues($unnamed);
+    $livecourses = $issuecourses
+        ? $DB->get_records_list('course', 'id', array_values(array_unique($issuecourses)), '', 'id, fullname, shortname')
+        : [];
+    foreach ($unnamed as $issueid) {
+        $cert = $certificates[$issueid];
+        $courseid = $issuecourses[$issueid] ?? 0;
+        if ($courseid && isset($livecourses[$courseid])) {
+            $cert->coursename = $livecourses[$courseid]->fullname;
+            $cert->courseshort = $livecourses[$courseid]->shortname;
+        } else if ($courseid) {
+            $issuedata = json_decode((string) $cert->data, true);
+            if (is_array($issuedata) && !empty($issuedata['coursefullname'])) {
+                $cert->coursename = (string) $issuedata['coursefullname'];
+            }
+        }
+    }
+}
 
 // Check if LinkedIn sharing is enabled.
 $showlinkedin = get_config('tool_certificate', 'show_shareonlinkedin');

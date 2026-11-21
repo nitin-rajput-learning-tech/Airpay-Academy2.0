@@ -22,6 +22,8 @@ $PAGE->set_secondary_navigation(false);
 
 $can_create = has_capability('local/sentientia_users:create', $context);
 $can_bulkstatus = has_capability('local/sentientia_users:bulkstatuschange', $context);
+// ADR-036 D9 (session 5): the External trainers button, only with its default-OFF flag and the invite capability.
+$can_invite_exttrainer = \local_sentientia_users\external_trainer\manager::can_manage();
 
 // ── KPI counts (cheap aggregate) ───────────────────────────────────
 $dbman = $DB->get_manager();
@@ -116,6 +118,8 @@ $data = [
     'has_kpi_tiles'   => !empty($kpi_tiles),
     'can_create'      => $can_create,
     'can_bulkstatus'  => $can_bulkstatus,
+    'can_invite_exttrainer' => $can_invite_exttrainer,
+    'exttrainers_url' => (new moodle_url('/local/sentientia_users/external_trainers.php'))->out(false),
     'org_options'     => $org_options,
     'has_org_options' => !empty($org_options),
     'export_url'      => (new moodle_url('/local/sentientia_users/exportcsv.php'))->out(false),

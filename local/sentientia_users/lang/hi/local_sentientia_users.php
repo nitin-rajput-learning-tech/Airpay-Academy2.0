@@ -294,3 +294,73 @@ $string['hrms_lines_uploader_only'] = 'इस रन की अस्वीक�
 $string['hrms_imported_history_off'] = 'BizLMS से आयातित HRMS सिंक इतिहास इस साइट पर चालू नहीं है।';
 // ADR-032 (BizLMS import, skills): the skills a user said they are interested in, on the skill profile.
 $string['skillprofile_interests']      = 'रुचि के कौशल';
+
+// ADR-036 D9 (session 5, 2026-11-20): external trainer accounts.
+$string['sentientia_users:inviteexternaltrainer'] = 'बाहरी प्रशिक्षकों को आमंत्रित और प्रबंधित करें';
+$string['exttrainer_disabled'] = 'इस साइट पर बाहरी प्रशिक्षक खाते चालू नहीं हैं।';
+$string['exttrainer_page_title'] = 'बाहरी प्रशिक्षक';
+$string['exttrainer_page_intro'] = 'संगठन के बाहर के उन लोगों को आमंत्रित करें जो क्लासरूम प्रशिक्षण देते हैं। हर एक को अपना लॉगिन मिलता है, वे केवल अपने दिए जाने वाले प्रशिक्षण देखते हैं, शिक्षार्थियों के केवल नाम देखते हैं, और अपने अंतिम सत्र के {$a} दिन बाद उनकी पहुँच समाप्त हो जाती है।';
+$string['exttrainer_manage_button'] = 'बाहरी प्रशिक्षक';
+$string['exttrainer_list_heading'] = 'आमंत्रित बाहरी प्रशिक्षक';
+$string['exttrainer_list_empty'] = 'अभी तक किसी को आमंत्रित नहीं किया गया है।';
+$string['exttrainer_invite_heading'] = 'बाहरी प्रशिक्षक को आमंत्रित करें';
+$string['exttrainer_invite_intro'] = 'उन्हें अपने उपयोगकर्ता नाम और अपना पासवर्ड सेट करने के लिंक के साथ एक ईमेल मिलता है। कोई पासवर्ड कभी नहीं भेजा जाता।';
+$string['exttrainer_field_organisation'] = 'संगठन';
+$string['exttrainer_field_organisation_help'] = 'प्रशिक्षक की अपनी कंपनी या संस्थान। यह केवल इस पेज पर प्रशासकों को दिखाई देता है।';
+$string['exttrainer_field_tenant'] = 'टेनेंट';
+$string['exttrainer_invite_submit'] = 'आमंत्रण भेजें';
+$string['exttrainer_invited'] = '{$a} को आमंत्रण भेजा गया।';
+$string['exttrainer_invited_nomail'] = '{$a} का खाता बन गया, लेकिन आमंत्रण ईमेल नहीं भेजा जा सका। वे लॉगिन पेज पर "पासवर्ड भूल गए?" में अपना ईमेल पता डालकर लिंक पा सकते हैं।';
+$string['exttrainer_col_expires'] = 'पहुँच समाप्ति';
+$string['exttrainer_col_invitedby'] = 'आमंत्रित करने वाले';
+$string['exttrainer_col_invited'] = 'आमंत्रण तिथि';
+$string['exttrainer_status_active'] = 'सक्रिय';
+$string['exttrainer_status_expired'] = 'समाप्त';
+$string['exttrainer_status_revoked'] = 'रद्द';
+$string['exttrainer_reassigned_hint'] = 'बाद के सत्र में नियुक्त। पहुँच वापस देने के लिए पुनः सक्रिय करें।';
+$string['exttrainer_action_extend'] = '30 दिन बढ़ाएँ';
+$string['exttrainer_action_reactivate'] = 'पुनः सक्रिय करें';
+$string['exttrainer_action_revoke'] = 'रद्द करें';
+$string['exttrainer_revoke_confirm'] = 'इस बाहरी प्रशिक्षक की पहुँच रद्द करें? खाता तुरंत निलंबित हो जाएगा और रिकॉर्ड में बना रहेगा।';
+$string['exttrainer_done_extend'] = 'पहुँच बढ़ा दी गई।';
+$string['exttrainer_done_reactivate'] = 'खाता पुनः सक्रिय किया गया।';
+$string['exttrainer_done_revoke'] = 'पहुँच रद्द की गई।';
+$string['exttrainer_error_invalidemail'] = 'मान्य ईमेल पता दर्ज करें।';
+$string['exttrainer_error_emailtaken'] = 'इस ईमेल पते वाला खाता पहले से मौजूद है। बाहरी प्रशिक्षक को अपना अलग खाता चाहिए।';
+$string['exttrainer_error_usernametaken'] = 'इस ईमेल पते का उपयोगकर्ता नाम पहले से उपयोग में है।';
+$string['exttrainer_error_tenant'] = 'वह टेनेंट चुनें जिसके लिए प्रशिक्षक प्रशिक्षण देंगे।';
+$string['exttrainer_error_notexternal'] = 'यह खाता बाहरी प्रशिक्षक का नहीं है।';
+$string['exttrainer_error_status'] = 'यह कार्रवाई {$a} खाते पर लागू नहीं होती।';
+$string['exttrainer_error_activate'] = 'यह एक बाहरी प्रशिक्षक है जिसकी पहुँच समाप्त हो चुकी है। पहुँच वापस देने के लिए बाहरी प्रशिक्षक पृष्ठ पर पुनः सक्रिय करें का उपयोग करें।';
+$string['exttrainer_role_name'] = 'बाहरी प्रशिक्षक';
+$string['exttrainer_role_description'] = 'बाहरी प्रशिक्षकों के लिए सीमित भूमिका (ADR-036): क्लासरूम देखना और उपस्थिति लेना, केवल उन क्लासरूम के लिए जिन्हें वे पढ़ाते हैं। इसमें कोई क्षमता न जोड़ें।';
+$string['exttrainer_invite_subject'] = '{$a->site} पर आपका प्रशिक्षक खाता';
+$string['exttrainer_invite_body'] = 'नमस्ते {$a->firstname},
+
+आपको {$a->site} पर बाहरी प्रशिक्षक के रूप में प्रशिक्षण देने के लिए आमंत्रित किया गया है।
+
+आपका उपयोगकर्ता नाम: {$a->username}
+
+अपना पासवर्ड यहाँ सेट करें:
+{$a->link}
+
+यह लिंक {$a->minutes} मिनट तक काम करता है। उसके बाद {$a->forgoturl} खोलें, यह ईमेल पता दर्ज करें, और आपको नया लिंक भेजा जाएगा।
+
+{$a->loginurl} पर लॉग इन करें। आपको केवल वे प्रशिक्षण दिखेंगे जो आप देते हैं। आपकी पहुँच आपके अंतिम सत्र के {$a->days} दिन बाद समाप्त हो जाती है।';
+$string['exttrainer_expiring_subject'] = 'बाहरी प्रशिक्षक की पहुँच {$a->date} को समाप्त होगी';
+$string['exttrainer_expiring_body'] = 'बाहरी प्रशिक्षक {$a->name} की {$a->site} तक पहुँच {$a->date} को समाप्त होगी, जो उनके अंतिम सत्र के {$a->days} दिन बाद है।
+
+उन्हें बनाए रखने के लिए, उन्हें किसी नए सत्र में नियुक्त करें या बाहरी प्रशिक्षक पेज पर उनकी पहुँच बढ़ाएँ:
+{$a->url}';
+$string['messageprovider:exttrainer_expiring'] = 'किसी बाहरी प्रशिक्षक की पहुँच समाप्त होने वाली है';
+$string['usertype_external_trainer_label'] = 'बाहरी प्रशिक्षक';
+$string['event_exttrainer_invited'] = 'बाहरी प्रशिक्षक आमंत्रित';
+$string['event_exttrainer_extended'] = 'बाहरी प्रशिक्षक की पहुँच बढ़ाई गई';
+$string['event_exttrainer_reactivated'] = 'बाहरी प्रशिक्षक पुनः सक्रिय';
+$string['event_exttrainer_expired'] = 'बाहरी प्रशिक्षक की पहुँच समाप्त';
+$string['event_exttrainer_revoked'] = 'बाहरी प्रशिक्षक की पहुँच रद्द';
+$string['task_exttrainer_expiry'] = 'बाहरी प्रशिक्षक खातों की समाप्ति';
+$string['privacy:metadata:exttrainer'] = 'बाहरी प्रशिक्षक खाते: उन्हें किसने आमंत्रित किया, उनका संगठन और टेनेंट, और उनकी पहुँच कब समाप्त होती है।';
+$string['privacy:metadata:field:organisation'] = 'बाहरी प्रशिक्षक का संगठन।';
+$string['privacy:metadata:field:exttrainer_tenant'] = 'वह टेनेंट जिसमें बाहरी प्रशिक्षक का खाता रखा गया।';
+$string['privacy:metadata:field:exttrainer_access'] = 'बाहरी प्रशिक्षक की पहुँच कब शुरू हुई और कब समाप्त होगी, उसकी स्थिति, और प्रशासकों को कब याद दिलाया गया।';

@@ -216,3 +216,6 @@ $string['privacy:metadata:trainers:timecreated'] = 'प्रशिक्षक 
 
 // Message provider (db/messages.php), 2026-10-20.
 $string['messageprovider:waitlist_promoted'] = 'क्लासरूम की प्रतीक्षा-सूची में आपको स्थान मिला';
+
+// ADR-036 D9/D10 (session 5, 2026-11-20): trainers see only the classrooms they train.
+$string['error_notyourclassroom'] = 'आप केवल वही क्लासरूम खोल सकते हैं जिन्हें आप पढ़ाते हैं।';

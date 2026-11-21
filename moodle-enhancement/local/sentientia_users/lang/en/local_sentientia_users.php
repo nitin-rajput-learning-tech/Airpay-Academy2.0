@@ -307,3 +307,73 @@ $string['hrms_lines_uploader_only'] = 'The rejected lines of this run show an e-
 $string['hrms_imported_history_off'] = 'The HRMS sync history imported from BizLMS is not switched on for this site.';
 // ADR-032 (BizLMS import, skills): the skills a user said they are interested in, on the skill profile.
 $string['skillprofile_interests']        = 'Interested in';
+
+// ADR-036 D9 (session 5, 2026-11-20): external trainer accounts.
+$string['sentientia_users:inviteexternaltrainer'] = 'Invite and manage external trainers';
+$string['exttrainer_disabled'] = 'External trainer accounts are not switched on for this site.';
+$string['exttrainer_page_title'] = 'External trainers';
+$string['exttrainer_page_intro'] = 'Invite people from outside the organisation who deliver classroom training. Each gets a login of their own, sees only the trainings they deliver, sees learners by name only, and loses access {$a} days after their last session.';
+$string['exttrainer_manage_button'] = 'External trainers';
+$string['exttrainer_list_heading'] = 'Invited external trainers';
+$string['exttrainer_list_empty'] = 'Nobody has been invited yet.';
+$string['exttrainer_invite_heading'] = 'Invite an external trainer';
+$string['exttrainer_invite_intro'] = 'They receive an e-mail with their username and a link to set their own password. No password is ever sent.';
+$string['exttrainer_field_organisation'] = 'Organisation';
+$string['exttrainer_field_organisation_help'] = 'The trainer\'s own company or institution. Shown to the admins on this page only.';
+$string['exttrainer_field_tenant'] = 'Tenant';
+$string['exttrainer_invite_submit'] = 'Send invite';
+$string['exttrainer_invited'] = 'Invite sent to {$a}.';
+$string['exttrainer_invited_nomail'] = 'The account for {$a} was created, but the invite e-mail could not be sent. They can use "Forgotten your password?" on the login page with their e-mail address.';
+$string['exttrainer_col_expires'] = 'Access ends';
+$string['exttrainer_col_invitedby'] = 'Invited by';
+$string['exttrainer_col_invited'] = 'Invited on';
+$string['exttrainer_status_active'] = 'Active';
+$string['exttrainer_status_expired'] = 'Expired';
+$string['exttrainer_status_revoked'] = 'Revoked';
+$string['exttrainer_reassigned_hint'] = 'Assigned to a later session. Reactivate to give access back.';
+$string['exttrainer_action_extend'] = 'Extend 30 days';
+$string['exttrainer_action_reactivate'] = 'Reactivate';
+$string['exttrainer_action_revoke'] = 'Revoke';
+$string['exttrainer_revoke_confirm'] = 'Revoke this external trainer? The account is suspended at once and stays on record.';
+$string['exttrainer_done_extend'] = 'Access extended.';
+$string['exttrainer_done_reactivate'] = 'Account reactivated.';
+$string['exttrainer_done_revoke'] = 'Access revoked.';
+$string['exttrainer_error_invalidemail'] = 'Enter a valid e-mail address.';
+$string['exttrainer_error_emailtaken'] = 'An account with this e-mail address already exists. An external trainer needs an account of their own.';
+$string['exttrainer_error_usernametaken'] = 'The username for this e-mail address is already in use.';
+$string['exttrainer_error_tenant'] = 'Choose the tenant the trainer will deliver training for.';
+$string['exttrainer_error_notexternal'] = 'This account is not an external trainer.';
+$string['exttrainer_error_status'] = 'This action does not apply to an account that is {$a}.';
+$string['exttrainer_error_activate'] = 'This is an external trainer whose access has ended. To give it back, use Reactivate on the External trainers page.';
+$string['exttrainer_role_name'] = 'External trainer';
+$string['exttrainer_role_description'] = 'Restricted role for external trainers (ADR-036): view classrooms and take attendance, only for the classrooms they train. Do not add capabilities to it.';
+$string['exttrainer_invite_subject'] = 'Your trainer account on {$a->site}';
+$string['exttrainer_invite_body'] = 'Hello {$a->firstname},
+
+You have been invited to deliver training on {$a->site} as an external trainer.
+
+Your username: {$a->username}
+
+Set your password here:
+{$a->link}
+
+This link works for {$a->minutes} minutes. After that, open {$a->forgoturl}, enter this e-mail address, and a new link is sent to you.
+
+Log in at {$a->loginurl}. You will see only the trainings you deliver. Your access ends {$a->days} days after your last session.';
+$string['exttrainer_expiring_subject'] = 'External trainer access ends on {$a->date}';
+$string['exttrainer_expiring_body'] = 'The external trainer {$a->name} loses access to {$a->site} on {$a->date}, {$a->days} days after their last session.
+
+To keep them, assign them to a new session or extend their access on the External trainers page:
+{$a->url}';
+$string['messageprovider:exttrainer_expiring'] = 'An external trainer\'s access is about to end';
+$string['usertype_external_trainer_label'] = 'External trainer';
+$string['event_exttrainer_invited'] = 'External trainer invited';
+$string['event_exttrainer_extended'] = 'External trainer access extended';
+$string['event_exttrainer_reactivated'] = 'External trainer reactivated';
+$string['event_exttrainer_expired'] = 'External trainer access expired';
+$string['event_exttrainer_revoked'] = 'External trainer access revoked';
+$string['task_exttrainer_expiry'] = 'Expire external trainer accounts';
+$string['privacy:metadata:exttrainer'] = 'External trainer accounts: who invited them, their organisation and tenant, and when their access ends.';
+$string['privacy:metadata:field:organisation'] = 'The external trainer\'s organisation.';
+$string['privacy:metadata:field:exttrainer_tenant'] = 'The tenant the external trainer account was placed in.';
+$string['privacy:metadata:field:exttrainer_access'] = 'When the external trainer\'s access started and ends, its status, and when the admins were reminded.';

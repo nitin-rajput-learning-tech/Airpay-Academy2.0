@@ -59,4 +59,25 @@ $flags = [
                           customer before the pages have been reviewed with screenshots.',
     ],
 
+    // ─── ADR-036 D9: external trainer accounts (session 5) ───────────────────
+    'sentientia.users.external_trainer.enabled' => [
+        'default'     => false,
+        'description' => 'External trainer accounts (ADR-036 D9, plan C6, session 5). When OFF (default) the
+                          page /local/sentientia_users/external_trainers.php refuses everyone, the Manage
+                          Users page shows no "External trainers" button, and no invite can be sent:
+                          the platform behaves as before. When ON, a holder of
+                          local/sentientia_users:inviteexternaltrainer (the tenant administrator role; site
+                          admins) can invite an external trainer by e-mail into their own tenant: a
+                          manual-login account with a forced password change, the restricted role
+                          sentientia_externaltrainer (classroom view and attendance only), names-only
+                          rosters and their own classrooms only. The account expires 30 days after the
+                          last session they train (invite date plus 30 days before any assignment); the
+                          daily task suspends it then, reminds the admins 7 days before, and never
+                          deletes it. Every invite, extension, reactivation, expiry and revoke is a
+                          logged event. Accounts that already exist keep their restrictions and expiry
+                          if the flag is turned OFF again; the expiry task runs either way. Do not turn
+                          this ON on a shared site before the platform part (user-type registration,
+                          audit allow-list) has landed and the pages have been reviewed with screenshots.',
+    ],
+
 ];

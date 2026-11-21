@@ -109,7 +109,12 @@ final class privacy_provider_test extends \core_privacy\tests\provider_testcase 
         }
         $this->assertEqualsCanonicalizing([
             'local_sentientia_users_sync_runs', 'local_sentientia_users_sync_errors',
-            'local_sentientia_users_transcript', 'local_sentientia_users_logindays'], array_keys($declared));
+            'local_sentientia_users_transcript', 'local_sentientia_users_logindays',
+            // ADR-036 D9 (session 5): the external-trainer profile names the trainer and the inviter.
+            'local_sentientia_external_trainer_profile'], array_keys($declared));
+        foreach (['userid', 'organisation', 'invitedby', 'open_path', 'expires_at'] as $column) {
+            $this->assertContains($column, $declared['local_sentientia_external_trainer_profile']);
+        }
         foreach (['email', 'employee_code', 'username', 'firstname', 'lastname', 'modified_by'] as $column) {
             $this->assertContains($column, $declared['local_sentientia_users_sync_errors']);
         }

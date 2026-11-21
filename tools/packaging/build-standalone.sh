@@ -25,6 +25,9 @@
 #               which dropped the shim.)
 #   3. OVERLAY  moodle-enhancement/tools/overlay-airpay-customs.ps1 -RepoRoot <export> lays the Sentientia
 #               layer on the staged tree (theme, plugins, vendor patches, my/ additions, router .htaccess).
+#   3b. CORE    tools/check-core-patches.sh apply puts the recorded Moodle core patches of the target (ADR-044,
+#               moodle-enhancement/core-patches/MANIFEST) over the staged vanilla files, from the committed files of
+#               --ref, and only where the staged file is the pinned upstream file (a different base release fails).
 #   4. VERIFY   the staged tree, then the archive, and FAIL THE BUILD (non-zero exit, no final zip) when any
 #               check below is not met.
 #   5. ZIP      DEPLOY-README.txt + <tree>/ with bsdtar (deflate). GNU tar writes a PLAIN TAR named .zip,
@@ -41,6 +44,7 @@
 #        present; public/theme/airpayux and airpay-audit-loginas.php absent;
 #   5.3: 0 SENTIENTIA-CORE-MOD in public/lib/setuplib.php (no core edit; the 5.2 ini_get_bool recipe is NOT
 #        applied on 5.3) and a few core files byte-identical to the vanilla base;
+#   both: every core patch of the target in moodle-enhancement/core-patches/MANIFEST is in the stage (ADR-044);
 #   0 mentions of the removed core modal factory AMD module in any shipped amd/build (.js and .map);
 #   no `new Mustache_Engine` in shipped PHP (the one allowed instantiation is local_sentientia_emails' mustache_factory).
 #
@@ -289,6 +293,18 @@ OVERLAY_ARGS=(-RepoRoot "$(win "$EXPORT")" -Target "$(win "$PUB")" -LogPath "$(w
 native powershell -NoProfile -ExecutionPolicy Bypass -File "$(win "$OVERLAY")" "${OVERLAY_ARGS[@]}" | tail -n 4
 
 # ---------------------------------------------------------------------------------------------
+# 3b. CORE PATCHES (ADR-044)
+# ---------------------------------------------------------------------------------------------
+# Moodle core is not in git for 5.3, so a patched core file is kept as a full file per Moodle version under
+# moodle-enhancement/core-patches/ (the MANIFEST pins each upstream file's SHA-256). The tool copies the COMMITTED
+# file of $REF over the staged vanilla file, and only when the staged file is that pinned upstream file: a different
+# base release fails the build here instead of shipping an old core file. Records: docs/core-mods/ (form.js:
+# 2026-11-20-form-js-dependency-guard.md).
+echo "── 3b. core patches (ADR-044) -> $STAGE_TREE"
+bash "$REPO/tools/check-core-patches.sh" apply --target "$TARGET" --tree "$STAGE_TREE" --ref "$REF" \
+    || { echo "core patch step failed (see above). Nothing was zipped. Stage left at: $RUN_DIR" >&2; exit 1; }
+
+# ---------------------------------------------------------------------------------------------
 # 4a. VERIFY the staged tree (content checks the archive listing cannot do)
 # ---------------------------------------------------------------------------------------------
 echo "── 4a. stage verification"
@@ -326,6 +342,12 @@ if [ "$FORBID_SETUPLIB_MOD" = 1 ]; then
         if [ "$(sha256sum "$STAGE_TREE/$f" | cut -d' ' -f1)" = "$(sha256sum "$BASE/$f" | cut -d' ' -f1)" ]; then :; else bad "core file $f differs from the vanilla base"; fi
     done
     ok "core integrity spot check done (setuplib, setup, component, moodlelib, weblib, version)"
+fi
+# ADR-044: the recorded core patches of this Moodle version are in the stage (each file equals the committed one).
+if bash "$REPO/tools/check-core-patches.sh" verify-tree --target "$TARGET" --tree "$STAGE_TREE" --ref "$REF" >/dev/null; then
+    ok "core patches of $TARGET in place (moodle-enhancement/core-patches/MANIFEST)"
+else
+    bad "a core patch of $TARGET is missing or different in the stage (tools/check-core-patches.sh verify-tree --target $TARGET --tree $STAGE_TREE)"
 fi
 
 if [ "${#SHIPPED[@]}" -gt 0 ]; then
@@ -390,8 +412,10 @@ NOT IN THE PACKAGE (on purpose)
   airpay-audit-loginas.php, the retired ini_get_bool polyfill.
   public/config.php IS in the package: it is Moodle's own loader (it requires ../config.php, or sends a fresh site to
   install.php). Leave it alone.
-  No Moodle core file is edited: the package only ADDS files (my/dashboard.php, my/switchrole.php and public/.htaccess are
-  new on 5.3). Do NOT put an ini_get_bool() polyfill in config.php and do NOT patch lib/setuplib.php (5.3: fatal).
+  One Moodle core file is patched: public/lib/form/form.js (ADR-044, recorded in docs/core-mods/: a form removed before
+  its show/hide rules were set up no longer throws). Everything else only ADDS files (my/dashboard.php, my/switchrole.php
+  and public/.htaccess are new on 5.3). Do NOT put an ini_get_bool() polyfill in config.php and do NOT patch
+  lib/setuplib.php (5.3: fatal).
 
 FRESH INSTALL
   1. Extract into a NEW, empty directory. chown to the web user.

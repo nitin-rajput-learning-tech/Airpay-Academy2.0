@@ -1,5 +1,6 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-11-20 ~05:15 (**Post-demo sessions 0 + 1 built, reviewed, deployed to local XAMPP and partly verified; NOT committed, NOT on UAT; PHPUnit NOT finished (the local re-init is cut off by the 06:00 shutdown). Session 1b confirmed: no course certificate is issued on completion; issuer spec amended, waits for Q9 / Q9-d. Proctoring B1/B2 code committed in `76e8ec572`, flags OFF, unverified, not on production or UAT. See the 2026-11-20 entry.**)
+**Updated:** 2026-11-21 ~10:30 (**20 Nov session: decisions D-2..D-15 built, reviewed, fixed, gated, deployed to local XAMPP and verified (browser where the overloaded web tier allowed, otherwise server side); proctoring B1/B2 verified server side; PHPUnit GREEN 21 Nov (88 files, 756 tests). NOT committed, NOT on UAT. See the 2026-11-21 entry.**)
+**Before that, 2026-11-20 ~05:15 (**Post-demo sessions 0 + 1 built, reviewed, deployed to local XAMPP and partly verified; NOT committed, NOT on UAT; PHPUnit NOT finished (the local re-init is cut off by the 06:00 shutdown). Session 1b confirmed: no course certificate is issued on completion; issuer spec amended, waits for Q9 / Q9-d. Proctoring B1/B2 code committed in `76e8ec572`, flags OFF, unverified, not on production or UAT. See the 2026-11-20 entry.**)
 **Before that, 2026-11-19 16:00** (**Post-demo: Nitin decided D1-D32 (plan 6a); 5 quick wins + certificate verify-on-arrival (D32) DEPLOYED TO UAT 15:15 (`fe94e7c97`); D32 extras (noindex, escaping, ADR-041 accepted) committed, not deployed; mobile = Flutter recommended pending spike. See the 2026-11-19 16:00 entry.**)
 **Before that, 2026-11-19 09:20** (**Walk fixes A+B+C DEPLOYED TO UAT at 09:06-09:12 on Nitin's go (`b757187a9` code, docs `53b249a16`, `production` fast-forwarded); all checks green; PHPUnit not run. See the 2026-11-19 09:20 entry.**)
 **Before that, 2026-11-19 08:30** (**Walk fixes Phase A+B (`56d822061`) and Phase C built and verified locally, NOT on UAT yet; V23 reverted; PHPUnit not run. See the 2026-11-19 entry.**)
@@ -10,6 +11,35 @@
 - A4 done on the local copy: 286 erasures, nothing sent, 0 failed deletes; found a Moodle core bug and two erasure gaps (`docs/cutover/A4-ERASURE-REHEARSAL-RESULTS-2026-11-13.md`). Decisions for Nitin listed there.)
 
 **Historical context:** Wave 1 + Wave 2 audit entries retained in git history (the docs/_archive/PROJECT-STATE-history.md snapshot was removed in repo-cleanup 612ac4b4e; recover via `git show 612ac4b4e^:moodle-enhancement/docs/_archive/PROJECT-STATE-history.md`).
+
+---
+
+## 2026-11-21 ~10:30 - 20 Nov session: decisions D-2..D-15 and proctoring verification (Opus 5.5)
+
+- **Evidence and full results:** `docs/visual-evidence/2026-11-20/session/README.md` (per group: changes, review
+  verdict, PASS / FAIL / BLOCKED per step, flag log, clean-up counts, PHPUnit table, open items, decisions N-1..N-6).
+- **Built, reviewed, fixed, deployed to local XAMPP (upgrade clean 20 Nov 13:44):**
+  - courses 2026112000: course certificate issuer on completion, no flag (D-2..D-6); certificates survive course delete.
+  - tool_certificate 5.0.12 re-vendor (D-7) with the ADR-041 hunks; pre-commit CHECK 2 aligned with CHECK 6.
+  - core `lib/form/form.js` dependency guard (D-14, ADR-044, core-mods record, `tools/check-core-patches.sh`).
+  - emails 2026112000: rule editor keeps stored values (D-12).
+  - evaluation 2026112000: anonymity minimum group size 5 (D-13), both review holes closed.
+  - users + classroom 2026112000: external trainer accounts and own-classroom scope (D-15, session 5), flags OFF;
+    4 review findings fixed (incl. one high: profile access).
+  - compliance_report 2026111902: `--unenrol-outsiders`; local clean-up removed 109 cross-tenant enrolments (D-10).
+- **Verification:** no regressions. Browser PASS for the certificate gallery, verify page, course header, rule editor and
+  D-11; server-side PASS for anonymity, external trainers, clean-up and proctoring B1/B2. BLOCKED (environment, not
+  failures): external-trainer pages, proctoring client, analysis page, modal race, tool_certificate admin pages.
+- **PHPUnit 21 Nov: GREEN**, 88 files / 756 tests. Fixes from the run: emails capability names (en + hi), proctoring
+  privacy-provider fields (en + hi), one test fix and one fixture fix. One upstream tool_certificate test
+  fails on Windows only (expects PHP_EOL, mtrace writes LF); it is left byte-identical to upstream v5.0.12.
+- **Flags:** toggled on local for verification only, all back to inherit (OFF). UAT untouched.
+- **Not in this commit:** the 21 Nov code-only batch (COURSE-SETTINGS, SURVEY-QUICKWINS, LP-COMPLETION, DPDP
+  follow-up) shares the courses, evaluation and learningpath plugins. Those three plugins (including the 20 Nov
+  issuer, D-13 and fixture changes in them) are committed with that batch after its own verification; the 20 Nov
+  commit holds everything else.
+- **Next:** commit; UAT deploy in 4 groups on Nitin's go (session 0+1, proctoring flags OFF, 20 Nov builds, D-8);
+  D-1 pin on UAT after the dry run is shown; owed browser steps on a quiet box; decisions N-1..N-6.
 
 ---
 

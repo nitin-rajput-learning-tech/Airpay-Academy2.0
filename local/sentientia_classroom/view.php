@@ -26,6 +26,11 @@ require_capability('local/sentientia_classroom:view', $context);
 // viewer had no tenant or the classroom had no path, so either opened any
 // classroom by id.
 $classroom = \local_sentientia_classroom\session_manager::require_classroom_access($classroomid);
+// ADR-036 D9/D10 (session 5): an external trainer (always) or an internal trainer without :update (flag
+// sentientia.classroom.trainer_own_scope.enabled) opens only a classroom they train.
+\local_sentientia_classroom\session_manager::require_trainer_scope($classroom);
+// An external trainer sees the roster by name only (the web service blanks the other columns too).
+$namesonly = \local_sentientia_classroom\session_manager::roster_names_only();
 
 $can_update = is_siteadmin() || has_capability('local/sentientia_classroom:update', $context)
     || has_capability('local/sentientia_classroom:manage', $context);
@@ -74,7 +79,12 @@ $users_columns = [
     ['key' => 'designation',  'label' => 'Designation',  'sortable' => false],
     ['key' => 'enrolled_at',  'label' => 'Enrolled',     'sortable' => true,  'sortkey' => 'timecreated'],
 ];
-if ($history) {
+if ($namesonly) {
+    // ADR-036 D9: names only - no e-mail, employee id, designation or completion columns.
+    $users_columns = array_values(array_filter($users_columns,
+        fn($col) => in_array($col['key'], ['name', 'enrolled_at'], true)));
+}
+if ($history && !$namesonly) {
     $users_columns[] = ['key' => 'completion',   'sortable' => false,
         'label' => get_string('roster_completion', 'local_sentientia_classroom')];
     $users_columns[] = ['key' => 'completed_at', 'sortable' => false,

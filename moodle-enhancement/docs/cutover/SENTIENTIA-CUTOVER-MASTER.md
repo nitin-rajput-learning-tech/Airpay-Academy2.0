@@ -68,6 +68,23 @@ the setting before any payment is taken if `logguests` is `0`, or if `enabled_st
 `logstore_standard` or exits 3 (no store loaded, no audit rows). Not yet checked on UAT or live
 (2026-11-13).
 
+**Config step: course certificates, `tool_certificate` "Certificate issued" e-mail OFF by default, popup kept
+(decision D-4, 2026-11-20).** From this release `local_sentientia_courses` issues the course certificate on
+course completion, with no flag (D-2), and the `local_sentientia_emails` congratulations e-mail already attaches
+the PDF. Without this step every learner would also get tool_certificate's own e-mail. As the web server user,
+after the upgrade:
+```
+php <dirroot>/admin/cli/cfg.php --component=message --name=message_provider_tool_certificate_certificateissued_enabled
+php <dirroot>/admin/cli/cfg.php --component=message --name=message_provider_tool_certificate_certificateissued_enabled --set=popup
+```
+The first prints the current default (`email,popup` on local, 2026-11-20); the second keeps the popup and
+turns the e-mail default off (if the first also listed `airnotifier`, keep it: `--set=popup,airnotifier`). Same in the UI: *Site administration > General > Messaging > Notification
+settings*, "Certificate issued" (tool_certificate): Web (popup) on, Email off, not locked. Users who saved their
+own preference for this notification keep it. **Verify:** complete a course that has a certificate template with
+a test learner: one congratulations e-mail with the PDF, one popup notification, no second e-mail. Do not run the
+Stage B `courseid = moduleid` backfill for imported certificates (D-6): it would let tool_certificate delete them
+with their course.
+
 ---
 
 ## Gate B — Tenant registry cutover  (`tenant_registry_legacy`)

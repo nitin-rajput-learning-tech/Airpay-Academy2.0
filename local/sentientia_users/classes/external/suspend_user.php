@@ -58,6 +58,13 @@ class suspend_user extends external_api {
         if (!is_siteadmin() && (int) $params['userid'] === (int) $USER->id) {
             throw new \moodle_exception('cannotsuspendself', 'local_sentientia_users');
         }
+        // ADR-036 D9 (review fix 2026-11-20): an external trainer whose access ended (expired or revoked)
+        // comes back only through Reactivate on external_trainers.php, which also restarts the expiry.
+        // Unsuspending them here left a live account the expiry task never suspended again.
+        if (!$params['suspended']
+                && \local_sentientia_users\external_trainer\manager::activation_blocked((int) $params['userid'])) {
+            throw new \moodle_exception('exttrainer_error_activate', 'local_sentientia_users');
+        }
 
         $newstate = \local_sentientia_users\user_manager::suspend(
             $params['userid'], $params['suspended']);

@@ -38,21 +38,18 @@ Feature: Being able to manually issue a certificate to a user
   Scenario: Issue a certificate as issuer user, from the list of templates
     When I log in as "issuer0"
     And I navigate to "Certificates > Manage certificate templates" in site administration
-    And I click on ".dropdown-toggle" "css_element" in the "Certificate 0" "table_row"
-    And I choose "Issue certificates" in the open action menu
+    And I press "Issue certificates" action in the "Certificate 0" report row
     And I set the field "Select users to issue certificate to" to "User 11"
     And I press "Save"
     And I wait until ".toast-message" "css_element" does not exist
     And I follow "Certificate 0"
     Then "User 11" "text" should exist in the "reportbuilder-table" "table"
-    And I log out
     # Check notifications are triggered.
     And I log in as "user11"
     And I am on site homepage
     When I click on ".popover-region-notifications" "css_element"
     And I click on "View full notification" "link" in the ".popover-region-notifications" "css_element"
     Then I should see "Your certificate is available!"
-    And I log out
 
   Scenario: Issue a certificate as issuer user, from the list of issues
     When I log in as "issuer0"
@@ -73,14 +70,12 @@ Feature: Being able to manually issue a certificate to a user
       | First name | Date issued         |
       | User 11    | ##today##%d %B %Y## |
       | User 12    | ##today##%d %B %Y## |
-    And I log out
 
   Scenario: Issue a certificate with expiry date as issuer user
     When I log in as "issuer0"
     And I navigate to "Certificates > Manage certificate templates" in site administration
     # Issue a certificate for user11 with absolute expiry date.
-    And I click on ".dropdown-toggle" "css_element" in the "Certificate 0" "table_row"
-    And I choose "Issue certificates" in the open action menu
+    And I press "Issue certificates" action in the "Certificate 0" report row
     And the field "expirydatetype" matches value "Never"
     And I set the following fields to these values:
       | Select users to issue certificate to  | User 11                 |
@@ -90,8 +85,7 @@ Feature: Being able to manually issue a certificate to a user
       | expirydateabsolute[year]              | ##tomorrow##%Y##        |
     And I press "Save"
     # Issue a certificate for user11 with relative expiry date.
-    And I click on ".dropdown-toggle" "css_element" in the "Certificate 0" "table_row"
-    And I choose "Issue certificates" in the open action menu
+    And I press "Issue certificates" action in the "Certificate 0" report row
     And I set the following fields to these values:
       | Select users to issue certificate to  | User 12 |
       | Expiry date type                      | After   |
@@ -105,7 +99,6 @@ Feature: Being able to manually issue a certificate to a user
       | First name | Expiry date            |
       | User 11    | ##tomorrow##%d %B %Y## |
       | User 12    | ##tomorrow##%d %B %Y## |
-    And I log out
 
   Scenario: Revoke issued certificate as issuer user
     Given the following certificate issues exist:
@@ -122,7 +115,6 @@ Feature: Being able to manually issue a certificate to a user
     And I click on "Revoke" "button" in the "Confirm" "dialogue"
     And I should not see "User 11"
     And I should see "User 12"
-    And I log out
 
   Scenario: Regenerate issued certificate file as issuer user
     Given the following certificate issues exist:
@@ -132,10 +124,30 @@ Feature: Being able to manually issue a certificate to a user
     And I navigate to "Certificates > Manage certificate templates" in site administration
     And I follow "Certificate 1"
     And I navigate to "Issued certificates" in current page administration
-    And I press "Regenerate issue file" action in the "User 11" report row
-    And I click on "Regenerate" "button" in the "Confirm" "dialogue"
+    And I press "Regenerate issued certificate" action in the "User 11" report row
     And I should see "User 11"
-    And I log out
+
+  Scenario: Regenerate selected issued certificates as issuer user
+    Given the following certificate issues exist:
+      | template      | user   |
+      | Certificate 1 | user11 |
+      | Certificate 1 | user12 |
+    When I log in as "issuer0"
+    And I navigate to "Certificates > Manage certificate templates" in site administration
+    And I follow "Certificate 1"
+    And I navigate to "Issued certificates" in current page administration
+    And I click on "input[name='report-select-row[]']" "css_element" in the "User 11" "table_row"
+    And I click on "input[name='report-select-row[]']" "css_element" in the "User 12" "table_row"
+    And I set the field "With selected users..." to "Regenerate issued certificates"
+    And I click on "Regenerate" "button" in the "Regenerate all issued certificates" "dialogue"
+    And I should see "The issued certificates are being regenerated"
+
+  Scenario: Regenerate all certificate as issuer user, from the list of templates
+    When I log in as "issuer0"
+    And I navigate to "Certificates > Manage certificate templates" in site administration
+    And I press "Regenerate all issued certificates" action in the "Certificate 0" report row
+    And I click on "Regenerate" "button" in the "Regenerate all issued certificates" "dialogue"
+    And I should see "The issued certificates are being regenerated"
 
   Scenario: Filter issued certificates datasource by cohort
     Given the following certificate issues exist:

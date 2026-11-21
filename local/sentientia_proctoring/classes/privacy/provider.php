@@ -42,15 +42,40 @@ class provider implements
             'lastheartbeat'     => 'privacy:metadata:sessions:lastheartbeat',
             'timeautosubmitted' => 'privacy:metadata:sessions:timeautosubmitted',
         ], 'privacy:metadata:local_sentientia_proctor_sessions');
-        $collection->add_database_table('local_sentientia_proctor_identity', [], 'privacy:metadata:local_sentientia_proctor_identity');
+        // 2026-11-21: the identity, recordings and reviews tables were declared with no fields, which core reports
+        // ("supplied without any fields") and which told a data subject nothing about what each table holds.
+        $collection->add_database_table('local_sentientia_proctor_identity', [
+            'userid'      => 'privacy:metadata:identity:userid',
+            'sessionid'   => 'privacy:metadata:identity:sessionid',
+            'provider'    => 'privacy:metadata:identity:provider',
+            'match_score' => 'privacy:metadata:identity:match_score',
+            'passed'      => 'privacy:metadata:identity:passed',
+            'error_code'  => 'privacy:metadata:identity:error_code',
+            'error_msg'   => 'privacy:metadata:identity:error_msg',
+            'timecreated' => 'privacy:metadata:identity:timecreated',
+        ], 'privacy:metadata:local_sentientia_proctor_identity');
         $collection->add_database_table('local_sentientia_proctor_events', [
             'event_type'   => 'privacy:metadata:events:event_type',
             'severity'     => 'privacy:metadata:events:severity',
             'payload_json' => 'privacy:metadata:events:payload_json',
             'timecreated'  => 'privacy:metadata:events:timecreated',
         ], 'privacy:metadata:local_sentientia_proctor_events');
-        $collection->add_database_table('local_sentientia_proctor_recordings', [], 'privacy:metadata:local_sentientia_proctor_recordings');
-        $collection->add_database_table('local_sentientia_proctor_reviews',  [], 'privacy:metadata:local_sentientia_proctor_reviews');
+        $collection->add_database_table('local_sentientia_proctor_recordings', [
+            'sessionid'    => 'privacy:metadata:recordings:sessionid',
+            'kind'         => 'privacy:metadata:recordings:kind',
+            's3_key'       => 'privacy:metadata:recordings:s3_key',
+            'duration_ms'  => 'privacy:metadata:recordings:duration_ms',
+            'retain_until' => 'privacy:metadata:recordings:retain_until',
+            'deleted_at'   => 'privacy:metadata:recordings:deleted_at',
+            'timecreated'  => 'privacy:metadata:recordings:timecreated',
+        ], 'privacy:metadata:local_sentientia_proctor_recordings');
+        $collection->add_database_table('local_sentientia_proctor_reviews', [
+            'sessionid'       => 'privacy:metadata:reviews:sessionid',
+            'reviewer_userid' => 'privacy:metadata:reviews:reviewer_userid',
+            'decision'        => 'privacy:metadata:reviews:decision',
+            'note'            => 'privacy:metadata:reviews:note',
+            'timecreated'     => 'privacy:metadata:reviews:timecreated',
+        ], 'privacy:metadata:local_sentientia_proctor_reviews');
         $collection->add_external_location_link('aws_s3',
             ['video' => 'privacy:metadata:aws_s3:video'],
             'privacy:metadata:aws_s3');

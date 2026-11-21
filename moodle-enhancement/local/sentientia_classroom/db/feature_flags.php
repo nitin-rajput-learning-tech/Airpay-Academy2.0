@@ -62,4 +62,22 @@ $flags = [
                           protection of imported history do not depend on it.',
     ],
 
+    'sentientia.classroom.trainer_own_scope.enabled' => [
+        'default'     => false,
+        'description' => 'Internal trainers see only their own classrooms (ADR-036 D10, owner decision D15,
+                          session 5). Resolved for the viewer\'s tenant. When OFF (default) nothing
+                          changes: a holder of local/sentientia_classroom:view sees every classroom of
+                          their tenant, as before (attendance is already limited to their own sessions
+                          since 2026-09-30). When ON, a user WITHOUT local/sentientia_classroom:update
+                          sees on the classroom list, the dashboard tiles of the list page, the classroom
+                          page, its sessions, roster and waiting list, its calendar file and its logo only
+                          the classrooms where they are the primary trainer, a co-trainer, or the trainer
+                          of one of its sessions; any other classroom refuses by id. Managers and tenant
+                          administrators (who hold :update) and site admins are not affected. The rule
+                          runs after the ADR-031 tenant guard, never instead of it. External trainers
+                          (sentientia.users.external_trainer.enabled) get this rule always, whatever this
+                          flag says, and see rosters by name only. Turn it ON for a tenant only after the
+                          pages have been checked as a trainer and as a tenant administrator.',
+    ],
+
 ];

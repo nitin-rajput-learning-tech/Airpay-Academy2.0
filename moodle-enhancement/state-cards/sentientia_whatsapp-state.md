@@ -8,6 +8,10 @@
 
 ---
 
+## 2026-11-21 - 20 Nov session wrap-up: local deploy, verification, PHPUnit
+
+`notification_bridge.php` deployed to local XAMPP 20 Nov (resolver change, PHP only); the certificate nudge stays behind its existing content flag (OFF). Evidence: `docs/visual-evidence/2026-11-20/session/README.md`.
+
 ## Mission
 
 WhatsApp Business API (+ SMS fallback via DLT-template registry) as a
@@ -281,3 +285,7 @@ Branch `claude/adr031-learning3-ff`, from the learningpath review.
 - Version 2026092202 -> 2026092500, release 0.4.1-alpha. Tests: `notification_bridge_content_test`
   asserts the link, and a new `tests/path_milestone_link_test.php` (`@group tenant_isolation`) does too.
   Written, not run. Both trees.
+
+## 2026-11-20 - certificate-ready nudge finds the course through the course certificate issuer
+
+`classes/notification_bridge.php` (both trees), `send_certificate_ready`: when the issue has no `courseid` (Sentientia course certificates carry NULL so they survive course delete), the course comes from `\local_sentientia_courses\certificate_issuer::course_of_issue()`, which also works while the issue is still being created. Without that class the old lookup runs unchanged. The nudge stays behind its existing content flag (OFF). PHP only: no version bump, no schema change. PHPUnit not run.

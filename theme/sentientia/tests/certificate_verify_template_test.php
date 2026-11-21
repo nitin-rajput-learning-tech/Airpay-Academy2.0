@@ -53,6 +53,10 @@ final class certificate_verify_template_test extends \advanced_testcase {
      */
     private function render_result(\stdClass $result): string {
         global $PAGE;
+        // Issuing a certificate e-mails the user, and email_to_user() sets up the theme on $PAGE,
+        // after which force_theme() throws. Render on a fresh page, as a new request would.
+        $PAGE = new \moodle_page();
+        $PAGE->set_context(\context_system::instance());
         $PAGE->force_theme('sentientia');
         $renderer = $PAGE->get_renderer('core');
         return $renderer->render(new \tool_certificate\output\verify_certificate_results($result));

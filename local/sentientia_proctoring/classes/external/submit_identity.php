@@ -45,7 +45,8 @@ class submit_identity extends external_api {
         // than 5 fall within the trailing 3600 seconds, no matter
         // when the boundary lands.
         $cache = \cache::make('local_sentientia_proctoring', 'identity_rate');
-        $key   = 'u:' . (int) $USER->id;
+        // simplekeys definition: a-zA-Z0-9_ only (a ':' throws coding_exception under debugging).
+        $key   = 'u_' . (int) $USER->id;
         $now   = time();
         $window = 3600;          // trailing one hour
         $limit  = 5;             // 5 submissions per trailing hour

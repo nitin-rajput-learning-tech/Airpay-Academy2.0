@@ -1,10 +1,24 @@
 # State Card — `local_airpay_classroom`
 
 **Component:** `local_airpay_classroom`
-**Version:** `2026052001` / `1.10.1`  (+P1 #44 Hindi top-up)
+**Version:** `2026112000` / `1.12.0` (trainer own-classroom scope, flag `sentientia.classroom.trainer_own_scope.enabled` OFF; external trainers always scoped; on local XAMPP since 2026-11-20, not committed, not on UAT. Was `2026052001` / `1.10.1`)
 **Maturity:** `MATURITY_STABLE`
 **Status:** Live on airpay.academy. Replaces BizLMS `local_classroom`.
 **Last refreshed:** 2026-05-24 (P1 state-card pass)
+
+---
+
+## 2026-11-21 - 20 Nov session wrap-up: local deploy, verification, PHPUnit
+
+Deployed to local XAMPP 20 Nov; server-side verification PASS (external trainer sees only own classroom with the flag ON and OFF, names-only roster, waiting-list join refused). PHPUnit green 21 Nov (`trainer_own_scope_test`, 15 tests). Flag restored to OFF. Evidence: `docs/visual-evidence/2026-11-20/session/README.md`.
+
+## 2026-11-20 — session 5: own classrooms only, names-only rosters (2026112000 / 1.12.0; repo only; PHPUnit written, not run)
+
+ADR-036 D9/D10, owner decision D15. Flag `sentientia.classroom.trainer_own_scope.enabled`, default OFF (today's behaviour).
+- `session_manager::trainer_scope_applies()`, `is_trainer_of()`, `trainer_scope_sql()`, `require_trainer_scope()`, `roster_names_only()`: with the flag ON a :view holder without :update sees only classrooms where they are primary trainer, co-trainer or a session trainer (list, tiles, view.php, sessions, roster, waiting list, ics.php, logo). External trainers (local_sentientia_users) always, flag or not, with names-only rosters (no e-mail, employee id, designation, completion, profile link; search ignores e-mail) and no :update shortcut in `may_run_session()`.
+- Not inside `require_classroom_access()`: that also guards learner actions (waitlist_join, QR scan).
+- `trainer_last_session_end()` and `trainer_userids_of_classroom()` feed the external-trainer expiry; classroom and session saves call `local_sentientia_users` to recompute it (never breaks the save).
+- Tests: `tests/trainer_own_scope_test.php`. No schema change.
 
 ---
 

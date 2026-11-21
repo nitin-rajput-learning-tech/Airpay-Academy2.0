@@ -6,7 +6,9 @@
 #
 # Checks:
 #   1. PHP syntax — all staged .php files
-#   2. Moodle MOODLE_INTERNAL guard — class/lib files
+#   2. Moodle MOODLE_INTERNAL guard — class/lib files (guarded core files
+#      under an upstream sync staged with the commit are skipped, as in
+#      CHECK 6)
 #   3. Raw superglobal access — $_GET/$_POST/$_REQUEST
 #   4. Credential patterns — hardcoded tokens/keys
 #   5. .env file staged detection
@@ -63,6 +65,73 @@ STAGED_ZIP=$(git diff --cached --name-only --no-renames --diff-filter=ACM 2>/dev
 STAGED_CONFLICT=$(git diff --cached --name-only --no-renames --diff-filter=ACM 2>/dev/null \
     | grep -E '\.(php|mustache|scss|js|json|xml|md|yml)$' || true)
 
+# Upstream sync prefixes, shared by CHECK 2 and CHECK 6 (see the CHECK 6
+# comment for the rule). A record line 'Core-Mods-Upstream-Sync: <guarded dir
+# prefix>/ <upstream version>' that is staged new with this commit (in the
+# index's records, not in HEAD's) marks the files under the prefix as an
+# upstream Moodle or vendor import. sync_prefixes() fills SYNC_PREFIXES (one
+# prefix per line, without public/) and SYNC_MALFORMED (lines it could not
+# read; CHECK 6 warns about them). It runs at most once and only when a check
+# needs it, so a commit with nothing to exempt pays no extra git grep. Call it
+# directly, never in $(...): it sets globals. Moved here from CHECK 6 on
+# 2026-11-20 (decision D-7, tool_certificate 5.0.12 import) with no change to
+# what it computes.
+SYNC_DONE=0
+SYNC_PREFIXES=""
+SYNC_MALFORMED=""
+sync_prefixes() {
+    [ "$SYNC_DONE" -eq 1 ] && return 0
+    SYNC_DONE=1
+    # Group 2 of SYNC_RE is the prefix without public/; the same pattern is in
+    # tools/ci/check-core-mods.sh.
+    local SYNC_RE SYNC_OLD SYNC_IDX line
+    SYNC_RE='^Core-Mods-Upstream-Sync:[[:space:]]+(public/)?((lib|admin|course|my|mod/assign|mod/quiz)/([A-Za-z0-9_.-]+/)*)[[:space:]]+[^[:space:]]'
+    SYNC_OLD=$(git grep -h -E '^Core-Mods-Upstream-Sync:' HEAD \
+        -- 'moodle-enhancement/docs/core-mods/*.md' 'docs/core-mods/*.md' ':(exclude)*README.md' 2>/dev/null \
+        | tr -d '\r' | LC_ALL=C sort -u || true)
+    SYNC_IDX=$(git grep --cached -h -E '^Core-Mods-Upstream-Sync:' \
+        -- 'moodle-enhancement/docs/core-mods/*.md' 'docs/core-mods/*.md' ':(exclude)*README.md' 2>/dev/null \
+        | tr -d '\r' | LC_ALL=C sort -u || true)
+    while IFS= read -r line; do
+        [ -n "$line" ] || continue
+        grep -qxF -- "$line" <<< "$SYNC_OLD" && continue
+        if [[ "$line" =~ $SYNC_RE ]]; then
+            SYNC_PREFIXES+="${BASH_REMATCH[2]}"$'\n'
+        else
+            SYNC_MALFORMED+="$line"$'\n'
+        fi
+    done <<< "$SYNC_IDX"
+    return 0
+}
+
+# Prints the sync prefix that covers path $1 (public/ ignored), or nothing.
+sync_prefix_of() {
+    local prefix
+    while IFS= read -r prefix; do
+        [ -n "$prefix" ] || continue
+        case "${1#public/}" in "$prefix"*) printf '%s' "$prefix"; return 0 ;; esac
+    done <<< "$SYNC_PREFIXES"
+    return 0
+}
+
+# Guarded core paths, shared by CHECK 2 and CHECK 6 (see the CHECK 6 comment
+# for the lists). core_paths reads paths on stdin and prints those in a guarded
+# core dir that are not ours: CHECK 6 builds CORE_STAGED with it, and CHECK 2
+# skips an unguarded file only when the file is one core_paths keeps AND sits
+# under a sync prefix. A sync line is a core-dir prefix, so a broad one such as
+# 'admin/' or 'mod/quiz/' (one per dir, as core-mods/README.md documents for a
+# Moodle release) covers admin/tool/sentientia_*/ and mod/quiz/accessrule/
+# sentientia_*/ too; these filters keep our own plugins checked. Added
+# 2026-11-20 (review of the tool_certificate 5.0.12 import: until then CHECK 2
+# applied the prefix without the exclusions). CI twin of the patterns:
+# tools/ci/check-core-mods.sh; change both together.
+CORE_DIR_RE='^(public/)?(lib|admin|course|my|mod/assign|mod/quiz)/'
+CORE_OURS_RE='^(public/)?(admin/tool/sentientia_[^/]+|mod/quiz/accessrule/sentientia_[^/]+)/'
+CORE_OVERLAY_RE='^(public/)?my/(dashboard\.php|switchrole\.php|templates/dropdown\.mustache)$'
+core_paths() {
+    grep -E "$CORE_DIR_RE" | grep -vE "$CORE_OURS_RE" | grep -vE "$CORE_OVERLAY_RE" || true
+}
+
 # ============================================================
 # CHECK 1: PHP SYNTAX
 # ============================================================
@@ -93,19 +162,53 @@ fi
 # ============================================================
 # CHECK 2: MOODLE_INTERNAL GUARD
 # ============================================================
+# Upstream sync (2026-11-20, decision D-7): a file without the guard is skipped
+# when CHECK 6 would skip it as synced: it is a guarded core file (core_paths()
+# above keeps it, so admin/tool/sentientia_*/, mod/quiz/accessrule/
+# sentientia_*/ and the my/ overlays are always checked) and it sits under a
+# Core-Mods-Upstream-Sync prefix staged new with this commit (sync_prefixes()
+# above). Upstream Moodle and vendor class files carry no MOODLE_INTERNAL line
+# (Moodle's own style for namespaced classes), and an import changes dozens of
+# them. Every other file is checked as before. Same known gap as CHECK 6: the
+# sync line cannot prove a file under its prefix is upstream content, so review
+# the sync commit.
 echo "→ [2/20] MOODLE_INTERNAL guard..."
 GUARD_ISSUES=0
+GUARD_SYNCED=0
+GUARD_CORE=""
+GUARD_CORE_DONE=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
     # Only check internal files (not web entrypoints that load config.php)
     if [[ "$file" =~ classes/|/lib\.php$|settings\.php$|locallib\.php$ ]]; then
         if ! grep -q "defined.*MOODLE_INTERNAL\|require.*config" "$file" 2>/dev/null; then
+            sync_prefixes
+            if [ -n "$(sync_prefix_of "$file")" ]; then
+                # The staged PHP files CHECK 6 would treat as core, worked out
+                # once (one core_paths run), then matched in bash per file.
+                if [ "$GUARD_CORE_DONE" -eq 0 ]; then
+                    GUARD_CORE=$(core_paths <<< "$STAGED_PHP")
+                    GUARD_CORE_DONE=1
+                fi
+                case $'\n'"$GUARD_CORE"$'\n' in
+                    *$'\n'"$file"$'\n'*)
+                        GUARD_SYNCED=$((GUARD_SYNCED+1))
+                        continue
+                        ;;
+                esac
+            fi
             err "Missing MOODLE_INTERNAL guard: $file"
             GUARD_ISSUES=$((GUARD_ISSUES+1))
         fi
     fi
 done <<< "$STAGED_PHP"
-[ "$GUARD_ISSUES" -eq 0 ] && ok "MOODLE_INTERNAL guards present"
+if [ "$GUARD_ISSUES" -eq 0 ]; then
+    if [ "$GUARD_SYNCED" -eq 0 ]; then
+        ok "MOODLE_INTERNAL guards present"
+    else
+        ok "MOODLE_INTERNAL guards present ($GUARD_SYNCED unguarded file(s) skipped: under an upstream sync staged with this commit)"
+    fi
+fi
 
 # ============================================================
 # CHECK 3: RAW SUPERGLOBAL ACCESS
@@ -218,10 +321,10 @@ fi
 # applies these rules to a commit range; change both together.
 echo "→ [6/20] Moodle core file protection..."
 CORE_ISSUES=0
+# The guarded-dir and ours filters are core_paths() near the top of the hook,
+# shared with CHECK 2 since 2026-11-20 (same three patterns as before).
 CORE_STAGED=$(git diff --cached --name-only --no-renames --diff-filter=ACDMT 2>/dev/null \
-    | grep -E '^(public/)?(lib|admin|course|my|mod/assign|mod/quiz)/' \
-    | grep -vE '^(public/)?(admin/tool/sentientia_[^/]+|mod/quiz/accessrule/sentientia_[^/]+)/' \
-    | grep -vE '^(public/)?my/(dashboard\.php|switchrole\.php|templates/dropdown\.mustache)$' || true)
+    | core_paths || true)
 if [ -z "$CORE_STAGED" ]; then
     ok "No core file modifications"
 else
@@ -234,25 +337,13 @@ else
         -- 'moodle-enhancement/docs/core-mods/*.md' 'docs/core-mods/*.md' ':(exclude)*README.md' 2>/dev/null \
         | grep -v '^/' | sed -e 's#^public/##' -e 's#[.]*$##' | sort -u || true)
     # Upstream sync lines staged new with this commit (in the index's records,
-    # not in HEAD's). Group 2 of SYNC_RE is the prefix without public/; the
-    # same pattern is in tools/ci/check-core-mods.sh.
-    SYNC_RE='^Core-Mods-Upstream-Sync:[[:space:]]+(public/)?((lib|admin|course|my|mod/assign|mod/quiz)/([A-Za-z0-9_.-]+/)*)[[:space:]]+[^[:space:]]'
-    SYNC_OLD=$(git grep -h -E '^Core-Mods-Upstream-Sync:' HEAD \
-        -- 'moodle-enhancement/docs/core-mods/*.md' 'docs/core-mods/*.md' ':(exclude)*README.md' 2>/dev/null \
-        | tr -d '\r' | LC_ALL=C sort -u || true)
-    SYNC_IDX=$(git grep --cached -h -E '^Core-Mods-Upstream-Sync:' \
-        -- 'moodle-enhancement/docs/core-mods/*.md' 'docs/core-mods/*.md' ':(exclude)*README.md' 2>/dev/null \
-        | tr -d '\r' | LC_ALL=C sort -u || true)
-    SYNC_PREFIXES=""
+    # not in HEAD's): sync_prefixes() near the top of the hook, shared with
+    # CHECK 2 since 2026-11-20. The same pattern is in tools/ci/check-core-mods.sh.
+    sync_prefixes
     while IFS= read -r line; do
         [ -n "$line" ] || continue
-        grep -qxF -- "$line" <<< "$SYNC_OLD" && continue
-        if [[ "$line" =~ $SYNC_RE ]]; then
-            SYNC_PREFIXES+="${BASH_REMATCH[2]}"$'\n'
-        else
-            warn "Ignored a malformed sync line (want 'Core-Mods-Upstream-Sync: <guarded dir prefix>/ <upstream version>'): $line"
-        fi
-    done <<< "$SYNC_IDX"
+        warn "Ignored a malformed sync line (want 'Core-Mods-Upstream-Sync: <guarded dir prefix>/ <upstream version>'): $line"
+    done <<< "$SYNC_MALFORMED"
     CORE_SYNCED=0
     CORE_REVERTS=0
     while IFS= read -r file; do

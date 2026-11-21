@@ -151,6 +151,17 @@ class bulk_csv_processor {
                 continue;
             }
 
+            // ADR-036 D9 (review fix 2026-11-20): an external trainer whose access ended comes back only
+            // through Reactivate on external_trainers.php, never through a CSV activate.
+            if ($action === 'activate'
+                    && \local_sentientia_users\external_trainer\manager::activation_blocked((int) $user->id)) {
+                $summary['skipped'][] = [
+                    'email' => $email, 'action' => $action,
+                    'reason' => get_string('exttrainer_error_activate', 'local_sentientia_users'),
+                ];
+                continue;
+            }
+
             // Already in target state? — Skip without DB write.
             $target = ($action === 'suspend') ? 1 : 0;
             if ((int) $user->suspended === $target) {

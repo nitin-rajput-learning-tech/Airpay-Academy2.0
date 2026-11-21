@@ -68,3 +68,9 @@ jobs:
             BASE=$(bash tools/ci/resolve-base.sh commit "$CORE_MODS_BASELINE")
           fi
           bash tools/ci/check-core-mods.sh "$BASE" HEAD
+
+      # ADR-044: Moodle core is not in git for 5.3, so a patched core file is kept as a full file per version
+      # (moodle-enhancement/core-patches/MANIFEST). Each must be the pinned upstream file plus marked hunks that
+      # only add lines; the path-based check above cannot see the copies outside the guarded dirs.
+      - name: Versioned core patches are the pinned upstream file plus their marked hunks
+        run: bash tools/check-core-patches.sh check --ref HEAD

@@ -50,8 +50,13 @@ $PAGE->navbar->add($heading);
 // SENTIENTIA-CORE-MOD: post the form to the bare URL. Given $pageurl, formslib prints its ?code= as a second
 // input named "code", and the client-side "required" check then reads an empty value. See
 // moodle-enhancement/docs/core-mods/2026-11-19-tool-certificate-verify-on-arrival.md
-$form = new \tool_certificate\verify_certificate_form(new moodle_url('/admin/tool/certificate/index.php'), null, 'post', '',
-    ['class' => 'mt-3 mb-5 p-4 bg-light']);
+$form = new \tool_certificate\verify_certificate_form(
+    new moodle_url('/admin/tool/certificate/index.php'),
+    null,
+    'post',
+    '',
+    ['class' => 'mt-3 mb-5 p-4 bg-light']
+);
 // END SENTIENTIA-CORE-MOD
 
 if ($code) {

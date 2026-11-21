@@ -65,6 +65,12 @@ class list_classrooms extends external_api {
         [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('c');
         $where[] = $tnsql;
         $sqlparams = array_merge($sqlparams, $tnargs);
+        // ADR-036 D9/D10 (session 5): inside the tenant, an external trainer (always) or an internal
+        // trainer without :update (flag sentientia.classroom.trainer_own_scope.enabled) sees only the
+        // classrooms they train. '1=1' for everyone else, so with the flag OFF the list is unchanged.
+        [$ownsql, $ownargs] = \local_sentientia_classroom\session_manager::trainer_scope_sql('c');
+        $where[] = $ownsql;
+        $sqlparams = array_merge($sqlparams, $ownargs);
         [$cascadesql, $cascadeargs] =
             \local_sentientia_org\org_manager::cascade_where_sql($client_filters, 'c');
         if ($cascadesql !== '') {

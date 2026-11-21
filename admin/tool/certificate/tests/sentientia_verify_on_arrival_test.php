@@ -146,8 +146,9 @@ final class sentientia_verify_on_arrival_test extends \advanced_testcase {
         $this->assertNotFalse($source);
 
         $this->assertSame(2, substr_count($source, '// SENTIENTIA-CORE-MOD:'));
-        $this->assertStringContainsString(
-            "verify_certificate_form(new moodle_url('/admin/tool/certificate/index.php')", $source);
+        // Any layout of the call: 4.5.7 had the arguments on one line, 5.0.12 puts one argument per line.
+        $this->assertMatchesRegularExpression(
+            '~verify_certificate_form\(\s*new moodle_url\(\'/admin/tool/certificate/index\.php\'\),~', $source);
         $this->assertStringContainsString('$form->get_data() || ($code && !$form->is_submitted())', $source);
     }
 }

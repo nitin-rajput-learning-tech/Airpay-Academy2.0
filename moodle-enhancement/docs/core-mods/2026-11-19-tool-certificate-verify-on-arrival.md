@@ -228,3 +228,38 @@ UAT (Nitin's call): `tools/uat/deploy_to_uat.sh --no-upgrade admin/tool/certific
 `--yes`, and repeat steps 3 to 6 on UAT with one of its 7 test certificates.
 
 Owed by CLAUDE.md: desktop and mobile screenshots of steps 3 and 4 in `docs/visual-evidence/2026-11-19/`.
+
+---
+
+## Addendum 2026-11-20 (re-vendored to 5.0.12 on 2026-11-20)
+
+- **Still required on 5.0.12.** Upstream 5.0.12 `index.php` builds the form with `$pageurl` and prints a result only
+  `if ($form->get_data())` (tag v5.0.12; equal to UAT's copy fetched before the 19 Nov 15:15 deploy).
+- **Re-applied** with the same markers and comment text. 5.0.12 writes the constructor call with one argument per
+  line, so hunk 1 now wraps that 7-line statement and changes one line in it, the first argument, from `$pageurl` to
+  `new moodle_url('/admin/tool/certificate/index.php')`; the other upstream lines are unchanged.
+
+  ```php
+  // SENTIENTIA-CORE-MOD: post the form to the bare URL. Given $pageurl, formslib prints its ?code= as a second
+  // input named "code", and the client-side "required" check then reads an empty value. See
+  // moodle-enhancement/docs/core-mods/2026-11-19-tool-certificate-verify-on-arrival.md
+  $form = new \tool_certificate\verify_certificate_form(
+      new moodle_url('/admin/tool/certificate/index.php'),
+      null,
+      'post',
+      '',
+      ['class' => 'mt-3 mb-5 p-4 bg-light']
+  );
+  // END SENTIENTIA-CORE-MOD
+  ```
+
+- **New line numbers:** hunk 1 at lines 50-60, hunk 2 (unchanged text) at lines 69-72. On 4.5.7 they were 50-55 and
+  64-67; the "Before" and "After" sections above show the 4.5.7 file.
+- **Tripwire:** `test_index_php_carries_the_patch()` now matches the call with
+  `assertMatchesRegularExpression('~verify_certificate_form\(\s*new moodle_url\(\'/admin/tool/certificate/index\.php\'\),~', ...)`,
+  so it holds for either layout. The marker count (2) and the condition assertion are unchanged.
+- **Vendor release patched:** now tool_certificate 5.0.12 (`version.php` 2026111000). The "five tool_certificate
+  vendor patches" table above is history: two of them are reverted (fixed upstream). Import record:
+  `2026-11-20-tool-certificate-5.0.12-revendor.md`.
+- **UAT:** UAT runs the 4.5.7-layout copy deployed on 19 Nov; the behaviour is the same. Deploy the 5.0.12-based file
+  and the changed tripwire test with `--no-upgrade` on Nitin's go (decision D-8) so UAT equals the repository.

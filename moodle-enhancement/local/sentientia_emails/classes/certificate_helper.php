@@ -51,6 +51,14 @@ class certificate_helper {
      * same course (rare, but possible if cert template is reissued
      * after expiry), we pick the newest one.
      *
+     * Course certificate issuer (2026-11-20): Sentientia's own course
+     * certificates are issued with courseid NULL (they must survive course
+     * delete) and the course is kept in local_sentientia_courses' map, so
+     * the lookup goes through \local_sentientia_courses\certificate_issuer,
+     * which also reads the BizLMS moduletype/moduleid columns of imported
+     * certificates. The courseid query below stays as the fallback for a
+     * site without that plugin.
+     *
      * @param int $userid
      * @param int $courseid
      * @return \stdClass|null Issue row or null if none.
@@ -63,6 +71,11 @@ class certificate_helper {
         // installed (some custom Moodle builds disable it).
         if (!$DB->get_manager()->table_exists('tool_certificate_issues')) {
             return null;
+        }
+
+        if (class_exists('\\local_sentientia_courses\\certificate_issuer')) {
+            // Archived issues included, as the courseid query below does.
+            return \local_sentientia_courses\certificate_issuer::get_issue_for_user_course($userid, $courseid, true);
         }
 
         $issues = $DB->get_records('tool_certificate_issues', [

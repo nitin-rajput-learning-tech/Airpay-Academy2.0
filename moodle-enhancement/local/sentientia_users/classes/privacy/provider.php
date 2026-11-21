@@ -12,6 +12,8 @@ use core_privacy\local\request\approved_userlist;
 use core_privacy\local\request\contextlist;
 use core_privacy\local\request\userlist;
 use core_privacy\local\request\writer;
+use local_sentientia_users\external_trainer\manager as external_trainer_manager;
+use local_sentientia_users\external_trainer\privacy as external_trainer_privacy;
 use local_sentientia_users\legacy_history;
 
 /**
@@ -30,6 +32,10 @@ use local_sentientia_users\legacy_history;
  * What an erasure request does (signed decision users.erasure_treatment = anonymise): the imported history is
  * KEPT and the person removed from it. See legacy_history for the details, including the one exception (login
  * days are deleted; the owner's written decision users.logindays_erasure = delete was signed 2026-10-07).
+ *
+ * External trainers (ADR-036 D9, session 5, 2026-11-20): {local_sentientia_external_trainer_profile} names
+ * the trainer and the admin who invited them. Exported to both; on erasure the row is kept and the person
+ * removed from it (external_trainer\privacy explains why the trainer's row is not deleted).
  *
  * Everything is held at system context.
  *
@@ -110,12 +116,19 @@ class provider implements
             'privacy:metadata:logindays'
         );
 
+        $collection->add_database_table(
+            external_trainer_manager::TABLE,
+            external_trainer_privacy::metadata_fields(),
+            'privacy:metadata:exttrainer'
+        );
+
         return $collection;
     }
 
     public static function get_contexts_for_userid(int $userid): contextlist {
         $contextlist = new contextlist();
-        if (legacy_history::holds_data_for_user($userid)) {
+        if (legacy_history::holds_data_for_user($userid)
+                || external_trainer_privacy::holds_data_for_user($userid)) {
             $contextlist->add_system_context();
         }
         return $contextlist;
@@ -128,7 +141,8 @@ class provider implements
         // The people a row names by id, and the people a rejected line or an unmatched transcript row names by
         // e-mail, username or employee code: the same two routes get_contexts_for_userid() takes (legacy_history
         // builds both, so the two halves of the privacy API agree).
-        foreach (legacy_history::user_list_sql() as [$sql, $params]) {
+        foreach (array_merge(legacy_history::user_list_sql(), external_trainer_privacy::user_list_sql())
+                as [$sql, $params]) {
             $userlist->add_from_sql('userid', $sql, $params);
         }
     }
@@ -145,6 +159,13 @@ class provider implements
                     (object) ['rows' => $rows]
                 );
             }
+            $exttrainer = external_trainer_privacy::export_data($userid);
+            if ($exttrainer['own'] || $exttrainer['invited']) {
+                writer::with_context($context)->export_data(
+                    [get_string('pluginname', 'local_sentientia_users'), 'external_trainer'],
+                    (object) $exttrainer
+                );
+            }
         }
     }
 
@@ -154,6 +175,7 @@ class provider implements
         }
         // History is kept; only the people are removed from it.
         legacy_history::anonymise_all();
+        external_trainer_privacy::anonymise_all();
     }
 
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
@@ -161,6 +183,7 @@ class provider implements
         foreach ($contextlist->get_contexts() as $context) {
             if ($context instanceof \context_system) {
                 legacy_history::anonymise_users([$userid]);
+                external_trainer_privacy::anonymise_users([$userid]);
             }
         }
     }
@@ -170,5 +193,6 @@ class provider implements
             return;
         }
         legacy_history::anonymise_users($userlist->get_userids());
+        external_trainer_privacy::anonymise_users($userlist->get_userids());
     }
 }

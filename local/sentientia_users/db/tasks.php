@@ -32,4 +32,17 @@ $tasks = [
         // import on first install.
         'disabled'  => 1,
     ],
+    // ADR-036 D9 (session 5, 2026-11-20): external-trainer expiry. Daily: recompute each active
+    // external trainer's expiry from their sessions, remind the tenant's admins 7 days before it,
+    // and suspend the accounts that reached it (never deletes). Enabled by default: it is a security
+    // control, and with no external-trainer rows (the flag was never ON) it does nothing.
+    [
+        'classname' => '\\local_sentientia_users\\task\\external_trainer_expiry',
+        'blocking'  => 0,
+        'minute'    => '15',
+        'hour'      => '1',
+        'day'       => '*',
+        'dayofweek' => '*',
+        'month'     => '*',
+    ],
 ];

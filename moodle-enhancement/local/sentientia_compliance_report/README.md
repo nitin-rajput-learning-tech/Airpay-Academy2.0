@@ -69,7 +69,7 @@ these hold (`compliance_engine::row_applies()`):
    reaches nobody.
 
 Snapshot rows for pairs that no longer apply are removed by the next refresh, so
-the reports stop counting them; enrolments are never removed (decision D3). The
+the reports stop counting them; the refresh never removes an enrolment (decision D3). The
 matrix shows such a pair as "Not applicable". Auto-enrolments have no end date:
 the deadline lives in the snapshot and drives the reminders only.
 
@@ -90,7 +90,7 @@ to it, and with `--clear-enddates` removes the end dates the old auto-enrol set
 reaches. The old refresh also enrolled other tenants' users (and accounts with
 no tenant) into these courses: 113 of the 129 such end dates on the local copy
 of the production data. Their ended enrolment is what keeps them out, so it is
-counted and left alone, and their enrolments are not removed. The same goes for
+counted and left alone; `--unenrol-outsiders` (below) removes their enrolments. The same goes for
 the IC course: the old refresh enrolled every Airpay employee into it, so only
 the IC cohort's members have their end dates cleared, and everyone else keeps
 the ended enrolment that keeps them out. The cohort starts empty, so the first
@@ -100,6 +100,34 @@ end date. L&D then adds the IC members to the cohort, and a second
 `--execute --clear-enddates` run clears the members' end dates. There is no edit form for the cohort yet; the Configure
 tab shows it next to the entity. The course audience model (plan A3/A4) will
 replace this.
+
+Removing those cross-tenant enrolments (decision D-10, Nitin 2026-11-20, "do all"),
+dry run by default:
+
+```bash
+php local/sentientia_compliance_report/cli/pin_compliance_courses.php --unenrol-outsiders            # counts per course + tenant
+php local/sentientia_compliance_report/cli/pin_compliance_courses.php --execute --unenrol-outsiders  # remove them
+php local/sentientia_compliance_report/cli/pin_compliance_courses.php --execute --unenrol-outsiders --include-no-tenant
+```
+
+It checks every course with a compliance row (active or not) that has a tenant
+(`course.open_path`). An enrolment goes only when it carries the old auto-enrol's
+mark (manual enrolment, end = start + deadline days of one of the course's rows)
+and its holder's tenant is neither the course's tenant nor a tenant the course is
+actively shared to (paths bounded with `tenant::path_descendant_filter()`, then
+checked again in PHP). Left alone and counted: anyone who also holds another role
+in the course (a teacher, say), any other enrolment of an outsider (another
+method, no end date, a changed end date), and accounts with no tenant unless
+`--include-no-tenant` is given (such an account may be an employee with a gap in
+the BizLMS data). The output gives counts per course and per tenant, never a
+name. With `--execute` each enrolment is removed through `enrol_manual`'s
+`unenrol_user()` in its own transaction, after the row is read again (a row
+changed since the plan is skipped): the `user_enrolment_deleted` event fires (actor:
+the site admin), and on a person's last enrolment in the course Moodle removes
+their roles, groups and grades there (grades go to the grade history; course
+completion records stay). The pin part of `--execute` runs too and is idempotent.
+Code: `compliance_pinning::outsider_enrolments()`, `unenrol_outsiders()`,
+`render_outsiders()`; tests: `tests/outsider_unenrol_test.php`.
 
 ## Privacy / GDPR
 

@@ -30,3 +30,13 @@
 - The patch is present in the package source `admin/tool/certificate/classes/customfield/issue_handler.php`
   (line 289 at this date). Drop it when a vendor release carries `: void`.
 - Two more vendor patches now sit beside it: see `2026-10-08-tool-certificate-duration-defaultunit.md`.
+
+---
+
+## Reverted 2026-11-20 (re-vendored to 5.0.12 on 2026-11-20)
+
+Upstream 5.0.12 declares `public static function reset_caches(): void` in `classes/customfield/issue_handler.php`
+itself (line 296), so the hunk is no longer needed. The file is now upstream's, with no `SENTIENTIA-CORE-MOD`
+marker; it lands in the import commit under that record's `Core-Mods-Upstream-Sync` line. ADR-041 D7 step 2:
+upstream taken, record kept. The patch had no Sentientia tests, so nothing else is removed. Import record:
+`2026-11-20-tool-certificate-5.0.12-revendor.md`.

@@ -74,14 +74,14 @@ Feature: Being able to view the certificates that have been issued
     And I navigate to "Certificates > Manage certificate templates" in site administration
     And I follow "Certificate 1"
     And I navigate to "Issued certificates" in current page administration
-    And I press "Revoke" action in the "User 12" report row
+    And I press "Revoke" action in the "User 11" report row
     And I click on "Cancel" "button" in the "Confirm" "dialogue"
     And I should see "User 11"
     And I should see "User 12"
-    And I press "Revoke" action in the "User 12" report row
+    And I press "Revoke" action in the "User 11" report row
     And I click on "Revoke" "button" in the "Confirm" "dialogue"
-    And I should see "User 11"
-    And I should not see "User 12"
+    And I should not see "User 11"
+    And I should see "User 12"
 
   Scenario: Verify any certificate as a guest using the site-wide URL
     And the following "permission overrides" exist:
@@ -106,7 +106,6 @@ Feature: Being able to view the certificates that have been issued
     And I should not see "Verify certificates"
     And I should not see "Add certificate template"
     And I should not see "Certificate images"
-    And I log out
 
   @javascript
   Scenario: View certificate as user with certificateviewer role
@@ -119,6 +118,6 @@ Feature: Being able to view the certificates that have been issued
     And I navigate to "Issued certificates" in current page administration
     And I open the action menu in "User 12" "table_row"
     # Make sure only viewing is permitted.
-    And I should not see "Revoke"
-    And I should not see "Regenerate issue file"
+    And the "Revoke" item should not exist in the "Actions" action menu of the "User 12" "table_row"
+    And the "Regenerate issued certificate" item should not exist in the "Actions" action menu of the "User 12" "table_row"
     And I should see "View"

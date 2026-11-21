@@ -24,7 +24,12 @@ class list_waitlist extends external_api {
         self::validate_context($ctx);
         require_capability('local/sentientia_classroom:view', $ctx);
         // ADR-031: the capability says WHAT; the classroom must also be in the caller's tenant.
-        \local_sentientia_classroom\session_manager::require_classroom_access((int) $params['classroomid']);
+        $classroom = \local_sentientia_classroom\session_manager::require_classroom_access(
+            (int) $params['classroomid']);
+        // ADR-036 D9/D10 (session 5): under the own-classroom rule, only a classroom the caller trains;
+        // an external trainer sees names only (no e-mail, employee id or the learner's reason).
+        \local_sentientia_classroom\session_manager::require_trainer_scope($classroom);
+        $namesonly = \local_sentientia_classroom\session_manager::roster_names_only();
 
         // ADR-031: the queue of an in-tenant classroom can still hold other
         // tenants' learners (legacy rows); list only the caller's tenant.
@@ -36,11 +41,11 @@ class list_waitlist extends external_api {
                 'id'           => (int) $r->id,
                 'userid'       => (int) $r->userid,
                 'fullname'     => trim($r->firstname . ' ' . $r->lastname),
-                'email'        => (string) $r->email,
-                'employee_id'  => (string) ($r->open_employeeid ?? ''),
+                'email'        => $namesonly ? '' : (string) $r->email,
+                'employee_id'  => $namesonly ? '' : (string) ($r->open_employeeid ?? ''),
                 'position'     => (int) $r->position,
                 'status'       => $r->status,
-                'reason'       => (string) ($r->reason ?? ''),
+                'reason'       => $namesonly ? '' : (string) ($r->reason ?? ''),
                 'joined_on'    => userdate($r->timecreated, '%d %b %Y %H:%M'),
                 'promoted_on'  => $r->promoted_at ? userdate($r->promoted_at, '%d %b %Y %H:%M') : '',
                 'removed_on'   => $r->removed_at ? userdate($r->removed_at, '%d %b %Y %H:%M') : '',

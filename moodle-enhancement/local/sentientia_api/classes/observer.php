@@ -64,11 +64,18 @@ class observer {
         self::safe(function () use ($event) {
             $userid = (int) $event->relateduserid;
             $other  = (array) ($event->other ?? []);
+            // Course certificate issuer (2026-11-20): Sentientia's course certificates carry courseid NULL (they
+            // survive course delete), so the event is in the system context and has no course. The resolver of
+            // local_sentientia_courses reads the course from the issue (its data, while the issue is being created).
+            $courseid = (int) ($event->courseid ?? 0);
+            if (!$courseid && class_exists('\\local_sentientia_courses\\certificate_issuer')) {
+                $courseid = \local_sentientia_courses\certificate_issuer::course_of_issue((int) $event->objectid);
+            }
             dispatcher::enqueue('certificate.issued', dispatcher::tenant_of_user($userid), $userid, [
                 'userid'     => $userid,
                 'issueid'    => (int) $event->objectid,
                 'templateid' => (int) ($other['templateid'] ?? 0),
-                'courseid'   => (int) ($event->courseid ?? 0),
+                'courseid'   => $courseid,
                 'timeissued' => (int) $event->timecreated,
             ]);
         });

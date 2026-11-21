@@ -236,3 +236,6 @@ $string['hrms_source_bizlms'] = 'BizLMS मधून इम्पोर्ट �
 $string['hrms_lines_uploader_only'] = 'या रनच्या नाकारलेल्या ओळींमध्ये ईमेल पत्ता, कर्मचारी कोड आणि नाव दिसते. त्या फक्त रन अपलोड करणाऱ्या व्यक्तीला आणि प्लॅटफॉर्म ॲडमिन्सना दिसतात.';
 $string['hrms_imported_history_off'] = 'BizLMS मधून इम्पोर्ट केलेली HRMS सिंक हिस्ट्री या साइटसाठी चालू नाही.';
 $string['skillprofile_interests'] = 'आवडीचे विषय';
+
+// ADR-036 D9 (session 5, 2026-11-20): the user-type label (ADR-017 Q6, five locales).
+$string['usertype_external_trainer_label'] = 'बाह्य प्रशिक्षक';

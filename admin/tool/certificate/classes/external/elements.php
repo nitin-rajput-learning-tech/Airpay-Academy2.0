@@ -14,21 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * Class elements
- *
- * @package     tool_certificate
- * @copyright   2019 Marina Glancy
- * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
 namespace tool_certificate\external;
 
 use tool_certificate\template;
-
-defined('MOODLE_INTERNAL') || die();
-
-require_once("$CFG->libdir/externallib.php");
+use core_external\external_api;
+use core_external\external_function_parameters;
+use core_external\external_value;
 
 /**
  * Class elements
@@ -37,17 +28,16 @@ require_once("$CFG->libdir/externallib.php");
  * @copyright   2019 Marina Glancy
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class elements extends \external_api {
-
+class elements extends external_api {
     /**
      * Returns the delete_element() parameters.
      *
-     * @return \external_function_parameters
+     * @return external_function_parameters
      */
     public static function delete_element_parameters() {
-        return new \external_function_parameters(
+        return new external_function_parameters(
             [
-                'id' => new \external_value(PARAM_INT, 'Element id'),
+                'id' => new external_value(PARAM_INT, 'Element id'),
             ]
         );
     }
@@ -77,15 +67,15 @@ class elements extends \external_api {
     /**
      * Returns the update_element() parameters.
      *
-     * @return \external_function_parameters
+     * @return external_function_parameters
      */
     public static function update_element_parameters() {
-        return new \external_function_parameters(
+        return new external_function_parameters(
             [
-                'id' => new \external_value(PARAM_INT, 'Element id'),
-                'sequence' => new \external_value(PARAM_INT, 'Sequence', VALUE_DEFAULT, null),
-                'posx' => new \external_value(PARAM_INT, 'X position', VALUE_DEFAULT, null),
-                'posy' => new \external_value(PARAM_INT, 'Y position', VALUE_DEFAULT, null),
+                'id' => new external_value(PARAM_INT, 'Element id'),
+                'sequence' => new external_value(PARAM_INT, 'Sequence', VALUE_DEFAULT, null),
+                'posx' => new external_value(PARAM_INT, 'X position', VALUE_DEFAULT, null),
+                'posy' => new external_value(PARAM_INT, 'Y position', VALUE_DEFAULT, null),
             ]
         );
     }
@@ -99,8 +89,10 @@ class elements extends \external_api {
      * @param int $posy
      */
     public static function update_element($elementid, $sequence, $posx, $posy) {
-        $params = self::validate_parameters(self::update_element_parameters(),
-            ['id' => $elementid, 'sequence' => $sequence, 'posx' => $posx, 'posy' => $posy]);
+        $params = self::validate_parameters(
+            self::update_element_parameters(),
+            ['id' => $elementid, 'sequence' => $sequence, 'posx' => $posx, 'posy' => $posy]
+        );
         self::validate_context(\context_system::instance());
         $template = template::find_by_element_id($params['id']);
         $template->require_can_manage();
@@ -124,6 +116,6 @@ class elements extends \external_api {
      * Returns the update_element result value.
      */
     public static function update_element_returns() {
-        return new \external_value(PARAM_BOOL, 'success');
+        return new external_value(PARAM_BOOL, 'success');
     }
 }

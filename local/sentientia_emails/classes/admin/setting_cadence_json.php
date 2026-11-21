@@ -30,7 +30,8 @@ defined('MOODLE_INTERNAL') || die();
  */
 class setting_cadence_json extends \admin_setting_configtext {
 
-    public const MAX_ENTRIES = 10;
+    /** D-12 (2026-11-20): the rule editor checks a rule's own cadence with the same rules (rule_manager::cadence_error()). */
+    public const MAX_ENTRIES = \local_sentientia_emails\rule_manager::CADENCE_MAX_ENTRIES;
 
     /**
      * @param string $data Raw user input from the settings form
@@ -51,32 +52,10 @@ class setting_cadence_json extends \admin_setting_configtext {
         // every save — including the install/upgrade default — silently
         // vanish ("New setting: …default_cadence_days_json" on every
         // upgrade run, admin edits never persisted). Fixed 2026-09-22.
-        if (trim($data) === '') {
-            return true;
-        }
-
-        $decoded = json_decode($data, true);
-        if (!is_array($decoded)) {
-            return get_string('cadence_error_not_array',
-                'local_sentientia_emails');
-        }
-        if (empty($decoded)) {
-            return get_string('cadence_error_empty',
-                'local_sentientia_emails');
-        }
-        if (count($decoded) > self::MAX_ENTRIES) {
-            return get_string('cadence_error_too_long',
-                'local_sentientia_emails', self::MAX_ENTRIES);
-        }
-        foreach ($decoded as $v) {
-            // Strict int check. JSON's "1" (string-quoted) shouldn't
-            // pass — that's the admin typing the wrong format.
-            if (!is_int($v) || $v <= 0) {
-                return get_string('cadence_error_bad_value',
-                    'local_sentientia_emails', var_export($v, true));
-            }
-        }
-
-        return true;
+        // The checks themselves live in rule_manager::cadence_error() since D-12 (2026-11-20), so the rule
+        // editor's per-rule cadence follows the same rules: valid JSON, a non-empty array of at most
+        // MAX_ENTRIES positive integers (a string-quoted "1" is refused). Empty = use the default.
+        $error = \local_sentientia_emails\rule_manager::cadence_error((string) $data);
+        return $error === null ? true : $error;
     }
 }

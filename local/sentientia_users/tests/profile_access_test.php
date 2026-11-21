@@ -26,6 +26,8 @@ defined('MOODLE_INTERNAL') || die();
  * require_login(). These tests lock in the rule that replaced that:
  *
  *   - own profile: always;
+ *   - an external trainer (ADR-036 D9): nothing but their own profile, even
+ *     in their own tenant (review fix, 2026-11-20);
  *   - site admin: always (even with no open_path of their own);
  *   - same tenant root: allowed, including /1 vs /1/2/3 (colleague links);
  *   - different root: refused, including /1 vs /10 (the '/1%' prefix trap);
@@ -307,6 +309,59 @@ final class profile_access_test extends \advanced_testcase {
             $this->assertFalse(profile_access::can_view((int) $viewer->id, (int) $target->id),
                 "Viewer {$vpath} must NOT see {$tpath}: a shared string prefix is not a shared tenant");
         }
+    }
+
+    // ─── Rule 1b: external trainers (ADR-036 D9) ────────────────────────
+
+    /**
+     * Review fix 2026-11-20. An external trainer sits at their inviter's tenant
+     * root, so rule 3 alone opened every profile of that tenant to them (e-mail,
+     * employee id, address, manager), and the roster web services hand them
+     * learner ids. profile.php (includedeleted = true), skillprofile.php and
+     * photo.php (defaults) all load the target through get_viewable_user(), so
+     * refusing in can_view() closes all three pages.
+     */
+    public function test_an_external_trainer_sees_only_their_own_profile(): void {
+        global $DB;
+        $table = \local_sentientia_users\external_trainer\manager::TABLE;
+        $trainer = $this->user_at('/1');
+        $now = time();
+        $DB->insert_record($table, (object) [
+            'userid' => (int) $trainer->id, 'organisation' => '', 'invitedby' => 0, 'open_path' => '/1',
+            'validfrom' => $now, 'expires_at' => $now + 30 * DAYSECS, 'status' => 'active', 'remindedat' => 0,
+            'timecreated' => $now, 'timemodified' => $now,
+        ]);
+        $learner = $this->user_at('/1/2/3');
+        $colleague = $this->user_at('/1');
+        $this->setUser($trainer);
+
+        // Their own profile stays open on all three pages.
+        $this->assertTrue(profile_access::can_view((int) $trainer->id, (int) $trainer->id));
+        $this->assertSame((int) $trainer->id,
+            (int) profile_access::get_viewable_user((int) $trainer->id, (int) $trainer->id)->id);
+        $this->assertSame((int) $trainer->id,
+            (int) profile_access::get_viewable_user((int) $trainer->id, (int) $trainer->id, true)->id);
+
+        // A same-tenant learner or colleague: refused, byte-identically to a missing id.
+        $expected = $this->fingerprint($this->refusal_of(fn() => profile_access::get_viewable_user(
+            (int) $trainer->id, $this->missing_userid())));
+        foreach (['learner /1/2/3' => $learner, 'colleague /1' => $colleague] as $case => $target) {
+            $this->assertFalse(profile_access::can_view((int) $trainer->id, (int) $target->id), $case);
+            $this->assertSame($expected, $this->fingerprint($this->refusal_of(
+                fn() => profile_access::get_viewable_user((int) $trainer->id, (int) $target->id))),
+                "{$case}: skillprofile.php / photo.php refusal must match the missing-id refusal");
+            $this->assertSame($expected, $this->fingerprint($this->refusal_of(
+                fn() => profile_access::get_viewable_user((int) $trainer->id, (int) $target->id, true))),
+                "{$case}: profile.php refusal must match the missing-id refusal");
+        }
+
+        // The restriction follows the row, not the status: an expired trainer is refused too.
+        $DB->set_field($table, 'status', 'expired', ['userid' => $trainer->id]);
+        $this->assertFalse(profile_access::can_view((int) $trainer->id, (int) $learner->id));
+
+        // Nobody else changes: rule 3 still lets the learner see a colleague and the trainer.
+        $this->assertTrue(profile_access::can_view((int) $learner->id, (int) $colleague->id));
+        $this->assertTrue(profile_access::can_view((int) $learner->id, (int) $trainer->id));
     }
 
     // ─── Rule 4: unresolvable viewer ────────────────────────────────────

@@ -14,6 +14,9 @@
 #     PATH          repo-relative file(s) to deploy. Each must map under the docroot
 #                   (theme/…, local/…, blocks/…, mod/…, admin/…, lib/…). A leading
 #                   `moodle-enhancement/` is stripped, so both trees map to public/<rel>.
+#                   Core patches (ADR-044): moodle-enhancement/core-patches/5.3/public/<path> maps to
+#                   public/<path> (UAT runs Moodle 5.3). The top-level lib/ is the Moodle 4.5 core
+#                   snapshot (its form.js is the 5.1/5.2 file), so it is skipped, in --commit/--range too.
 #     --commit SHA  derive the deployable files from that commit (git show --name-only).
 #     --range A..B  derive the deployable files from a commit range.
 #     --yes         actually perform the deploy. DEFAULT IS A DRY RUN that only prints the plan.
@@ -51,7 +54,7 @@ while [ $# -gt 0 ]; do
         --prefer-me) PREFER=me; shift ;;
         --commit) shift; mapfile -t _c < <(git -C "$REPO_ROOT" show --name-only --pretty=format: "$1"); INPUTS+=("${_c[@]}"); shift ;;
         --range)  shift; mapfile -t _c < <(git -C "$REPO_ROOT" diff --name-only "$1"); INPUTS+=("${_c[@]}"); shift ;;
-        -h|--help) sed -n '2,40p' "$0"; exit 0 ;;
+        -h|--help) sed -n '2,43p' "$0"; exit 0 ;;
         --*) echo "unknown flag: $1" >&2; exit 2 ;;
         *) INPUTS+=("$1"); shift ;;
     esac
@@ -65,6 +68,13 @@ declare -a RELS=() SRCS=()
 for p in "${INPUTS[@]}"; do
     [ -n "$p" ] || continue
     rel="${p#moodle-enhancement/}"                      # both trees map to public/<rel>
+    # ADR-044 core patches: only the 5.3 copy deploys (UAT runs 5.3). A top-level lib/ file comes from the
+    # Moodle 4.5 snapshot, which matches 5.1/5.2: over UAT's 5.3 file it would undo 5.3's own changes.
+    case "$p" in
+        moodle-enhancement/core-patches/5.3/public/*) rel="${p#moodle-enhancement/core-patches/5.3/public/}" ;;
+        moodle-enhancement/core-patches/*) echo "skip (core-patch manifest, or a patch for another Moodle version): $p"; continue ;;
+        lib/*) echo "skip (top-level lib/ is the Moodle 4.5 snapshot, not UAT's 5.3; deploy moodle-enhancement/core-patches/5.3/public/$p): $p"; continue ;;
+    esac
     [[ "$rel" =~ $DEPLOYABLE_RE ]] || { echo "skip (not under docroot): $p"; continue; }
     src="$REPO_ROOT/$p"
     [ -f "$src" ] || { echo "skip (not a file in repo): $p"; continue; }

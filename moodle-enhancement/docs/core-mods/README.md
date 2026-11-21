@@ -66,6 +66,18 @@ On a pull request CI blocks the merge. A push to production has landed before CI
 starts, so there CI only reports, but it checks everything since a pinned baseline
 (the 2026-05-23 Moodle 5.2 merge), so a violation stays red until it is fixed.
 
+### Versioned core patches (ADR-044)
+
+Moodle core is not in git for 5.3, so a patched core file is kept as a full file per
+Moodle version: the top-level `lib/` copy (the 4.5.10 snapshot, same files as 5.1/5.2)
+and `moodle-enhancement/core-patches/5.3/public/...`, listed in
+`moodle-enhancement/core-patches/MANIFEST` with the pinned SHA-256 of each upstream file.
+Hunks may only add lines. `tools/check-core-patches.sh check` (same workflow, every pull
+request and push) proves each copy is its upstream file plus marked hunks; `apply` puts
+the patches into a package stage (`build-standalone.sh` step 3b) or a local site and
+refuses a tree that holds another release. UAT takes the 5.3 copy through
+`tools/uat/deploy_to_uat.sh`, which refuses top-level `lib/` paths.
+
 ### Undoing a core mod (revert)
 
 When upstream fixes the problem or a patch is rolled back, the file goes back to its
@@ -102,26 +114,36 @@ commit need neither a record path nor a marker.
 - Neither check can prove that the files are upstream content: a local edit committed
   with the import passes. Review the import commit against the upstream release.
 - The line is a record too, so keep it when the record is updated later.
+- The pre-commit hook's CHECK 2 (MOODLE_INTERNAL guard) honours the same line since
+  2026-11-20 (decision D-7): an unguarded class or lib file under a prefix staged new
+  with the commit is skipped, because upstream namespaced classes carry no guard, but
+  only when CHECK 6 would count it as a core file (the shared `core_paths()` filter), so
+  `admin/tool/sentientia_*/` and `mod/quiz/accessrule/sentientia_*/` stay checked under
+  a broad prefix such as `admin/`. Every other file is checked as before. CHECK 2 has no
+  CI twin.
 
 ## Index
 
-No existing Moodle core file is edited on Moodle 5.3 (ADR-033). The records below are either
+One existing Moodle core file is edited on Moodle 5.3: `public/lib/form/form.js` (ADR-044, which amends
+ADR-033 decision 4 for that file only). The other records below are either
 vendor-plugin patches (tagged `// SENTIENTIA-CORE-MOD (vendor)` before ADR-041, `// SENTIENTIA-CORE-MOD:` from it on), additive overlay files, or notes. The status column is the verdict for
 Moodle 5.3; 5.2 stays the fallback target and keeps its notes.
 
 | Record | What it is | Status on 5.3 |
 |---|---|---|
 | `2026-05-20-moodle-to-sentientia-rename.md` | Rename map of user-visible "Moodle" strings (pending approval, no code) | Version independent |
-| `2026-05-23-certificate-image-imageinfo-guard.md` | tool_certificate image-element guard (vendor patch) | Still required; applied to the package source (top-level tree) |
-| `2026-05-29-tool_certificate-hi-pack.md` | Additive Hindi language file for tool_certificate (staged) | Version independent |
+| `2026-05-23-certificate-image-imageinfo-guard.md` | tool_certificate image-element guard (vendor patch) | Still required; applied to the package source (top-level tree); re-applied on 5.0.12 (2026-11-20) |
+| `2026-05-29-tool_certificate-hi-pack.md` | Additive Hindi language file for tool_certificate (staged) | Version independent; 14 keys to top up for 5.0.12 before activation |
 | `2026-06-04-open-substrate-ownership.md` | 37 `open_*` columns on `user`, 18 on `course` (raw ALTER) | No collision; runtime check in the upgrade rehearsal |
 | `2026-06-11-setuplib-ini-get-bool-guard.md` | `ini_get_bool()` guard in `lib/setuplib.php` plus a config.php polyfill (5.2 only) | **Retired on 5.3**: do not apply the guard, no polyfill (it is fatal alone); fallback recorded |
 | `2026-06-19-my-overlays-5.2.md` | `my/dashboard.php` and `my/switchrole.php` | Additive overlay on 5.3 (new files, both required); `dropdown.mustache` no longer shipped |
-| `2026-09-03-tool-certificate-5.2-reset-caches.md` | `issue_handler::reset_caches(): void` (vendor patch) | Still required |
-| `2026-10-08-tool-certificate-duration-defaultunit.md` | `defaulunit` typo fix (vendor patch; throws on 5.3) | Required on 5.3 |
+| `2026-09-03-tool-certificate-5.2-reset-caches.md` | `issue_handler::reset_caches(): void` (vendor patch) | **Reverted 2026-11-20**: upstream 5.0.12 declares `: void` |
+| `2026-10-08-tool-certificate-duration-defaultunit.md` | `defaulunit` typo fix (vendor patch; throws on 5.3) | **Reverted 2026-11-20**: upstream 5.0.12 spells `defaultunit` |
 | `2026-10-08-learnerscript-modal-factory-port.md` | learnerscript report modals ported off the removed modal factory (vendor patch) | Required on 5.2 and 5.3 |
-| `2026-11-19-tool-certificate-verify-on-arrival.md` | tool_certificate `index.php`: verification links show the result on arrival; form posts to the bare URL (vendor patch, decision D32; rules in ADR-041) | Version independent (bug fix) |
-| `2026-11-19-tool-certificate-verify-result-escaping.md` | tool_certificate `classes/output/verify_certificate_result.php`: the verification result escapes the holder's name (`s()`) and the certificate name (`format_string()` in the template's context) (vendor patch, Nitin 2026-11-19; rules in ADR-041) | Version independent (bug fix) |
+| `2026-11-19-tool-certificate-verify-on-arrival.md` | tool_certificate `index.php`: verification links show the result on arrival; form posts to the bare URL (vendor patch, decision D32; rules in ADR-041) | Version independent (bug fix); re-applied on 5.0.12 (2026-11-20) |
+| `2026-11-19-tool-certificate-verify-result-escaping.md` | tool_certificate `classes/output/verify_certificate_result.php`: the verification result escapes the holder's name (`s()`) and the certificate name (`format_string()` in the template's context) (vendor patch, Nitin 2026-11-19; rules in ADR-041) | Version independent (bug fix); re-applied on 5.0.12 (2026-11-20) |
+| `2026-11-20-tool-certificate-5.0.12-revendor.md` | tool_certificate vendor import 4.5.7 -> 5.0.12 (2026111000), the release UAT runs; carries the `Core-Mods-Upstream-Sync` line; 3 records re-applied, 2 reverted (decision D-7) | `supported = [500, 503]`: 5.1 and 5.3 in range |
+| `2026-11-20-form-js-dependency-guard.md` | `lib/form/form.js`: `M.form.initFormDependencies` returns early for a form no longer in the document, which stops the modal-form TypeError (core patch, decision D-14; rules in ADR-044). Kept per version: top-level `lib/` for 5.1/5.2, `moodle-enhancement/core-patches/5.3/` for 5.3 | Required on 5.1, 5.2 and 5.3 (same hunk; the package applies it in step 3b) |
 
 ## Decision criteria
 

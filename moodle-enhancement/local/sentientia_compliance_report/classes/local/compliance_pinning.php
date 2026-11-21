@@ -32,6 +32,12 @@
  * is restricted to (every Airpay employee the old refresh enrolled into the
  * IC-members-only course): it is what keeps them out of the course.
  *
+ * Outsiders' enrolments (decision D-10, Nitin 20 Nov 2026, "do all"): with
+ * --unenrol-outsiders, outsider_enrolments() finds the enrolments the old
+ * auto-enrol made for people outside the course's tenants, and
+ * unenrol_outsiders() removes them through the manual enrolment plugin.
+ * Without that option no enrolment is ever removed (decision D3).
+ *
  * @package    local_sentientia_compliance_report
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -363,7 +369,8 @@ class compliance_pinning {
      * refresh also auto-enrolled every Public and ZEEA user into Airpay's
      * courses (the A1 defect). Their expired end date is what keeps them out
      * of a course that was never theirs, so it is counted as 'outside' and
-     * left alone; their enrolment is not removed either (decision D3).
+     * left alone; their enrolment is removed only by --unenrol-outsiders
+     * (outsider_enrolments(), decision D-10).
      *
      * A course restricted to a cohort (cohort_gates()) is cleared for that
      * cohort's members only. The old refresh enrolled every Airpay employee
@@ -668,8 +675,8 @@ class compliance_pinning {
         if ($outside > 0) {
             $lines[] = "  {$outside} deadline end dates belong to people outside the course's tenants (the old refresh"
                 . ' enrolled other tenants\' users into these courses). They are never cleared: the ended enrolment'
-                . ' keeps them out. Their enrolments are not removed (decision D3); review them on the course'
-                . ' Participants page.';
+                . ' keeps them out. Their enrolments are not removed unless --unenrol-outsiders is given'
+                . ' (decision D-10; accounts with no tenant also need --include-no-tenant).';
         }
         if ($noncohort > 0) {
             $lines[] = "  {$noncohort} deadline end dates belong to people who are not in the cohort a course is restricted"
@@ -704,6 +711,336 @@ class compliance_pinning {
             foreach ($plan['problems'] as $p) {
                 $lines[] = '  - ' . $p;
             }
+        }
+        return $lines;
+    }
+
+    /**
+     * Enrolments the old compliance auto-enrol made for people outside the
+     * course's tenants, for --unenrol-outsiders. Writes nothing.
+     *
+     * Decision D-10 (Nitin, 20 Nov 2026, "do all"): remove them. The old
+     * hourly refresh tracked the Airpay rows for every tenant, so it
+     * auto-enrolled Public and ZEEA users (and accounts with no tenant) into
+     * Airpay's courses: 113 enrolments on the local copy of the production
+     * data. The A1 guard stops new ones; this finds the old ones.
+     *
+     * Every course with a compliance row is checked, active or not (the old
+     * auto-enrol ran for any tracked course). An enrolment is removed only
+     * when all of these hold:
+     *   - it carries the old auto-enrol's mark: a manual enrolment with a
+     *     start date and end = start + deadline days of one of the course's
+     *     compliance rows (the mark deadline_enddates() uses). New
+     *     auto-enrolments have no end date, but the A1 guard no longer makes
+     *     any for outsiders;
+     *   - the holder's tenant (root of user.open_path) is neither the
+     *     course's tenant (root of course.open_path) nor a tenant the course
+     *     is actively shared to (compliance_engine::course_reaches_tenant()).
+     *     The SQL bounds the paths with tenant::path_descendant_filter(), and
+     *     each row is checked again in PHP;
+     *   - the holder has no role in the course other than student, the role
+     *     the auto-enrol gave. Someone also made a teacher there is counted
+     *     as 'otherrole' and left alone;
+     *   - the holder has a tenant, unless $includenotenant. An account with
+     *     no org path may be a real employee with a gap in the BizLMS data,
+     *     so it is counted as 'notenant' and removed only on request.
+     *
+     * Any other enrolment of an outsider (another method, no end date, an end
+     * date someone changed) is counted as 'unsigned' and left alone. A course
+     * with no tenant (no open_path) reaches every tenant, so nobody is outside
+     * it: it is listed as 'unowned'.
+     *
+     * @param bool $includenotenant also remove marked enrolments of accounts with no tenant
+     * @return array ['available' => bool (the user table has open_path), 'includenotenant' => bool,
+     *               'unowned' => [courseid => \stdClass], 'courses' => [courseid => [
+     *                 'course' => \stdClass, 'tenant' => int, 'sharedto' => int[],
+     *                 'remove' => [rows: id, userid, enrolid, status, timestart, timeend, usertenant],
+     *                 'bytenant' => [tenantid => int], 'suspended' => int, 'completed' => int,
+     *                 'notenant' => int, 'otherrole' => int, 'unsigned' => int]]]
+     */
+    public static function outsider_enrolments(bool $includenotenant = false): array {
+        global $DB;
+        $out = ['available' => false, 'includenotenant' => $includenotenant, 'unowned' => [], 'courses' => []];
+        if (!array_key_exists('open_path', $DB->get_columns('user'))) {
+            return $out;
+        }
+        $out['available'] = true;
+
+        $rows = $DB->get_records('local_compliance_courses', null, '',
+            'id, courseid, costcenterid, deadline_days, is_active, cohortid');
+        $spans = [];
+        foreach ($rows as $row) {
+            $spans[(int) $row->courseid][(int) $row->deadline_days * DAYSECS] = true;
+        }
+        if (!$spans) {
+            return $out;
+        }
+        ksort($spans);
+        $courses = self::load_courses(array_keys($spans));
+        $audiences = compliance_engine::course_audiences($rows);
+        $studentroleid = (int) $DB->get_field('role', 'id', ['shortname' => 'student']);
+
+        foreach ($spans as $courseid => $wanted) {
+            $course = $courses[$courseid] ?? null;
+            $context = $course ? \context_course::instance($courseid, IGNORE_MISSING) : false;
+            if (!$course || !$context) {
+                // A row naming a deleted course: nobody is enrolled in it.
+                continue;
+            }
+            $owner = (int) ($audiences[$courseid]['tenant'] ?? 0);
+            if ($owner <= 0) {
+                $out['unowned'][$courseid] = $course;
+                continue;
+            }
+            $sharedto = array_map('intval', array_keys($audiences[$courseid]['sharedto'] ?? []));
+            sort($sharedto);
+
+            // Holders whose org path lies under none of the tenants the course
+            // reaches. A NULL path is no tenant; it is sorted out below.
+            $params = ['courseid' => $courseid];
+            $notunder = [];
+            foreach (array_values(array_unique(array_merge([$owner], $sharedto))) as $i => $tenantid) {
+                [$pathsql, $pathparams] = \local_sentientia_platform\tenant::path_descendant_filter(
+                    '/' . $tenantid, 'u', 'open_path', 'outr' . $i);
+                $notunder[] = "NOT {$pathsql}";
+                $params += $pathparams;
+            }
+
+            // Who holds another role in the course, and who completed it: one
+            // query each per course, not one per person.
+            $otherroles = array_fill_keys(array_map('intval', $DB->get_fieldset_select('role_assignments', 'userid',
+                'contextid = :contextid AND roleid <> :studentroleid',
+                ['contextid' => $context->id, 'studentroleid' => $studentroleid])), true);
+            $completed = array_fill_keys(array_map('intval', $DB->get_fieldset_select('course_completions', 'userid',
+                'course = :course AND timecompleted > 0', ['course' => $courseid])), true);
+
+            $entry = ['course' => $course, 'tenant' => $owner, 'sharedto' => $sharedto, 'remove' => [],
+                'bytenant' => [], 'suspended' => 0, 'completed' => 0, 'notenant' => 0, 'otherrole' => 0,
+                'unsigned' => 0];
+            $rs = $DB->get_recordset_sql(
+                "SELECT ue.id, ue.userid, ue.enrolid, ue.status, ue.timestart, ue.timeend, e.enrol,
+                        u.open_path AS userpath
+                   FROM {user_enrolments} ue
+                   JOIN {enrol} e ON e.id = ue.enrolid
+                   JOIN {user} u ON u.id = ue.userid
+                  WHERE e.courseid = :courseid
+                    AND (u.open_path IS NULL OR (" . implode(' AND ', $notunder) . "))
+               ORDER BY ue.id",
+                $params);
+            foreach ($rs as $ue) {
+                $usertenant = compliance_engine::tenant_id_from_path((string) ($ue->userpath ?? ''));
+                if ($usertenant > 0 && compliance_engine::course_reaches_tenant($courseid, $usertenant, $audiences)) {
+                    // A path the SQL did not take for the tenant's (no leading
+                    // slash, say) that is the course's tenant after all.
+                    continue;
+                }
+                $span = (int) $ue->timeend - (int) $ue->timestart;
+                if ($ue->enrol !== 'manual' || (int) $ue->timestart <= 0 || (int) $ue->timeend <= 0
+                        || !isset($wanted[$span])) {
+                    $entry['unsigned']++;
+                    continue;
+                }
+                if ($usertenant <= 0) {
+                    $entry['notenant']++;
+                    if (!$includenotenant) {
+                        continue;
+                    }
+                }
+                if (!empty($otherroles[(int) $ue->userid])) {
+                    $entry['otherrole']++;
+                    continue;
+                }
+                unset($ue->userpath, $ue->enrol);
+                $ue->usertenant = $usertenant;
+                $entry['remove'][] = $ue;
+                $entry['bytenant'][$usertenant] = ($entry['bytenant'][$usertenant] ?? 0) + 1;
+                if ((int) $ue->status !== ENROL_USER_ACTIVE) {
+                    $entry['suspended']++;
+                }
+                if (!empty($completed[(int) $ue->userid])) {
+                    $entry['completed']++;
+                }
+            }
+            $rs->close();
+            ksort($entry['bytenant']);
+            $out['courses'][$courseid] = $entry;
+        }
+        return $out;
+    }
+
+    /**
+     * Remove the enrolments outsider_enrolments() found.
+     *
+     * Through the manual enrolment plugin's unenrol_user(), so Moodle's own
+     * clean-up and events run: a user_enrolment_deleted event for each (the
+     * CLI acts as the site admin), and on a person's last enrolment in the
+     * course the removal of their roles, groups and grades there. Grades go
+     * to the grade history; course completion records and activity attempts
+     * stay. Each removal is its own transaction.
+     *
+     * Each row is read again first and skipped when it changed since the plan
+     * was made (another end date or enrolment, or the person moved tenant).
+     *
+     * @param array $outsiders from outsider_enrolments()
+     * @return array ['removed' => int, 'skipped' => int, 'failed' => int,
+     *               'percourse' => [courseid => int], 'lines' => string[] summary for the operator]
+     */
+    public static function unenrol_outsiders(array $outsiders): array {
+        global $DB;
+        $result = ['removed' => 0, 'skipped' => 0, 'failed' => 0, 'percourse' => [], 'lines' => []];
+        $plugin = enrol_get_plugin('manual');
+        if (!$plugin) {
+            $result['lines'][] = 'The manual enrolment plugin is missing: no enrolment removed.';
+            return $result;
+        }
+        $instances = [];
+        foreach ($outsiders['courses'] ?? [] as $courseid => $entry) {
+            foreach ($entry['remove'] as $ue) {
+                $current = $DB->get_record_sql(
+                    "SELECT ue.id, ue.userid, ue.enrolid, ue.timestart, ue.timeend, e.enrol, e.courseid
+                       FROM {user_enrolments} ue
+                       JOIN {enrol} e ON e.id = ue.enrolid
+                      WHERE ue.id = :id",
+                    ['id' => $ue->id]);
+                $path = (string) $DB->get_field('user', 'open_path', ['id' => $ue->userid]);
+                if (!$current || $current->enrol !== 'manual' || (int) $current->courseid !== (int) $courseid
+                        || (int) $current->userid !== (int) $ue->userid
+                        || (int) $current->timestart !== (int) $ue->timestart
+                        || (int) $current->timeend !== (int) $ue->timeend
+                        || compliance_engine::tenant_id_from_path($path) !== (int) $ue->usertenant) {
+                    $result['skipped']++;
+                    continue;
+                }
+                $enrolid = (int) $current->enrolid;
+                if (!array_key_exists($enrolid, $instances)) {
+                    $instances[$enrolid] = $DB->get_record('enrol', ['id' => $enrolid]);
+                }
+                if (!$instances[$enrolid]) {
+                    $result['skipped']++;
+                    continue;
+                }
+                $transaction = $DB->start_delegated_transaction();
+                try {
+                    $plugin->unenrol_user($instances[$enrolid], (int) $ue->userid);
+                    $transaction->allow_commit();
+                    $result['removed']++;
+                    $result['percourse'][$courseid] = ($result['percourse'][$courseid] ?? 0) + 1;
+                } catch (\Throwable $e) {
+                    try {
+                        // Rolls back this removal only, and rethrows $e.
+                        $transaction->rollback($e);
+                    } catch (\Throwable $ignored) {
+                        // Expected: rollback() rethrows. Counted below; the next removal goes ahead.
+                    }
+                    $result['failed']++;
+                    $result['lines'][] = "Course {$courseid}: one removal failed and was rolled back ("
+                        . get_class($e) . ': ' . $e->getMessage() . ').';
+                }
+            }
+        }
+        if ($result['removed'] > 0) {
+            compliance_engine::purge_kpi_cache();
+        }
+
+        $summary = ["Removed {$result['removed']} enrolments of people outside the course's tenants"
+            . " ({$result['skipped']} skipped because they changed since the plan, {$result['failed']} failed)."];
+        foreach ($result['percourse'] as $courseid => $n) {
+            $course = $outsiders['courses'][$courseid]['course'] ?? null;
+            $summary[] = '  ' . ($course ? self::describe_course($course) : "course {$courseid}") . ": {$n} removed.";
+        }
+        if ($result['removed'] > 0) {
+            $summary[] = 'Each removal is in the Moodle log as a user_enrolment_deleted event (actor: the site admin).'
+                . ' The next hourly compliance refresh drops their snapshot rows.';
+        }
+        $result['lines'] = array_merge($summary, $result['lines']);
+        return $result;
+    }
+
+    /**
+     * The --unenrol-outsiders plan as text: counts per course and per tenant,
+     * never a person's name or id.
+     *
+     * @param array $outsiders from outsider_enrolments()
+     * @param bool $execute whether unenrol_outsiders() will follow
+     * @return string[] lines
+     */
+    public static function render_outsiders(array $outsiders, bool $execute): array {
+        $will = $execute ? 'WILL' : 'would';
+        $lines = [];
+        $lines[] = '';
+        $lines[] = "Enrolments of people outside the course's tenants (--unenrol-outsiders, decision D-10):";
+        $lines[] = '  Only enrolments the old compliance auto-enrol made are removed: manual enrolment, end = start +'
+            . ' deadline days. Tenants a course is shared to count as its own.';
+        if (empty($outsiders['available'])) {
+            $lines[] = '  The user table has no open_path column, so nobody has a tenant: nothing to do.';
+            return $lines;
+        }
+        $includenotenant = !empty($outsiders['includenotenant']);
+        $total = 0;
+        $notenant = 0;
+        $notenantremoved = 0;
+        $otherrole = 0;
+        $unsigned = 0;
+        $completed = 0;
+        $suspended = 0;
+        $clean = 0;
+        foreach ($outsiders['courses'] as $e) {
+            $n = count($e['remove']);
+            $total += $n;
+            $notenant += $e['notenant'];
+            $otherrole += $e['otherrole'];
+            $unsigned += $e['unsigned'];
+            $completed += $e['completed'];
+            $suspended += $e['suspended'];
+            $notenantremoved += $e['bytenant'][0] ?? 0;
+            $notenantleft = $includenotenant ? 0 : $e['notenant'];
+            if ($n + $notenantleft + $e['otherrole'] + $e['unsigned'] === 0) {
+                $clean++;
+                continue;
+            }
+            $bytenant = [];
+            foreach ($e['bytenant'] as $tenantid => $count) {
+                $bytenant[] = ($tenantid > 0 ? "tenant {$tenantid}" : 'no tenant') . ": {$count}";
+            }
+            $reach = "tenant {$e['tenant']}" . ($e['sharedto'] ? '; shared to ' . implode(', ', $e['sharedto']) : '');
+            $lines[] = '  ' . self::describe_course($e['course']) . " (reaches {$reach}):";
+            $lines[] = "      {$n} {$will} be removed" . ($bytenant ? ' (' . implode(', ', $bytenant) . ')' : '')
+                . "; {$e['suspended']} of them suspended, {$e['completed']} completed the course.";
+            $lines[] = "      Left as is: {$notenantleft} with no tenant; {$e['otherrole']} with another role in the"
+                . " course; {$e['unsigned']} other enrolments of people outside.";
+        }
+        $lines[] = "  {$total} enrolments {$will} be removed, through the manual enrolment plugin (unenrol_user):"
+            . ' the enrolment events fire, and on a person\'s last enrolment in the course Moodle also removes their'
+            . ' roles, groups and grades there (grades go to the grade history; course completion records stay).';
+        if ($clean > 0) {
+            $lines[] = "  {$clean} tracked courses have nobody outside their tenants.";
+        }
+        if ($outsiders['unowned']) {
+            $lines[] = '  ' . count($outsiders['unowned']) . ' tracked courses have no tenant (no open_path): they reach'
+                . ' every tenant, so nobody is outside them.';
+        }
+        if ($suspended > 0) {
+            $lines[] = "  {$suspended} of the enrolments to remove are suspended already.";
+        }
+        if ($completed > 0) {
+            $lines[] = "  {$completed} of the people to remove completed the course. Their course completion record"
+                . ' stays; their enrolment and grades in the course go.';
+        }
+        if ($notenant > 0 && !$includenotenant) {
+            $lines[] = "  {$notenant} marked enrolments belong to accounts with no tenant (no org path). Left as is:"
+                . ' such an account may be an employee with a gap in the BizLMS data. Add --include-no-tenant to'
+                . ' remove them too.';
+        } else if ($notenantremoved > 0) {
+            $lines[] = "  {$notenantremoved} of them belong to accounts with no tenant (--include-no-tenant).";
+        }
+        if ($otherrole > 0) {
+            $lines[] = "  {$otherrole} people outside also hold another role in the course (a teacher, say). Left as is:"
+                . ' review them on the course Participants page.';
+        }
+        if ($unsigned > 0) {
+            $lines[] = "  {$unsigned} enrolments of people outside were not made by the old auto-enrol (another method,"
+                . ' no end date, or an end date that is not start + deadline days). Left as is: review them on the'
+                . ' course Participants page.';
         }
         return $lines;
     }

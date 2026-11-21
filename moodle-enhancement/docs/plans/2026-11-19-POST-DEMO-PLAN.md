@@ -597,6 +597,14 @@ aggregate only):
 
 ### 5.1 Track 1: LMS (revised)
 
+**Status, 21 Nov ~10:30** (details: `docs/visual-evidence/2026-11-20/session/README.md`, PROJECT-STATE 2026-11-21 entry):
+- **Session 0 and 1: verified on development.** PHPUnit green 21 Nov (88 files, 756 tests); the tool_certificate 5.0.12 re-vendor (D-7) is applied locally. Not committed for the 20 Nov part; UAT deploy waits for your go (D-9, D-8).
+- **Session 1b: built and verified on development** (D-2..D-6): one certificate per completion cycle, survives course delete, no flag.
+- **Session 4 (B1) and session 7 (B2): verified on development, server side** (consent and identity, session recording, warn-and-flag, hiring auto-submit at 3, integrity report); the browser client check of secure mode is still owed. Flags OFF, code committed `76e8ec572`, not on UAT.
+- **Session 5 (external trainers): built, reviewed (4 findings fixed), verified on development server side**; pages still to be seen in a browser. Flags OFF, not committed, not on UAT.
+- **D-x builds:** D-10 done locally (109 removed; 4 no-tenant left, decision N-1), D-11 shown ON then OFF, D-12 and D-13 verified, D-14 core patch applied locally with its tool.
+- **Owed:** the browser steps listed in the session README, commit, UAT on your go.
+
 **Status, 20 Nov ~05:15** (details: `docs/visual-evidence/2026-11-19/session-01/README.md`, PROJECT-STATE 2026-11-20 entry):
 - **Session 0: partly done.** Quick wins, D32 and its extras are on UAT and XAMPP is up to date; PHPUnit has not run and the tool_certificate 5.0.12 re-vendor is packaged, not applied (D-7).
 - **Session 1: partly done.** Built, reviewed (E1/E2 from session 2 too), deployed to local XAMPP and read-only verified; not committed, not on UAT, PHPUnit not finished, write-path checks owed.

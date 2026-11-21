@@ -2,8 +2,15 @@
     Rules tab — CRUD for notification rules.
     Context: tabdata {rules [each with can_modify], rule_count}, sesskey, manage_url, tenant_id,
              show_form, has_editrule, editrule, editrule_readonly,
+             rule_type_options, channel_options, audience_options [value, label, selected],
              template_options [category, templates [key, label, selected]],
              rule_scope_options [id, name, selected], is_crosstenant
+    D-12 (2026-11-20): editing a rule loads every stored value (manage_controller::rule_form_context()):
+    Rule Type, Channel and Audience have the rule's value selected (they pre-selected nothing, so a re-save
+    stored the first option of each), Trigger Days is blank for a NULL (it showed 0), the reminder cadence
+    is on the form, and the trigger event and conditions, which this form does not edit, are shown
+    read-only (the save keeps them). Each check box has a hidden 0 before it, so an unticked box posts 0:
+    the Enabled box could never switch a rule off. Labels are lang strings (en + hi).
     G1 (2026-11-19): template_options is the template registry the save accepts, with the edited
     rule's template selected (manage_controller::rule_template_options()).
     ADR-031: a scoped caller gets their own tenant as the only scope, and no
@@ -17,8 +24,8 @@
 {{#show_form}}
 <div class="ap-manage-card" style="border-left:4px solid #0066A7; margin-bottom:24px;">
     <h3 style="font-size:16px; font-weight:700; color:#1a1a2e; margin:0 0 16px;">
-        <i class="fa {{#has_editrule}}fa-pencil{{/has_editrule}}{{^has_editrule}}fa-plus{{/has_editrule}}" style="color:#0066A7;"></i>
-        {{#has_editrule}}Edit Rule{{/has_editrule}}{{^has_editrule}}Create New Rule{{/has_editrule}}
+        <i class="fa {{#has_editrule}}fa-pencil{{/has_editrule}}{{^has_editrule}}fa-plus{{/has_editrule}}" style="color:#0066A7;" aria-hidden="true"></i>
+        {{#has_editrule}}{{#str}}rule_form_title_edit, local_sentientia_emails{{/str}}{{/has_editrule}}{{^has_editrule}}{{#str}}rule_form_title_new, local_sentientia_emails{{/str}}{{/has_editrule}}
     </h3>
     <form method="post" action="{{manage_url}}?tab=rules&tenant={{tenant_id}}">
         {{^editrule_readonly}}
@@ -28,72 +35,65 @@
         {{/editrule_readonly}}
         <fieldset class="ap-manage-fieldset"{{#editrule_readonly}} disabled aria-describedby="ap-rule-readonly-note"{{/editrule_readonly}}>
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-bottom:16px;">
             <div>
-                <label style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">Rule Name *</label>
-                <input type="text" name="rule_name" required
+                <label for="ap-rule-name" style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">{{#str}}rule_field_name, local_sentientia_emails{{/str}} *</label>
+                <input type="text" id="ap-rule-name" name="rule_name" required maxlength="255"
                        value="{{#has_editrule}}{{editrule.rule_name}}{{/has_editrule}}"
-                       placeholder="e.g. Compliance: 7-day deadline warning"
+                       placeholder="{{#str}}rule_field_name_placeholder, local_sentientia_emails{{/str}}"
                        style="width:100%; padding:8px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px; font-family:inherit;">
             </div>
             <div>
-                <label style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">Rule Type *</label>
-                <select name="rule_type" required style="width:100%; padding:8px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px; font-family:inherit;">
-                    <option value="">Select type...</option>
-                    <option value="compliance_enrolled" {{#has_editrule}}{{#editrule.rule_type}}{{/editrule.rule_type}}{{/has_editrule}}>Compliance: Auto-Enrol</option>
-                    <option value="compliance_reminder">Compliance: Reminder</option>
-                    <option value="compliance_overdue">Compliance: Overdue</option>
-                    <option value="deadline_approaching">Deadline Approaching</option>
-                    <option value="course_not_started">Course Not Started</option>
-                    <option value="streak_broken">Streak Broken</option>
-                    <option value="manager_nudge">Manager Nudge</option>
-                    <option value="weekly_escalation">Weekly Escalation</option>
-                    <option value="new_course">New Course Available</option>
-                    <option value="custom">Custom</option>
+                <label for="ap-rule-type" style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">{{#str}}rule_field_type, local_sentientia_emails{{/str}} *</label>
+                <select id="ap-rule-type" name="rule_type" required style="width:100%; padding:8px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px; font-family:inherit;">
+                    <option value="">{{#str}}rule_field_type_choose, local_sentientia_emails{{/str}}</option>
+                    {{#rule_type_options}}
+                    <option value="{{value}}"{{#selected}} selected{{/selected}}>{{label}}</option>
+                    {{/rule_type_options}}
                 </select>
             </div>
         </div>
 
-        <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:12px; margin-bottom:16px;">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:12px; margin-bottom:16px;">
             <div>
-                <label style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">Trigger Days</label>
-                <input type="number" name="trigger_days" min="-365" max="365"
+                <label for="ap-rule-trigger-days" style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">{{#str}}rule_field_trigger_days, local_sentientia_emails{{/str}}</label>
+                <input type="number" id="ap-rule-trigger-days" name="trigger_days" min="-365" max="365" step="1"
                        value="{{#has_editrule}}{{editrule.trigger_days}}{{/has_editrule}}{{^has_editrule}}7{{/has_editrule}}"
                        style="width:100%; padding:8px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px;"
-                       title="Negative = before deadline, Positive = after enrolment/event">
-                <small style="font-size:10px; color:#8890a0;">-7 = 7 days before deadline</small>
+                       title="{{#str}}rule_field_trigger_days_title, local_sentientia_emails{{/str}}"
+                       aria-describedby="ap-rule-trigger-days-help">
+                <small id="ap-rule-trigger-days-help" style="font-size:10px; color:#8890a0;">{{#str}}rule_field_trigger_days_help, local_sentientia_emails{{/str}}</small>
             </div>
             <div>
-                <label style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">Channel *</label>
-                <select name="channel" required style="width:100%; padding:8px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px; font-family:inherit;">
-                    <option value="email,popup" {{#has_editrule}}{{/has_editrule}}>Email + Popup</option>
-                    <option value="popup">Popup Only</option>
-                    <option value="email">Email Only</option>
+                <label for="ap-rule-channel" style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">{{#str}}rule_field_channel, local_sentientia_emails{{/str}} *</label>
+                <select id="ap-rule-channel" name="channel" required style="width:100%; padding:8px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px; font-family:inherit;">
+                    {{#channel_options}}
+                    <option value="{{value}}"{{#selected}} selected{{/selected}}>{{label}}</option>
+                    {{/channel_options}}
                 </select>
             </div>
             <div>
-                <label style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">Audience *</label>
-                <select name="audience" required style="width:100%; padding:8px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px; font-family:inherit;">
-                    <option value="learner">Learner</option>
-                    <option value="manager">Manager</option>
-                    <option value="admin">Admin</option>
-                    <option value="all">All</option>
+                <label for="ap-rule-audience" style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">{{#str}}rule_field_audience, local_sentientia_emails{{/str}} *</label>
+                <select id="ap-rule-audience" name="audience" required style="width:100%; padding:8px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px; font-family:inherit;">
+                    {{#audience_options}}
+                    <option value="{{value}}"{{#selected}} selected{{/selected}}>{{label}}</option>
+                    {{/audience_options}}
                 </select>
             </div>
             <div>
-                <label style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">Priority</label>
-                <input type="number" name="priority" min="1" max="100"
+                <label for="ap-rule-priority" style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">{{#str}}rule_field_priority, local_sentientia_emails{{/str}}</label>
+                <input type="number" id="ap-rule-priority" name="priority" min="1" max="100" step="1" required
                        value="{{#has_editrule}}{{editrule.priority}}{{/has_editrule}}{{^has_editrule}}50{{/has_editrule}}"
                        style="width:100%; padding:8px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px;"
-                       title="1-100, higher = more important">
+                       title="{{#str}}rule_field_priority_title, local_sentientia_emails{{/str}}">
             </div>
         </div>
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-bottom:16px;">
             <div>
-                <label style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">Email Template</label>
-                <select name="template_key" style="width:100%; padding:8px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px; font-family:inherit;">
-                    <option value="">None (plain text)</option>
+                <label for="ap-rule-template" style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">{{#str}}rule_field_template, local_sentientia_emails{{/str}}</label>
+                <select id="ap-rule-template" name="template_key" style="width:100%; padding:8px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px; font-family:inherit;">
+                    <option value="">{{#str}}rule_field_template_none, local_sentientia_emails{{/str}}</option>
                     {{#template_options}}
                     <optgroup label="{{category}}">
                         {{#templates}}
@@ -104,12 +104,12 @@
                 </select>
             </div>
             <div>
-                <label style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">Tenant Scope</label>
+                <label for="ap-rule-scope" style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">{{#str}}rule_field_scope, local_sentientia_emails{{/str}}</label>
                 {{#editrule_readonly}}
                 <span class="ap-manage-badge ap-manage-badge--bizlms">{{#str}}rule_scope_global, local_sentientia_emails{{/str}}</span>
                 {{/editrule_readonly}}
                 {{^editrule_readonly}}
-                <select name="rule_tenant" style="width:100%; padding:8px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px; font-family:inherit;">
+                <select id="ap-rule-scope" name="rule_tenant" style="width:100%; padding:8px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px; font-family:inherit;">
                     {{#rule_scope_options}}
                     <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
                     {{/rule_scope_options}}
@@ -118,24 +118,73 @@
             </div>
         </div>
 
+        {{! Reminder cadence: per-rule columns (Sprint B) that course_incomplete rules read. }}
+        <div style="margin-bottom:16px; padding:12px; background:#f8f9fc; border:1px solid #e2e6ef; border-radius:8px;">
+            <div style="font-size:12px; font-weight:700; color:#1a1a2e; margin-bottom:2px;">{{#str}}rule_cadence_heading, local_sentientia_emails{{/str}}</div>
+            <small style="display:block; font-size:11px; color:#8890a0; margin-bottom:8px;">{{#str}}rule_cadence_help, local_sentientia_emails{{/str}}</small>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; align-items:start;">
+                <div>
+                    <label for="ap-rule-cadence" style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">{{#str}}rule_field_cadence, local_sentientia_emails{{/str}}</label>
+                    <input type="text" id="ap-rule-cadence" name="cadence_days_json" maxlength="255"
+                           value="{{#has_editrule}}{{editrule.cadence_days_json}}{{/has_editrule}}"
+                           placeholder="[1,3,7,14,21]" aria-describedby="ap-rule-cadence-help"
+                           style="width:100%; padding:8px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px; font-family:inherit;">
+                    <small id="ap-rule-cadence-help" style="font-size:10px; color:#8890a0;">{{#str}}rule_field_cadence_help, local_sentientia_emails{{/str}}</small>
+                </div>
+                <div>
+                    <label for="ap-rule-max-reminders" style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">{{#str}}rule_field_max_reminders, local_sentientia_emails{{/str}}</label>
+                    <input type="number" id="ap-rule-max-reminders" name="max_reminders_per_user" min="0" max="999" step="1"
+                           value="{{#has_editrule}}{{editrule.max_reminders_per_user}}{{/has_editrule}}{{^has_editrule}}0{{/has_editrule}}"
+                           aria-describedby="ap-rule-max-reminders-help"
+                           style="width:100%; padding:8px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px;">
+                    <small id="ap-rule-max-reminders-help" style="font-size:10px; color:#8890a0;">{{#str}}rule_field_max_reminders_help, local_sentientia_emails{{/str}}</small>
+                </div>
+                <div style="padding-top:22px;">
+                    <input type="hidden" name="auto_stop_on_completion" value="0">
+                    <label style="display:flex; align-items:flex-start; gap:6px; font-size:13px; color:#5a6070; cursor:pointer;">
+                        <input type="checkbox" name="auto_stop_on_completion" value="1"
+                               {{#has_editrule}}{{#editrule.auto_stop_on_completion}}checked{{/editrule.auto_stop_on_completion}}{{/has_editrule}}{{^has_editrule}}checked{{/has_editrule}}
+                               style="width:16px; height:16px; flex-shrink:0; margin-top:2px;">
+                        {{#str}}rule_field_auto_stop, local_sentientia_emails{{/str}}
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        {{! Not edited on this form; the save keeps the stored values (rule_manager::rule_from_form()). }}
+        {{#has_editrule}}
+        <div style="margin-bottom:16px;">
+            <div style="font-size:12px; font-weight:600; color:#5a6070; margin-bottom:4px;">{{#str}}rule_field_trigger_event, local_sentientia_emails{{/str}}</div>
+            {{#editrule.has_trigger_event}}<code style="font-size:12px; background:#f0f2f7; padding:2px 6px; border-radius:4px; overflow-wrap:anywhere;">{{editrule.trigger_event}}</code>{{/editrule.has_trigger_event}}
+            {{^editrule.has_trigger_event}}<span style="color:#8890a0; font-size:12px;">—</span>{{/editrule.has_trigger_event}}
+            <small style="display:block; font-size:10px; color:#8890a0;">{{#str}}rule_field_trigger_event_help, local_sentientia_emails{{/str}}</small>
+            {{#editrule.has_conditions}}
+            <div style="font-size:12px; font-weight:600; color:#5a6070; margin:12px 0 4px;">{{#str}}rule_field_conditions, local_sentientia_emails{{/str}}</div>
+            <pre style="font-size:11px; background:#f0f2f7; padding:8px; border-radius:6px; margin:0; white-space:pre-wrap; overflow-wrap:anywhere;">{{editrule.conditions_json}}</pre>
+            <small style="display:block; font-size:10px; color:#8890a0;">{{#str}}rule_field_conditions_help, local_sentientia_emails{{/str}}</small>
+            {{/editrule.has_conditions}}
+        </div>
+        {{/has_editrule}}
+
         {{#editrule_readonly}}
         <p id="ap-rule-readonly-note" style="font-size:12px; color:#5a6070; margin:0 0 16px;">
             <i class="fa fa-lock" aria-hidden="true"></i> {{#str}}rule_readonly_crosstenant, local_sentientia_emails{{/str}}
         </p>
         {{/editrule_readonly}}
 
-        <div style="display:flex; gap:8px; align-items:center;">
+        <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+            <input type="hidden" name="rule_enabled" value="0">
             <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#5a6070; cursor:pointer;">
                 <input type="checkbox" name="rule_enabled" value="1"
                        {{#has_editrule}}{{#editrule.enabled}}checked{{/editrule.enabled}}{{/has_editrule}}{{^has_editrule}}checked{{/has_editrule}}
                        style="width:16px; height:16px;">
-                Enabled
+                {{#str}}rule_field_enabled, local_sentientia_emails{{/str}}
             </label>
             <div style="flex:1;"></div>
-            <a href="{{manage_url}}?tab=rules&tenant={{tenant_id}}" class="ap-manage-btn ap-manage-btn--outline ap-manage-btn--sm">Cancel</a>
+            <a href="{{manage_url}}?tab=rules&tenant={{tenant_id}}" class="ap-manage-btn ap-manage-btn--outline ap-manage-btn--sm">{{#str}}cancel, core{{/str}}</a>
             {{^editrule_readonly}}
             <button type="submit" class="ap-manage-btn ap-manage-btn--primary ap-manage-btn--sm">
-                <i class="fa fa-save"></i> {{#has_editrule}}Update Rule{{/has_editrule}}{{^has_editrule}}Create Rule{{/has_editrule}}
+                <i class="fa fa-save" aria-hidden="true"></i> {{#has_editrule}}{{#str}}rule_button_update, local_sentientia_emails{{/str}}{{/has_editrule}}{{^has_editrule}}{{#str}}rule_button_create, local_sentientia_emails{{/str}}{{/has_editrule}}
             </button>
             {{/editrule_readonly}}
         </div>
